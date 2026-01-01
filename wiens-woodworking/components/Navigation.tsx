@@ -9,13 +9,13 @@ export default function Navigation() {
         <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
           <Image 
             src="/logo.png"
-            alt="Wiens Fine Woodworking"
+            alt="WIENS Fine Woodworking"
             width={50}
             height={50}
             className="object-contain"
           />
           <span className="text-xl font-bold text-stone-800 hidden sm:block">
-            Wiens Fine Woodworking
+            WIENS Fine Woodworking
           </span>
         </Link>
 

@@ -7,7 +7,7 @@ export default function Footer() {
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           {/* Copyright */}
           <div className="text-stone-300 text-sm">
-            © {currentYear} Wiens Fine Woodworking. All rights reserved.
+            © {currentYear} WIENS Fine Woodworking. All rights reserved.
           </div>
           
           {/* Social Links */}

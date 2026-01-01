@@ -28,7 +28,7 @@ export default function Home() {
           {/* Content - now with z-10 to appear above background */}
           <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
             <h1 className="text-6xl md:text-7xl font-bold text-white mb-6 drop-shadow-lg">
-              Wiens Fine Woodworking
+              WIENS Fine Woodworking
             </h1>
             <p className="text-xl md:text-2xl text-white/95 mb-8 drop-shadow-md">
               Handcrafted furniture and custom woodworking projects built with precision and care
@@ -56,12 +56,12 @@ export default function Home() {
         <section id="about" className="py-20 px-6 bg-stone-50">
           <div className="max-w-4xl mx-auto">
             <h2 className="text-4xl font-bold text-stone-800 mb-8 text-center">
-              About Wiens Fine Woodworking
+              About WIENS Fine Woodworking
             </h2>
 
             <div className="prose prose-lg prose-stone mx-auto">
               <p className="text-stone-700 text-lg leading-relaxed mb-6">
-                Welcome to Wiens Fine Woodworking, where traditional craftsmanship meets modern design.
+                Welcome to WIENS Fine Woodworking, where traditional craftsmanship meets modern design.
                 Every piece I create is built with meticulous attention to detail, quality materials,
                 and a passion for the timeless art of woodworking.
               </p>
