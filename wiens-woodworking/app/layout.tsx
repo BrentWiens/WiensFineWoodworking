@@ -21,10 +21,10 @@ export const metadata: Metadata = {
     title: "Wiens Fine Woodworking",
     description: "Handcrafted furniture and custom woodworking projects",
     type: "website",
-    url: "https://wfinew.com", // Update when you have domain
+    url: "https://wfinew.com",
     images: [
       {
-        url: "/images/handplanes.jpg", // Your hero image
+        url: "/images/handplanes.jpg",
         width: 1200,
         height: 630,
         alt: "Wiens Fine Woodworking",
