@@ -16,7 +16,7 @@ export default function ContactForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!turnstileToken) {
       setStatus('error');
       setErrorMessage('Please complete the verification');
@@ -30,9 +30,9 @@ export default function ContactForm() {
       const response = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          ...formData, 
-          turnstileToken 
+        body: JSON.stringify({
+          ...formData,
+          turnstileToken
         }),
       });
 
@@ -64,7 +64,7 @@ export default function ContactForm() {
           required
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-800 focus:border-transparent outline-none"
+          className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-800 focus:border-transparent outline-none text-stone-900 placeholder:text-stone-500"
           placeholder="Your name"
         />
       </div>
@@ -79,7 +79,7 @@ export default function ContactForm() {
           required
           value={formData.email}
           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-          className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-800 focus:border-transparent outline-none"
+          className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-800 focus:border-transparent outline-none text-stone-900 placeholder:text-stone-500"
           placeholder="your.email@example.com"
         />
       </div>
@@ -94,7 +94,7 @@ export default function ContactForm() {
           rows={6}
           value={formData.message}
           onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-          className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-800 focus:border-transparent outline-none resize-y"
+          className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-800 focus:border-transparent outline-none resize-y text-stone-900 placeholder:text-stone-500"
           placeholder="Tell me about your project..."
         />
       </div>
