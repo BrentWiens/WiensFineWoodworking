@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 const geist = Geist({
   variable: "--font-geist-sans",
@@ -33,17 +35,38 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'LocalBusiness',
+    name: 'Wiens Fine Woodworking',
+    description: 'Handcrafted furniture and custom woodworking projects',
+    url: 'https://wfinew.com',
+    telephone: '', // Reach out to ask
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: 'Kitchener',
+      addressRegion: 'ON',
+      addressCountry: 'CA',
+    },
+    sameAs: [
+      'https://www.facebook.com/people/Wiens-Fine-Woodworking/61559807342865',
+      'https://www.instagram.com/wiensfinewoodworking/',
+    ],
+  };
+
   return (
     <html lang="en">
-      <body
-        className={`${geist.variable} ${geistMono.variable} antialiased`}
-      >
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
+      <body className={`${geist.variable} ${geistMono.variable} antialiased`}>
         {children}
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
