@@ -4,19 +4,17 @@ import Image from 'next/image';
 export default function Navigation() {
   return (
     <nav className="fixed top-0 left-0 right-0 bg-white border-b border-stone-200 z-50">
-      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+      <div className="max-w-7xl mx-auto px-6 py-2 flex items-center justify-between">
+        {/* Logo - constrained by height */}
+        <Link href="/" className="flex items-center hover:opacity-80 transition-opacity">
           <Image 
             src="/logo.png"
-            alt="WIENS Fine Woodworking"
-            width={50}
-            height={50}
-            className="object-contain"
+            alt="Wiens Fine Woodworking"
+            width={200}
+            height={48}
+            className="object-contain h-12 w-auto"
+            priority
           />
-          <span className="text-xl font-bold text-stone-800 hidden sm:block">
-            WIENS Fine Woodworking
-          </span>
         </Link>
 
         {/* Navigation Links */}

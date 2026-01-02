@@ -23,7 +23,7 @@ export default function Hero() {
                     WIENS Fine Woodworking
                 </h1>
                 <p className="text-xl md:text-2xl text-white/95 mb-8 drop-shadow-md">
-                    Handcrafted furniture and custom woodworking projects built with precision and care
+                    Custom handcrafted projects built with precision and care in Kitchener, Ontario
                 </p>
                 <div className="flex gap-4 justify-center">
                     <a

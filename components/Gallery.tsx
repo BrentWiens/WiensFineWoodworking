@@ -67,11 +67,7 @@ export default function Gallery({ images }: GalleryProps) {
           <h2 className="text-4xl font-bold text-stone-800 mb-4 text-center">
             Recent Projects
           </h2>
-          <p className="text-stone-600 text-center mb-12">
-            Custom woodworking and handcrafted furniture
-          </p>
           
-          {/* Gallery grid */}
           <div data-testid="gallery-grid" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {images.map((filename, index) => (
               <button
