@@ -1,20 +1,23 @@
 import Link from 'next/link';
-import Image from 'next/image';
 
 export default function Navigation() {
   return (
     <nav className="fixed top-0 left-0 right-0 bg-white border-b border-stone-200 z-50">
-      <div className="max-w-7xl mx-auto px-6 py-2 flex items-center justify-between">
-        {/* Logo - constrained by height */}
-        <Link href="/" className="flex items-center hover:opacity-80 transition-opacity">
-          <Image 
-            src="/logo.png"
-            alt="Wiens Fine Woodworking"
-            width={200}
-            height={48}
-            className="object-contain h-12 w-auto"
-            priority
-          />
+      <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
+        {/* Logo as HTML/CSS */}
+        <Link href="/" className="flex items-center gap-4 hover:opacity-80 transition-opacity">
+          {/* WIENS */}
+          <span className="text-3xl font-bold tracking-wider" style={{ fontFamily: 'Georgia, serif', color: '#2C1810' }}>
+            WIENS
+          </span>
+          
+          {/* Separator - more visible */}
+          <div className="w-[3px] h-10 bg-stone-400"></div>
+          
+          {/* FINE WOODWORKING - same height */}
+          <span className="text-3xl font-normal tracking-widest" style={{ fontFamily: 'Georgia, serif', color: '#78716C' }}>
+            FINE WOODWORKING
+          </span>
         </Link>
 
         {/* Navigation Links */}
