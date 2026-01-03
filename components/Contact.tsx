@@ -71,7 +71,7 @@ export default function Contact() {
             </div>
 
             <p className="text-stone-500 text-sm text-center">
-              Typically respond within 24 hours
+              Typically respond within 24-48 hours
             </p>
           </div>
         ) : (
