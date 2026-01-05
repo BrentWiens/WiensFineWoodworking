@@ -69,10 +69,6 @@ export default function Contact() {
                 </a>
               </div>
             </div>
-
-            <p className="text-stone-500 text-sm text-center">
-              Typically respond within 24-48 hours
-            </p>
           </div>
         ) : (
           /* Form view - only loads when clicked */

@@ -63,7 +63,7 @@ export default function About() {
                                 alt="Brent Wiens in woodworking shop"
                                 fill
                                 className="object-cover hover:scale-105 transition-transform duration-300"
-                                sizes="(max-width: 1024px) 50vw, 33vw"
+                                sizes="(max-width: 500px) 50vw, 33vw"
                                 quality={70}
                             />
                         </div>
