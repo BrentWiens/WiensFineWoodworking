@@ -46,3 +46,5 @@ next-env.d.ts
 /playwright/.cache/
 # Sentry Config File
 .env.sentry-build-plugin
+
+/.lighthouseci
