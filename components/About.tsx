@@ -64,7 +64,7 @@ export default function About() {
                                 fill
                                 className="object-cover hover:scale-105 transition-transform duration-300"
                                 sizes="(max-width: 1024px) 50vw, 33vw"
-                                quality={85}
+                                quality={70}
                             />
                         </div>
                     </div>
@@ -79,7 +79,7 @@ export default function About() {
                             fill
                             className="object-cover hover:scale-105 transition-transform duration-300"
                             sizes="(max-width: 640px) 100vw, 50vw"
-                            quality={85}
+                            quality={70}
                         />
                     </div>
 
@@ -90,7 +90,7 @@ export default function About() {
                             fill
                             className="object-cover hover:scale-105 transition-transform duration-300"
                             sizes="(max-width: 640px) 100vw, 50vw"
-                            quality={85}
+                            quality={70}
                         />
                     </div>
                 </div>
