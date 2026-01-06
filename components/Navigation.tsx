@@ -22,19 +22,19 @@ export default function Navigation() {
           {/* Nav links row */}
           <div className="flex items-center gap-4">
             <Link 
-              href="#gallery" 
+              href="/gallery" 
               className="text-sm text-stone-600 hover:text-stone-900 transition-colors font-medium"
             >
               Gallery
             </Link>
             <Link 
-              href="#about" 
+              href="/#about" 
               className="text-sm text-stone-600 hover:text-stone-900 transition-colors font-medium"
             >
               About
             </Link>
             <Link 
-              href="#contact" 
+              href="/#contact" 
               className="text-sm bg-stone-800 text-white px-5 py-1.5 rounded-lg hover:bg-stone-700 transition-colors font-semibold"
             >
               Contact
@@ -60,19 +60,19 @@ export default function Navigation() {
           {/* Navigation Links */}
           <div className="flex items-center gap-8">
             <Link 
-              href="#gallery" 
+              href="/gallery" 
               className="text-base text-stone-600 hover:text-stone-900 transition-colors font-medium"
             >
               Gallery
             </Link>
             <Link 
-              href="#about" 
+              href="/#about" 
               className="text-base text-stone-600 hover:text-stone-900 transition-colors font-medium"
             >
               About
             </Link>
             <Link 
-              href="#contact" 
+              href="/#contact" 
               className="bg-stone-800 text-white px-6 py-2 rounded-lg hover:bg-stone-700 transition-colors font-semibold"
             >
               Contact

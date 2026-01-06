@@ -1,4 +1,4 @@
-import { Navigation, GalleryWrapper, Footer, Hero, About, Contact } from '@/components';
+import { Navigation, Footer, Hero, About, Contact, Featured, InstagramFeed, Testimonials } from '@/components';
 
 export default function Home() {
   return (
@@ -7,7 +7,7 @@ export default function Home() {
 
       <main className="min-h-screen">
         <Hero />
-        <GalleryWrapper />
+        <Featured />
         <About />
         <Contact />
       </main>

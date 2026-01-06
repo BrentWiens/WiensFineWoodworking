@@ -24,7 +24,7 @@ export default function Hero() {
         </p>
         <div className="flex gap-4 justify-center">
           <a 
-            href="#gallery" 
+            href="/gallery" 
             className="bg-white text-stone-800 px-8 py-3 rounded-lg hover:bg-stone-100 transition-colors font-semibold shadow-lg"
           >
             View Gallery

@@ -24,6 +24,7 @@ export const metadata: Metadata = {
     description: "Handcrafted furniture and custom woodworking projects",
     type: "website",
     url: "https://wfinew.com",
+    siteName: "Wiens Fine Woodworking",
     images: [
       {
         url: "/images/handplanes.jpg",

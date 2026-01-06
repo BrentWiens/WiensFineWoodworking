@@ -64,10 +64,6 @@ export default function Gallery({ images }: GalleryProps) {
     <>
       <section id="gallery" data-testid="gallery-section" className="py-20 px-6 bg-white">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-bold text-stone-800 mb-4 text-center">
-            Recent Projects
-          </h2>
-
           <div data-testid="gallery-grid" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {images.map((filename, index) => (
               <button
@@ -182,7 +178,6 @@ export default function Gallery({ images }: GalleryProps) {
               height={1080}
               className="object-contain max-h-[90vh] w-auto"
               quality={95}
-              priority
               onLoad={() => setIsLoading(false)}
             />
           </div>

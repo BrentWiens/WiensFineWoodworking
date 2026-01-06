@@ -9,22 +9,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 1,
     },
     {
-      url: 'https://wfinew.com#gallery',
+      url: 'https://wfinew.com/gallery',
       lastModified: new Date(),
-      changeFrequency: 'weekly',
+      changeFrequency: 'monthly',
       priority: 0.8,
-    },
-    {
-      url: 'https://wfinew.com#about',
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.5,
-    },
-    {
-      url: 'https://wfinew.com#contact',
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.5,
     },
   ]
 }

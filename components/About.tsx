@@ -5,7 +5,7 @@ export default function About() {
         <section id="about" className="py-20 px-6 bg-stone-50">
             <div className="max-w-6xl mx-auto">
                 <h2 className="text-4xl font-bold text-stone-800 mb-8 text-center">
-                    About me
+                    About Me
                 </h2>
 
                 {/* Two-column layout on desktop, stacked on mobile */}
