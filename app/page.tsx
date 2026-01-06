@@ -1,4 +1,4 @@
-import { Navigation, Footer, Hero, About, Contact, Featured, InstagramFeed, Testimonials } from '@/components';
+import { Navigation, Footer, Hero, About, Contact, Featured, Testimonials } from '@/components';
 
 export default function Home() {
   return (
