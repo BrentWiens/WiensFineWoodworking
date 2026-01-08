@@ -2,21 +2,21 @@ export default function Testimonials() {
   const testimonials = [
     {
       id: 1,
-      quote: "Brent built us a custom walnut dining table that seats 8. He helped us choose the perfect wood and finish, kept us updated throughout, and the craftsmanship is stunning. It's the centerpiece of our home.",
-      author: "Sarah M.",
-      location: "Waterloo, ON",
+      quote: "Brent from Wiens Fine Woodworking built plinths for the 13th Street Art Gallery.  Communication was easy, the workmanship and attention to detail was excellent and the project was completed in a timely manner. I would highly recommend.",
+      author: "Karen Whitty",
+      location: "13th Street Winery, St. Catharines",
     },
     {
       id: 2,
-      quote: "I needed a unique gift for my parents' anniversary - an end grain cutting board with their initials. Brent created something even more beautiful than I imagined. The attention to detail was incredible.",
-      author: "Mike T.",
-      location: "Cambridge, ON",
+      quote: "Brent Wiens delivered outstanding quality and craftsmanship on our cabinet door project, showcasing a true mastery of woodworking that exceeded all our expectations.",
+      author: "Nikhil Thiruvengadam",
+      location: "Cambridge",
     },
     {
       id: 3,
-      quote: "From initial consultation to final delivery, working with Brent was a pleasure. Our custom built-in shelves are exactly what we envisioned. Quality craftsmanship and excellent communication throughout.",
-      author: "Jennifer L.",
-      location: "Kitchener, ON",
+      quote: "We had Brent build us a couple of  frame and panel doors to replace the default crappy Ikea doors for our closet build and they were perfect, he even assisted with the install! Great attention to detail and very responsive commmunication.",
+      author: "Robert Haskett",
+      location: "Kitchener",
     },
   ];
 
@@ -45,7 +45,7 @@ export default function Testimonials() {
 
               {/* Quote text */}
               <p className="text-stone-700 mb-6 leading-relaxed">
-                "{testimonial.quote}"
+                {testimonial.quote}
               </p>
 
               {/* Author info */}
