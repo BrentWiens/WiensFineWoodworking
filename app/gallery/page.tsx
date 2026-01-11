@@ -23,7 +23,7 @@ export default function GalleryPage() {
                     <div className="absolute inset-0 z-0">
                         <Image
                             src="/handplanes.jpg"
-                            alt="Workshop background"
+                            alt="Handplanes"
                             fill
                             className="object-cover"
                             priority

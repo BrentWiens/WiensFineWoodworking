@@ -34,6 +34,12 @@ export default function Navigation() {
               About
             </Link>
             <Link 
+              href="/tools" 
+              className="text-sm text-stone-600 hover:text-stone-900 transition-colors font-medium"
+            >
+              Tools
+            </Link>
+            <Link 
               href="/#contact" 
               className="text-sm bg-stone-800 text-white px-5 py-1.5 rounded-lg hover:bg-stone-700 transition-colors font-semibold"
             >
@@ -70,6 +76,12 @@ export default function Navigation() {
               className="text-base text-stone-600 hover:text-stone-900 transition-colors font-medium"
             >
               About
+            </Link>
+            <Link 
+              href="/tools" 
+              className="text-base text-stone-600 hover:text-stone-900 transition-colors font-medium"
+            >
+              Tools
             </Link>
             <Link 
               href="/#contact" 
