@@ -51,14 +51,13 @@ export default function ToolsPage() {
                         {/* Tool 1: Dovetail Calculator */}
                         <Link
                             href="/tools/dovetail-calculator"
-                            className="flex gap-6 bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow border border-stone-200"
+                            className="flex flex-col sm:flex-row gap-4 sm:gap-6 bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow border border-stone-200"
                         >
-                            <div className="flex-shrink-0">
+                            <div className="relative flex-shrink-0 aspect-[250/208] w-full max-w-[250px] mx-auto sm:mx-0">
                                 <Image
                                     src="/images/dovetail-calculator/dovetail-sizing.jpg"
                                     alt="Dovetail joint preview"
-                                    width={250}
-                                    height={208}
+                                    fill
                                     className="rounded-md object-cover"
                                 />
                             </div>
