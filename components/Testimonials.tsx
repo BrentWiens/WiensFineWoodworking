@@ -3,8 +3,8 @@ export default function Testimonials() {
     {
       id: 1,
       quote: "Brent from Wiens Fine Woodworking built plinths for the 13th Street Art Gallery.  Communication was easy, the workmanship and attention to detail was excellent and the project was completed in a timely manner. I would highly recommend.",
-      author: "Karen Whitty",
-      location: "13th Street Winery, St. Catharines",
+      author: "13th Street Winery",
+      location: "St. Catharines",
     },
     {
       id: 2,

@@ -72,27 +72,38 @@ export default function ToolsPage() {
                         </Link>
 
                         <Link
-                        href="/tools/cut-list-optimizer"
-                        className="block bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow border border-stone-200"
+                            href="#"
+                            className="block bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow border border-stone-200"
                         >
-                        <h2 className="text-2xl font-bold text-stone-800 mb-2">
-                            (Coming Soon) Cut List Optimizer                        </h2>
-                        <p className="text-stone-600">
-                            Optimize the material usage for a project. Particularly when working with sheet goods like plywood.
-                        </p>
+                            <h2 className="text-2xl font-bold text-stone-800 mb-2">
+                                (Coming Soon) Fractional Calculator                        </h2>
+                            <p className="text-stone-600">
+                                Convenient fractional calculator for working with imperial measurements.
+                            </p>
                         </Link>
 
                         <Link
-                        href="/tools/board-feet-calculator"
-                        className="block bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow border border-stone-200"
+                            href="#"
+                            className="block bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow border border-stone-200"
                         >
-                        <h2 className="text-2xl font-bold text-stone-800 mb-2">
-                            (Coming Soon) Board Feet Calculator                        </h2>
-                        <p className="text-stone-600">
-                            Calculate board feet from lumber dimensions.
-                        </p>
+                            <h2 className="text-2xl font-bold text-stone-800 mb-2">
+                                (Coming Soon) Board Feet Calculator                        </h2>
+                            <p className="text-stone-600">
+                                Calculate board feet from lumber dimensions.
+                            </p>
                         </Link>
-                       
+
+                        <Link
+                            href="#"
+                            className="block bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow border border-stone-200"
+                        >
+                            <h2 className="text-2xl font-bold text-stone-800 mb-2">
+                                (Coming Soon) Cut List Optimizer                        </h2>
+                            <p className="text-stone-600">
+                                Optimize the material usage for a project. Particularly when working with sheet goods like plywood.
+                            </p>
+                        </Link>
+
                     </div>
                 </div>
             </main>
