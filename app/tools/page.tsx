@@ -89,13 +89,15 @@ export default function ToolsPage() {
                         </Link>
 
                         <Link
-                            href="#"
+                            href="/tools/fractional-calculator"
                             className="block bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow border border-stone-200"
                         >
                             <h2 className="text-2xl font-bold text-stone-800 mb-2">
-                                (Coming Soon) Fractional Calculator                        </h2>
+                                Fractional Calculator
+                            </h2>
                             <p className="text-stone-600">
                                 Convenient fractional calculator for working with imperial measurements.
+                                Add, subtract, multiply, and divide fractions with ease.
                             </p>
                         </Link>
 

@@ -28,5 +28,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly',
       priority: 0.8,
     },
+    {
+      url: `${BASE_URL}/tools/fractional-calculator`,
+      lastModified: '2025-01-23',
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
   ]
 }
