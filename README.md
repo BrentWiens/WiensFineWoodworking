@@ -61,11 +61,17 @@ GMAIL_APP_PASSWORD=your_gmail_app_password
 ### Running Tests
 
 ```bash
-# Run all Playwright tests
+# Run Playwright E2E tests
 npm run test
 
-# Run tests with UI mode (interactive)
+# Run Playwright tests with UI mode (interactive)
 npm run test:ui
+
+# Run Vitest unit tests
+npm run test:unit
+
+# Run unit tests in watch mode
+npm run test:unit:watch
 
 # Type check the project
 npm run type-check
@@ -159,6 +165,7 @@ Components use barrel exports (`components/index.ts`) for cleaner imports throug
 
 ### Quality Assurance
 - **E2E Testing:** Playwright test suite with 13 tests covering critical user flows
+- **Unit Testing:** Vitest tests for dovetail calculator logic (22 tests)
 - **Performance Monitoring:** PageSpeed Insights for production performance tracking
 - **Type Safety:** Strict TypeScript configuration with `tsc --noEmit` checks
 
@@ -200,8 +207,3 @@ Engineering Manager | 14+ years software development experience
 - 💼 [LinkedIn](https://www.linkedin.com/in/brentwiens/)
 - 🐙 [GitHub](https://github.com/BrentWiens)
 
----
-
-## License
-
-MIT License - See [LICENSE](LICENSE) file for details

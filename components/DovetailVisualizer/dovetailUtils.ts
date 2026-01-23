@@ -79,8 +79,8 @@ export function decimalToFraction(decimal: number): string | null {
 
 // Format a dimension value with optional fraction
 export function formatDimension(value: number): string {
-  // Round to 3 decimal places
-  const rounded = Math.round(value * 1000) / 1000;
+  // Round to 4 decimal places
+  const rounded = Math.round(value * 10000) / 10000;
   
   // Format without unnecessary trailing zeros
   let decimal = rounded.toString();
