@@ -6,20 +6,23 @@ A modern, responsive website for Wiens Fine Woodworking showcasing custom furnit
 
 ## Tech Stack
 
-- **Framework:** Next.js 15 (App Router)
+- **Framework:** Next.js 16 (App Router)
 - **Language:** TypeScript
-- **Styling:** Tailwind CSS
+- **Styling:** Tailwind CSS v4
 - **Deployment:** Vercel
-- **Image Optimization:** Next.js Image component
+- **Testing:** Playwright
+- **Monitoring:** Sentry, Vercel Analytics
 
 ## Features
 
-- 📸 **Photo Gallery** - 33+ project images with lightbox modal, keyboard navigation (arrow keys), and smooth transitions
+- 📸 **Photo Gallery** - 35+ project images with lightbox modal, keyboard navigation, and smooth transitions
+- 🛠️ **Woodworking Tools** - Interactive calculators including dovetail joint visualizer
 - 🖼️ **Image Optimization** - Automatic WebP/AVIF conversion, responsive sizing, lazy loading
 - 📱 **Fully Responsive** - Mobile-first design optimized for all screen sizes
 - ⚡ **Performance** - Server-side rendering, static generation, optimized images
 - 🎨 **Modern UI** - Clean design with smooth animations and hover effects
-- 🔍 **SEO Optimized** - Meta tags, semantic HTML, OpenGraph support for social sharing
+- 🔍 **SEO Optimized** - Meta tags, canonical URLs, OpenGraph, Twitter Cards, Schema.org structured data
+- 🔒 **Secure Contact Form** - Cloudflare Turnstile bot protection with email notifications
 
 ## Local Development
 ```bash
@@ -38,30 +41,67 @@ npm run dev
 # Open http://localhost:3000
 ```
 
+### Environment Variables
+
+Create a `.env.local` file in the root directory with the following variables:
+
+```bash
+# Sentry Error Tracking
+NEXT_PUBLIC_SENTRY_DSN=your_sentry_dsn
+
+# Cloudflare Turnstile (Bot Protection)
+NEXT_PUBLIC_TURNSTILE_SITE_KEY=your_turnstile_site_key
+TURNSTILE_SECRET_KEY=your_turnstile_secret_key
+
+# Email (Contact Form)
+GMAIL_USER=your_gmail_address
+GMAIL_APP_PASSWORD=your_gmail_app_password
+```
+
+### Running Tests
+
+```bash
+# Run all Playwright tests
+npm run test
+
+# Run tests with UI mode (interactive)
+npm run test:ui
+
+# Type check the project
+npm run type-check
+```
+
 ## Project Structure
 ```
 wiens-woodworking/
-├── src/
-│   ├── app/              # Next.js App Router
-│   │   ├── page.tsx      # Homepage
-│   │   ├── layout.tsx    # Root layout & metadata
-│   │   ├── globals.css   # Global styles
-│   │   └── favicon.ico   # Site icon
-│   └── components/       # React components
-│       ├── Navigation.tsx
-│       ├── Hero.tsx
-│       ├── Gallery.tsx
-│       ├── GalleryWrapper.tsx
-│       ├── About.tsx
-│       ├── Contact.tsx
-│       ├── Footer.tsx
-│       └── index.ts      # Barrel exports
+├── app/                      # Next.js App Router
+│   ├── page.tsx              # Homepage
+│   ├── layout.tsx            # Root layout & metadata
+│   ├── globals.css           # Global styles
+│   ├── gallery/page.tsx      # Photo gallery page
+│   ├── tools/
+│   │   ├── page.tsx          # Tools listing page
+│   │   └── dovetail-calculator/page.tsx
+│   ├── api/contact/route.ts  # Contact form API
+│   ├── sitemap.ts            # Dynamic sitemap
+│   └── robots.ts             # Robots.txt
+├── components/               # React components
+│   ├── Navigation.tsx
+│   ├── Hero.tsx
+│   ├── Featured.tsx
+│   ├── About.tsx
+│   ├── Testimonials.tsx
+│   ├── Contact.tsx
+│   ├── ContactForm.tsx
+│   ├── Gallery.tsx
+│   ├── GalleryWrapper.tsx
+│   ├── DovetailVisualizer/   # Interactive tool component
+│   ├── Footer.tsx
+│   └── index.ts              # Barrel exports
+├── tests/                    # Playwright E2E tests
 ├── public/
-│   ├── images/
-│   │   └── gallery/      # Woodworking project photos (35 images)
-│   ├── shop1.jpg
-│   ├── shop2.jpg
-│   └── logo.png
+│   ├── images/gallery/       # Project photos (35+ images)
+│   └── manifest.json         # PWA manifest
 └── README.md
 ```
 
@@ -83,11 +123,12 @@ npm start
 ## Learning Outcomes
 
 - **TypeScript** - Type safety, interfaces, and modern JavaScript patterns
-- **Next.js 15** - App Router, Server Components vs Client Components, file-based routing
-- **React Hooks** - useState, useEffect for modal state and keyboard navigation
+- **Next.js 16** - App Router, Server Components vs Client Components, file-based routing
+- **React 19** - Latest React features and hooks
 - **Modern image optimization** - Next.js Image component, quality settings, responsive sizing
-- **Tailwind CSS** - Utility-first approach, responsive design, custom styling
-- **Git workflow** - Proper commit messages, GitHub integration, version control
+- **Tailwind CSS v4** - Utility-first approach, responsive design, custom styling
+- **E2E Testing** - Playwright test suite for critical user flows
+- **Production monitoring** - Sentry error tracking, Vercel Analytics
 
 ## Key Technical Decisions
 
@@ -117,10 +158,9 @@ Components use barrel exports (`components/index.ts`) for cleaner imports throug
 - **Performance:** Vercel Speed Insights tracking Core Web Vitals
 
 ### Quality Assurance
-- **E2E Testing:** Playwright test suite with 13+ tests covering critical user flows
-- **Visual Regression:** Screenshot testing to catch UI regressions
-- **Performance Budget:** Lighthouse CI enforces 90+ scores on all metrics
-- **Automated Testing:** GitHub Actions run on every PR
+- **E2E Testing:** Playwright test suite with 13 tests covering critical user flows
+- **Performance Monitoring:** PageSpeed Insights for production performance tracking
+- **Type Safety:** Strict TypeScript configuration with `tsc --noEmit` checks
 
 ### Security
 - **Bot Protection:** Cloudflare Turnstile on contact form
@@ -131,7 +171,6 @@ Components use barrel exports (`components/index.ts`) for cleaner imports throug
 ### Continuous Integration/Deployment
 - **CI/CD:** Automatic deployment via Vercel on push to `main`
 - **Preview Deployments:** Every PR gets a unique preview URL
-- **Quality Gates:** PRs must pass Lighthouse CI before merge
 - **Zero Downtime:** Atomic deployments with instant rollback capability
 
 ### Performance Metrics (Lighthouse)
@@ -141,8 +180,8 @@ Components use barrel exports (`components/index.ts`) for cleaner imports throug
 - SEO: 100
 
 ### Monitoring Dashboard
-- **Sentry:** [dashboard-link]
-- **Vercel Analytics:** [dashboard-link]
+- **Sentry:** [Sentry Dashboard](https://wiens-fine-woodworking.sentry.io/dashboard/default-overview/)
+- **Vercel Analytics:** [Vercel Analytics](https://vercel.com/brent-wiens-projects/wiens-fine-woodworking/analytics)
 
 ## Browser Support
 
@@ -158,7 +197,7 @@ Components use barrel exports (`components/index.ts`) for cleaner imports throug
 Engineering Manager | 14+ years software development experience
 
 - 🔗 [wfinew.com](https://wfinew.com)
-- 💼 [LinkedIn](https://linkedin.com/in/brentwiens) *(add your actual link)*
+- 💼 [LinkedIn](https://www.linkedin.com/in/brentwiens/)
 - 🐙 [GitHub](https://github.com/BrentWiens)
 
 ---

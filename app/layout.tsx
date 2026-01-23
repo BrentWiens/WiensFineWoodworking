@@ -15,10 +15,15 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://wfinew.com"),
   title: "Wiens Fine Woodworking | Custom Furniture & Handcrafted Wood Projects",
   description: "Handcrafted furniture and custom woodworking projects built with precision and care. Quality custom furniture, cutting boards, and unique wood pieces.",
   keywords: ["woodworking", "custom furniture", "handcrafted", "wood projects", "cutting boards", "furniture"],
   authors: [{ name: "Wiens Fine Woodworking" }],
+  alternates: {
+    canonical: "/",
+  },
+  manifest: "/manifest.json",
   openGraph: {
     title: "Wiens Fine Woodworking",
     description: "Handcrafted furniture and custom woodworking projects",
@@ -34,6 +39,12 @@ export const metadata: Metadata = {
       },
     ],
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "Wiens Fine Woodworking",
+    description: "Handcrafted furniture and custom woodworking projects",
+    images: ["/images/handplanes.jpg"],
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -43,7 +54,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     name: 'Wiens Fine Woodworking',
     description: 'Handcrafted furniture and custom woodworking projects',
     url: 'https://wfinew.com',
-    telephone: '', // Reach out to ask
     address: {
       '@type': 'PostalAddress',
       addressLocality: 'Kitchener',
@@ -53,6 +63,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     sameAs: [
       'https://www.facebook.com/people/Wiens-Fine-Woodworking/61559807342865',
       'https://www.instagram.com/wiensfinewoodworking/',
+      'https://www.linkedin.com/in/brentwiens/',
     ],
   };
 

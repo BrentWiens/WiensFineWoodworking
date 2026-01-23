@@ -5,9 +5,26 @@ import { Navigation, GalleryWrapper, Footer } from '@/components';
 export const metadata: Metadata = {
     title: 'Gallery | Wiens Fine Woodworking',
     description: 'Browse our complete collection of custom furniture, cutting boards, and handcrafted wood projects. Quality craftsmanship from Kitchener, Ontario.',
+    alternates: {
+        canonical: '/gallery',
+    },
     openGraph: {
         title: 'Gallery | Wiens Fine Woodworking',
         description: 'Browse our complete collection of custom furniture and handcrafted wood projects',
+        images: [
+            {
+                url: '/images/handplanes.jpg',
+                width: 1200,
+                height: 630,
+                alt: 'Wiens Fine Woodworking Gallery',
+            },
+        ],
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'Gallery | Wiens Fine Woodworking',
+        description: 'Browse our complete collection of custom furniture and handcrafted wood projects',
+        images: ['/images/handplanes.jpg'],
     },
 };
 

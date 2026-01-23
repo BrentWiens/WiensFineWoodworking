@@ -5,10 +5,27 @@ import Link from 'next/link';
 
 export const metadata: Metadata = {
     title: 'Tools | Wiens Fine Woodworking',
-    description: 'Tools for woodworking design',
+    description: 'Free woodworking tools and calculators. Plan dovetail joints, calculate board feet, and optimize cut lists for your projects.',
+    alternates: {
+        canonical: '/tools',
+    },
     openGraph: {
         title: 'Tools | Wiens Fine Woodworking',
-        description: 'Tools for woodworking design',
+        description: 'Free woodworking tools and calculators for your projects',
+        images: [
+            {
+                url: '/images/handplanes.jpg',
+                width: 1200,
+                height: 630,
+                alt: 'Wiens Fine Woodworking Tools',
+            },
+        ],
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'Tools | Wiens Fine Woodworking',
+        description: 'Free woodworking tools and calculators for your projects',
+        images: ['/images/handplanes.jpg'],
     },
 };
 

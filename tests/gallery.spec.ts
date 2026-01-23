@@ -2,24 +2,24 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Gallery', () => {
   test('displays gallery section with images', async ({ page }) => {
-    await page.goto('/', { waitUntil: 'networkidle' });
-    
+    await page.goto('/gallery', { waitUntil: 'networkidle' });
+
     // Gallery section should be visible
     const gallerySection = page.getByTestId('gallery-section');
     await expect(gallerySection).toBeVisible();
-    
+
     // Gallery grid should have images
     const galleryGrid = page.getByTestId('gallery-grid');
     await expect(galleryGrid).toBeVisible();
-    
+
     // Should have at least one image
     const firstImage = page.getByTestId('gallery-image-0');
     await expect(firstImage).toBeVisible();
   });
 
   test('opens lightbox when clicking an image', async ({ page }) => {
-    await page.goto('/', { waitUntil: 'networkidle' });
-    
+    await page.goto('/gallery', { waitUntil: 'networkidle' });
+
     // Scroll to gallery
     await page.getByTestId('gallery-section').scrollIntoViewIfNeeded();
     
@@ -43,8 +43,8 @@ test.describe('Gallery', () => {
   });
 
   test('navigates between images using keyboard arrows', async ({ page }) => {
-    await page.goto('/', { waitUntil: 'networkidle' });
-    
+    await page.goto('/gallery', { waitUntil: 'networkidle' });
+
     await page.getByTestId('gallery-section').scrollIntoViewIfNeeded();
     await page.waitForTimeout(500);
     
@@ -76,8 +76,8 @@ test.describe('Gallery', () => {
   });
 
   test('navigates between images using next/previous buttons', async ({ page }) => {
-    await page.goto('/', { waitUntil: 'networkidle' });
-    
+    await page.goto('/gallery', { waitUntil: 'networkidle' });
+
     await page.getByTestId('gallery-section').scrollIntoViewIfNeeded();
     await page.waitForTimeout(500);
     
@@ -106,8 +106,8 @@ test.describe('Gallery', () => {
   });
 
   test('closes lightbox when clicking close button', async ({ page }) => {
-    await page.goto('/', { waitUntil: 'networkidle' });
-    
+    await page.goto('/gallery', { waitUntil: 'networkidle' });
+
     await page.getByTestId('gallery-section').scrollIntoViewIfNeeded();
     await page.waitForTimeout(500);
     await page.getByTestId('gallery-image-0').click();
@@ -123,8 +123,8 @@ test.describe('Gallery', () => {
   });
 
   test('closes lightbox when pressing Escape', async ({ page }) => {
-    await page.goto('/', { waitUntil: 'networkidle' });
-    
+    await page.goto('/gallery', { waitUntil: 'networkidle' });
+
     await page.getByTestId('gallery-section').scrollIntoViewIfNeeded();
     await page.waitForTimeout(500);
     await page.getByTestId('gallery-image-0').click();
@@ -140,8 +140,8 @@ test.describe('Gallery', () => {
   });
 
   test('closes lightbox when clicking outside image', async ({ page }) => {
-    await page.goto('/', { waitUntil: 'networkidle' });
-    
+    await page.goto('/gallery', { waitUntil: 'networkidle' });
+
     await page.getByTestId('gallery-section').scrollIntoViewIfNeeded();
     await page.waitForTimeout(500);
     await page.getByTestId('gallery-image-0').click();
@@ -158,8 +158,8 @@ test.describe('Gallery', () => {
   });
 
   test('displays correct image name in lightbox', async ({ page }) => {
-    await page.goto('/', { waitUntil: 'networkidle' });
-    
+    await page.goto('/gallery', { waitUntil: 'networkidle' });
+
     await page.getByTestId('gallery-section').scrollIntoViewIfNeeded();
     await page.waitForTimeout(500);
     await page.getByTestId('gallery-image-0').click();
@@ -176,8 +176,8 @@ test.describe('Gallery', () => {
   });
 
   test('hides previous button on first image', async ({ page }) => {
-    await page.goto('/', { waitUntil: 'networkidle' });
-    
+    await page.goto('/gallery', { waitUntil: 'networkidle' });
+
     await page.getByTestId('gallery-section').scrollIntoViewIfNeeded();
     await page.waitForTimeout(500);
     await page.getByTestId('gallery-image-0').click();
@@ -192,8 +192,8 @@ test.describe('Gallery', () => {
   });
 
   test('shows loading spinner when changing images', async ({ page }) => {
-    await page.goto('/', { waitUntil: 'networkidle' });
-    
+    await page.goto('/gallery', { waitUntil: 'networkidle' });
+
     await page.getByTestId('gallery-section').scrollIntoViewIfNeeded();
     await page.waitForTimeout(500);
     await page.getByTestId('gallery-image-0').click();
@@ -211,21 +211,24 @@ test.describe('Gallery', () => {
 });
 
 test.describe('Navigation', () => {
-  test('navigation links scroll to correct sections', async ({ page }) => {
+  test('navigation links work correctly', async ({ page }) => {
     await page.goto('/', { waitUntil: 'networkidle' });
-    
-    // Click Gallery link in navigation (use nav selector to be specific)
-    await page.locator('nav a[href="#gallery"]').click();
-    await page.waitForTimeout(500);
-    await expect(page.getByTestId('gallery-section')).toBeInViewport();
-    
+
+    // Click Gallery link - should navigate to /gallery page (filter to visible for mobile/desktop variants)
+    await page.locator('nav a[href="/gallery"]:visible').click();
+    await page.waitForURL('/gallery');
+    await expect(page.getByTestId('gallery-section')).toBeVisible();
+
+    // Go back to homepage
+    await page.goto('/', { waitUntil: 'networkidle' });
+
     // Click About link in navigation
-    await page.locator('nav a[href="#about"]').click();
+    await page.locator('nav a[href="/#about"]:visible').click();
     await page.waitForTimeout(500);
     await expect(page.locator('#about')).toBeInViewport();
-    
+
     // Click Contact link in navigation
-    await page.locator('nav a[href="#contact"]').click();
+    await page.locator('nav a[href="/#contact"]:visible').click();
     await page.waitForTimeout(500);
     await expect(page.locator('#contact')).toBeInViewport();
   });
