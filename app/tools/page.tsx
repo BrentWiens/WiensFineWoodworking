@@ -75,6 +75,7 @@ export default function ToolsPage() {
                                     src="/images/dovetail-calculator/dovetail-calculator-preview.png"
                                     alt="Dovetail joint preview"
                                     fill
+                                    sizes="(max-width: 640px) 100vw, 300px"
                                     className="rounded-md object-cover"
                                 />
                             </div>
@@ -98,6 +99,7 @@ export default function ToolsPage() {
                                     src="/images/fractional-calculator/fractional-calculator-preview.png"
                                     alt="Fractional calculator preview"
                                     fill
+                                    sizes="(max-width: 640px) 100vw, 300px"
                                     className="rounded-md object-cover"
                                 />
                             </div>
