@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import Image from 'next/image';
-import { Navigation, Footer } from '@/components';
+import { Navigation, Footer, ErrorBoundary } from '@/components';
 import FractionalCalculator from '@/components/FractionalCalculator/FractionalCalculator';
 
 export const metadata: Metadata = {
@@ -65,7 +65,9 @@ export default function FractionalCalculatorPage() {
                 </div>
 
                 <div className="py-8 px-4">
-                    <FractionalCalculator />
+                    <ErrorBoundary>
+                        <FractionalCalculator />
+                    </ErrorBoundary>
                 </div>
             </main>
 

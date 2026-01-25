@@ -7,3 +7,6 @@ export { default as Contact } from './Contact';
 export { default as Featured } from './Featured';
 export { default as Testimonials } from './Testimonials';
 export { default as DovetailVisualizer } from './DovetailVisualizer/DovetailVisualizer';
+export { default as ErrorBoundary } from './ErrorBoundary';
+export { default as FractionalCalculator } from './FractionalCalculator/FractionalCalculator';
+export { default as ServiceWorkerRegistration } from './ServiceWorkerRegistration';

@@ -16,7 +16,7 @@ A modern, responsive website for Wiens Fine Woodworking showcasing custom furnit
 ## Features
 
 - 📸 **Photo Gallery** - 35+ project images with lightbox modal, keyboard navigation, and smooth transitions
-- 🛠️ **Woodworking Tools** - Interactive calculators including dovetail joint visualizer
+- 🛠️ **Woodworking Tools** - Interactive calculators including dovetail joint visualizer and fractional calculator
 - 🖼️ **Image Optimization** - Automatic WebP/AVIF conversion, responsive sizing, lazy loading
 - 📱 **Fully Responsive** - Mobile-first design optimized for all screen sizes
 - ⚡ **Performance** - Server-side rendering, static generation, optimized images
@@ -87,7 +87,8 @@ wiens-woodworking/
 │   ├── gallery/page.tsx      # Photo gallery page
 │   ├── tools/
 │   │   ├── page.tsx          # Tools listing page
-│   │   └── dovetail-calculator/page.tsx
+│   │   ├── dovetail-calculator/page.tsx
+│   │   └── fractional-calculator/page.tsx
 │   ├── api/contact/route.ts  # Contact form API
 │   ├── sitemap.ts            # Dynamic sitemap
 │   └── robots.ts             # Robots.txt
@@ -101,7 +102,8 @@ wiens-woodworking/
 │   ├── ContactForm.tsx
 │   ├── Gallery.tsx
 │   ├── GalleryWrapper.tsx
-│   ├── DovetailVisualizer/   # Interactive tool component
+│   ├── DovetailVisualizer/   # Dovetail calculator component
+│   ├── FractionalCalculator/ # Fractional calculator component
 │   ├── Footer.tsx
 │   └── index.ts              # Barrel exports
 ├── tests/                    # Playwright E2E tests
@@ -165,7 +167,7 @@ Components use barrel exports (`components/index.ts`) for cleaner imports throug
 
 ### Quality Assurance
 - **E2E Testing:** Playwright test suite with 13 tests covering critical user flows
-- **Unit Testing:** Vitest tests for dovetail calculator logic (22 tests)
+- **Unit Testing:** Vitest tests for calculator utilities (dovetail: 22 tests, fractional: 40+ tests)
 - **Performance Monitoring:** PageSpeed Insights for production performance tracking
 - **Type Safety:** Strict TypeScript configuration with `tsc --noEmit` checks
 

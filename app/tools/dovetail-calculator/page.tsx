@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import Image from 'next/image';
-import { Navigation, Footer } from '@/components';
+import { Navigation, Footer, ErrorBoundary } from '@/components';
 import DovetailVisualizer from '@/components/DovetailVisualizer/DovetailVisualizer';
 
 export const metadata: Metadata = {
@@ -64,7 +64,9 @@ export default function DovetailCalculatorPage() {
                     </div>
                 </div>
 
-                <DovetailVisualizer />
+                <ErrorBoundary>
+                    <DovetailVisualizer />
+                </ErrorBoundary>
             </main>
 
             <Footer />

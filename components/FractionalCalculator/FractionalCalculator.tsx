@@ -45,13 +45,15 @@ function CalcButton({
   children,
   variant = 'default',
   className = '',
+  ariaLabel,
 }: {
   onClick: () => void;
   children: React.ReactNode;
   variant?: 'default' | 'number' | 'operation' | 'action' | 'equals' | 'history';
   className?: string;
+  ariaLabel?: string;
 }) {
-  const baseClasses = 'font-semibold rounded-lg transition-all active:scale-95 select-none touch-manipulation';
+  const baseClasses = 'font-semibold rounded-lg transition-all active:scale-95 select-none touch-manipulation focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2';
 
   const variantClasses = {
     default: 'bg-stone-200 hover:bg-stone-300 text-stone-800',
@@ -66,6 +68,8 @@ function CalcButton({
     <button
       onClick={onClick}
       className={`${baseClasses} ${variantClasses[variant]} ${className}`}
+      aria-label={ariaLabel}
+      type="button"
     >
       {children}
     </button>
@@ -76,15 +80,19 @@ function CalcButton({
 function NumberPad({
   onNumber,
   onBackspace,
+  onDecimal,
   label,
+  showDecimal = false,
 }: {
   onNumber: (num: string) => void;
   onBackspace: () => void;
+  onDecimal?: () => void;
   label: string;
+  showDecimal?: boolean;
 }) {
   return (
-    <div className="flex flex-col flex-1">
-      <div className="text-xs text-stone-500 mb-2 font-medium uppercase tracking-wide text-center">
+    <div className="flex flex-col flex-1" role="group" aria-label={`${label} input`}>
+      <div className="text-xs text-stone-500 mb-2 font-medium uppercase tracking-wide text-center" id={`${label.toLowerCase()}-label`}>
         {label}
       </div>
       <div className="grid grid-cols-3 gap-1.5">
@@ -94,6 +102,7 @@ function NumberPad({
             onClick={() => onNumber(num)}
             variant="number"
             className="h-11 sm:h-12 text-lg sm:text-xl"
+            ariaLabel={`${label} ${num}`}
           >
             {num}
           </CalcButton>
@@ -102,16 +111,39 @@ function NumberPad({
           onClick={() => onNumber('0')}
           variant="number"
           className="h-11 sm:h-12 text-lg sm:text-xl"
+          ariaLabel={`${label} 0`}
         >
           0
         </CalcButton>
-        <CalcButton
-          onClick={onBackspace}
-          variant="default"
-          className="h-11 sm:h-12 text-base col-span-2"
-        >
-          ⌫
-        </CalcButton>
+        {showDecimal && onDecimal ? (
+          <>
+            <CalcButton
+              onClick={onDecimal}
+              variant="number"
+              className="h-11 sm:h-12 text-lg sm:text-xl"
+              ariaLabel="Decimal point"
+            >
+              .
+            </CalcButton>
+            <CalcButton
+              onClick={onBackspace}
+              variant="default"
+              className="h-11 sm:h-12 text-base"
+              ariaLabel={`Delete last ${label.toLowerCase()} digit`}
+            >
+              ⌫
+            </CalcButton>
+          </>
+        ) : (
+          <CalcButton
+            onClick={onBackspace}
+            variant="default"
+            className="h-11 sm:h-12 text-base col-span-2"
+            ariaLabel={`Delete last ${label.toLowerCase()} digit`}
+          >
+            ⌫
+          </CalcButton>
+        )}
       </div>
     </div>
   );
@@ -122,12 +154,30 @@ export default function FractionalCalculator() {
 
   // Get current fraction from state
   const getCurrentFraction = useCallback((): Fraction => {
-    const whole = parseInt(state.whole, 10) || 0;
-    const numerator = parseInt(state.numerator, 10) || 0;
-    const denominator = parseInt(state.denominator, 10) || 1;
+    const wholeValue = parseFloat(state.whole) || 0;
+    const whole = Math.floor(wholeValue);
+    const decimalPart = wholeValue - whole;
+    let numerator = parseInt(state.numerator, 10) || 0;
+    let denominator = parseInt(state.denominator, 10) || 1;
 
     // If denominator is 0, treat as 1
     const safeDenom = denominator === 0 ? 1 : denominator;
+
+    // If there's a decimal part in the whole number, convert it to fraction
+    if (decimalPart > 0.0001) {
+      // Convert decimal to fraction with denominator based on precision
+      const precision = (state.whole.split('.')[1]?.length || 0);
+      const decimalDenom = Math.pow(10, precision);
+      const decimalNum = Math.round(decimalPart * decimalDenom);
+
+      // Add the decimal fraction to the existing fraction
+      // (decimalNum/decimalDenom) + (numerator/safeDenom)
+      const combinedNum = decimalNum * safeDenom + numerator * decimalDenom;
+      const combinedDenom = decimalDenom * safeDenom;
+
+      const result = toMixed(whole * combinedDenom + combinedNum, combinedDenom);
+      return result;
+    }
 
     // Convert to proper mixed number if numerator >= denominator
     if (numerator >= safeDenom && safeDenom > 0) {
@@ -141,9 +191,19 @@ export default function FractionalCalculator() {
   // Handle number input for whole
   const handleWholeNumber = useCallback((num: string) => {
     setState((prev) => {
-      if (prev.whole.length >= 4) return prev;
-      if (prev.whole === '0') return { ...prev, whole: num, waitingForOperand: false };
+      if (prev.whole.length >= 6) return prev;
+      if (prev.whole === '0' && num !== '0') return { ...prev, whole: num, waitingForOperand: false };
+      if (prev.whole === '0' && num === '0') return prev;
       return { ...prev, whole: prev.whole + num, waitingForOperand: false };
+    });
+  }, []);
+
+  // Handle decimal input for whole
+  const handleWholeDecimal = useCallback(() => {
+    setState((prev) => {
+      if (prev.whole.includes('.')) return prev;
+      if (prev.whole === '') return { ...prev, whole: '0.', waitingForOperand: false };
+      return { ...prev, whole: prev.whole + '.', waitingForOperand: false };
     });
   }, []);
 
@@ -303,14 +363,38 @@ export default function FractionalCalculator() {
 
   // Calculate display values
   const currentFraction = getCurrentFraction();
-  const decimal = fractionToDecimal(currentFraction);
   const displayWhole = state.whole || '0';
   const displayNumerator = state.numerator || '0';
   const displayDenominator = state.denominator || '1';
   const hasInput = hasCurrentInput();
 
+  // Calculate running total - what the result would be if equals was pressed now
+  const runningTotal = (() => {
+    if (state.previousValue && state.operation && !state.waitingForOperand) {
+      // We have a previous value, operation, and current input - show the result
+      const result = calculate(state.previousValue, currentFraction, state.operation);
+      return fractionToDecimal(result);
+    } else if (state.previousValue && state.waitingForOperand) {
+      // Waiting for input - show previous value
+      return fractionToDecimal(state.previousValue);
+    } else {
+      // Just the current value
+      return fractionToDecimal(currentFraction);
+    }
+  })();
+
+  // Generate accessible description of current value
+  const accessibleValue = state.waitingForOperand
+    ? 'Waiting for input'
+    : `${displayWhole}${state.numerator || state.denominator ? ` and ${displayNumerator} over ${displayDenominator}` : ''} equals ${runningTotal.toFixed(4)} inches`;
+
   return (
-    <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden">
+    <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden" role="application" aria-label="Fractional Calculator">
+      {/* Screen reader announcements */}
+      <div className="sr-only" aria-live="polite" aria-atomic="true">
+        {accessibleValue}
+      </div>
+
       {/* Display */}
       <div className="bg-stone-800 p-4 sm:p-6">
         {/* Expression display */}
@@ -348,9 +432,9 @@ export default function FractionalCalculator() {
           )}
         </div>
 
-        {/* Decimal equivalent */}
+        {/* Decimal equivalent - always shows running total */}
         <div className="text-stone-400 text-right text-sm mt-2 font-mono">
-          {!state.waitingForOperand && `= ${decimal.toFixed(4)}"`}
+          {`= ${runningTotal.toFixed(4)}"`}
         </div>
       </div>
 
@@ -389,22 +473,22 @@ export default function FractionalCalculator() {
       <div className="p-3 sm:p-4 bg-stone-50">
         {/* Top row: Clear, History, Operations */}
         <div className="grid grid-cols-6 gap-2 mb-3">
-          <CalcButton onClick={handleClear} variant="action" className="h-11 sm:h-12 text-lg">
+          <CalcButton onClick={handleClear} variant="action" className="h-11 sm:h-12 text-lg" ariaLabel="Clear calculator">
             C
           </CalcButton>
-          <CalcButton onClick={toggleHistory} variant="history" className="h-11 sm:h-12 text-sm">
+          <CalcButton onClick={toggleHistory} variant="history" className="h-11 sm:h-12 text-sm" ariaLabel={state.showHistory ? 'Hide history' : 'Show history'}>
             {state.showHistory ? 'Hide' : 'History'}
           </CalcButton>
-          <CalcButton onClick={() => handleOperation('÷')} variant="operation" className="h-11 sm:h-12 text-xl">
+          <CalcButton onClick={() => handleOperation('÷')} variant="operation" className="h-11 sm:h-12 text-xl" ariaLabel="Divide">
             ÷
           </CalcButton>
-          <CalcButton onClick={() => handleOperation('×')} variant="operation" className="h-11 sm:h-12 text-xl">
+          <CalcButton onClick={() => handleOperation('×')} variant="operation" className="h-11 sm:h-12 text-xl" ariaLabel="Multiply">
             ×
           </CalcButton>
-          <CalcButton onClick={() => handleOperation('-')} variant="operation" className="h-11 sm:h-12 text-xl">
+          <CalcButton onClick={() => handleOperation('-')} variant="operation" className="h-11 sm:h-12 text-xl" ariaLabel="Subtract">
             −
           </CalcButton>
-          <CalcButton onClick={() => handleOperation('+')} variant="operation" className="h-11 sm:h-12 text-xl">
+          <CalcButton onClick={() => handleOperation('+')} variant="operation" className="h-11 sm:h-12 text-xl" ariaLabel="Add">
             +
           </CalcButton>
         </div>
@@ -414,7 +498,9 @@ export default function FractionalCalculator() {
           <NumberPad
             onNumber={handleWholeNumber}
             onBackspace={handleWholeBackspace}
+            onDecimal={handleWholeDecimal}
             label="Whole"
+            showDecimal
           />
 
           {/* Divider */}
@@ -426,9 +512,9 @@ export default function FractionalCalculator() {
             label="Numerator"
           />
 
-          {/* Fraction line visual */}
+          {/* Fraction slash visual */}
           <div className="flex items-center">
-            <div className="w-4 h-0.5 bg-stone-400" />
+            <span className="text-3xl text-stone-400 font-light">/</span>
           </div>
 
           <NumberPad
@@ -439,7 +525,7 @@ export default function FractionalCalculator() {
         </div>
 
         {/* Equals button */}
-        <CalcButton onClick={handleEquals} variant="equals" className="w-full h-12 sm:h-14 text-2xl">
+        <CalcButton onClick={handleEquals} variant="equals" className="w-full h-12 sm:h-14 text-2xl" ariaLabel="Calculate result">
           =
         </CalcButton>
       </div>
