@@ -70,9 +70,9 @@ export default function ToolsPage() {
                             href="/tools/dovetail-calculator"
                             className="flex flex-col sm:flex-row gap-4 sm:gap-6 bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow border border-stone-200"
                         >
-                            <div className="relative flex-shrink-0 aspect-[250/208] w-full max-w-[250px] mx-auto sm:mx-0">
+                            <div className="relative flex-shrink-0 aspect-[250/240] w-full max-w-[300px] mx-auto sm:mx-0">
                                 <Image
-                                    src="/images/dovetail-calculator/dovetail-sizing.jpg"
+                                    src="/images/dovetail-calculator/dovetail-calculator-preview.png"
                                     alt="Dovetail joint preview"
                                     fill
                                     className="rounded-md object-cover"
@@ -93,7 +93,7 @@ export default function ToolsPage() {
                             href="/tools/fractional-calculator"
                             className="flex flex-col sm:flex-row gap-4 sm:gap-6 bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow border border-stone-200"
                         >
-                            <div className="relative flex-shrink-0 aspect-[250/208] w-full max-w-[250px] mx-auto sm:mx-0">
+                            <div className="relative flex-shrink-0 aspect-[250/200] w-full max-w-[300px] mx-auto sm:mx-0">
                                 <Image
                                     src="/images/fractional-calculator/fractional-calculator-preview.png"
                                     alt="Fractional calculator preview"
