@@ -65,7 +65,53 @@ export default function ToolsPage() {
                 <div className="max-w-4xl mx-auto px-6 py-12">
 
                     <div className="space-y-6">
-                        {/* Tool 1: Dovetail Calculator */}
+                        <Link
+                            href="/tools/fractional-calculator"
+                            className="flex flex-col sm:flex-row gap-4 sm:gap-6 bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow border border-stone-200"
+                        >
+                            <div className="relative flex-shrink-0 aspect-[5/4.3] w-full max-w-[300px] mx-auto sm:mx-0">
+                                <Image
+                                    src="/images/fractional-calculator/fractional-calculator-preview.png"
+                                    alt="Fractional calculator preview"
+                                    fill
+                                    sizes="(max-width: 640px) 100vw, 300px"
+                                    className="rounded-md object-cover"
+                                />
+                            </div>
+                            <div className="flex flex-col justify-center">
+                                <h2 className="text-2xl font-bold text-stone-800 mb-2">
+                                    Fractional Calculator
+                                </h2>
+                                <p className="text-stone-600">
+                                    A convenient fractional calculator.
+                                    Add, subtract, multiply, and divide fractions with ease.
+                                </p>
+                            </div>
+                        </Link>
+
+                        <Link
+                            href="/tools/board-feet-calculator"
+                            className="flex flex-col sm:flex-row gap-4 sm:gap-6 bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow border border-stone-200"
+                        >
+                            <div className="relative flex-shrink-0 aspect-[4/5.1] w-full max-w-[300px] mx-auto sm:mx-0">
+                                <Image
+                                    src="/images/board-feet-calculator/board-feet-calculator-preview.png"
+                                    alt="Board feet calculator preview"
+                                    fill
+                                    sizes="(max-width: 640px) 100vw, 300px"
+                                    className="rounded-md object-cover"
+                                />
+                            </div>
+                            <div className="flex flex-col justify-center">
+                                <h2 className="text-2xl font-bold text-stone-800 mb-2">
+                                    Board Feet Calculator
+                                </h2>
+                                <p className="text-stone-600">
+                                    Calculate lumber volume in board feet from thickness, width, and length.
+                                </p>
+                            </div>
+                        </Link>
+
                         <Link
                             href="/tools/dovetail-calculator"
                             className="flex flex-col sm:flex-row gap-4 sm:gap-6 bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow border border-stone-200"
@@ -87,43 +133,7 @@ export default function ToolsPage() {
                                     Visualize and plan your dovetail joints with custom dimensions, pin angles, and spacing.
                                 </p>
                             </div>
-                        </Link>
-
-                        {/* Tool 2: Fractional Calculator */}
-                        <Link
-                            href="/tools/fractional-calculator"
-                            className="flex flex-col sm:flex-row gap-4 sm:gap-6 bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow border border-stone-200"
-                        >
-                            <div className="relative flex-shrink-0 aspect-[250/200] w-full max-w-[300px] mx-auto sm:mx-0">
-                                <Image
-                                    src="/images/fractional-calculator/fractional-calculator-preview.png"
-                                    alt="Fractional calculator preview"
-                                    fill
-                                    sizes="(max-width: 640px) 100vw, 300px"
-                                    className="rounded-md object-cover"
-                                />
-                            </div>
-                            <div className="flex flex-col justify-center">
-                                <h2 className="text-2xl font-bold text-stone-800 mb-2">
-                                    Fractional Calculator
-                                </h2>
-                                <p className="text-stone-600">
-                                    A convenient fractional calculator.
-                                    Add, subtract, multiply, and divide fractions with ease.
-                                </p>
-                            </div>
-                        </Link>
-
-                        <Link
-                            href="#"
-                            className="block bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow border border-stone-200"
-                        >
-                            <h2 className="text-2xl font-bold text-stone-800 mb-2">
-                                (Coming Soon) Board Feet Calculator                        </h2>
-                            <p className="text-stone-600">
-                                Calculate board feet from lumber dimensions.
-                            </p>
-                        </Link>
+                        </Link>                        
 
                         <Link
                             href="#"
