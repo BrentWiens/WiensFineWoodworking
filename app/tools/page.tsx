@@ -108,7 +108,7 @@ export default function ToolsPage() {
                                     Fractional Calculator
                                 </h2>
                                 <p className="text-stone-600">
-                                    Convenient fractional calculator for working with imperial measurements.
+                                    A convenient fractional calculator.
                                     Add, subtract, multiply, and divide fractions with ease.
                                 </p>
                             </div>

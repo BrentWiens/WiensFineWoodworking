@@ -6,7 +6,7 @@ import FractionalCalculator from '@/components/FractionalCalculator/FractionalCa
 export const metadata: Metadata = {
     title: 'Fractional Calculator | Wiens Fine Woodworking',
     description: 'Free fractional calculator for woodworking. Add, subtract, multiply, and divide fractions with common woodworking measurements like 1/8, 1/16, and 1/32.',
-    keywords: ['fractional calculator', 'woodworking calculator', 'fraction calculator', 'imperial measurements', 'woodworking tools'],
+    keywords: ['fractional calculator', 'woodworking calculator', 'fraction calculator', 'woodworking tools'],
     alternates: {
         canonical: '/tools/fractional-calculator',
     },
@@ -58,8 +58,8 @@ export default function FractionalCalculatorPage() {
                             Fractional Calculator
                         </h1>
                         <p className="text-white/90 text-center text-lg max-w-2xl mx-auto drop-shadow-md">
-                            A calculator designed for woodworking with imperial fractions.
-                            Add, subtract, multiply, and divide measurements like 2-3/4&quot; easily.
+                            A calculator designed for working with fractions.
+                            Add, subtract, multiply, and divide measurements like 2-3/4 easily.
                         </p>
                     </div>
                 </div>

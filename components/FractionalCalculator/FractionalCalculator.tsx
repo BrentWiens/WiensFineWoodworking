@@ -46,12 +46,14 @@ function CalcButton({
   variant = 'default',
   className = '',
   ariaLabel,
+  testId,
 }: {
   onClick: () => void;
   children: React.ReactNode;
   variant?: 'default' | 'number' | 'operation' | 'action' | 'equals' | 'history';
   className?: string;
   ariaLabel?: string;
+  testId?: string;
 }) {
   const baseClasses = 'font-semibold rounded-lg transition-all active:scale-95 select-none touch-manipulation focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2';
 
@@ -70,6 +72,7 @@ function CalcButton({
       className={`${baseClasses} ${variantClasses[variant]} ${className}`}
       aria-label={ariaLabel}
       type="button"
+      data-testid={testId}
     >
       {children}
     </button>
@@ -83,15 +86,17 @@ function NumberPad({
   onDecimal,
   label,
   showDecimal = false,
+  padId,
 }: {
   onNumber: (num: string) => void;
   onBackspace: () => void;
   onDecimal?: () => void;
   label: string;
   showDecimal?: boolean;
+  padId: string;
 }) {
   return (
-    <div className="flex flex-col flex-1" role="group" aria-label={`${label} input`}>
+    <div className="flex flex-col flex-1" role="group" aria-label={`${label} input`} data-testid={`${padId}-pad`}>
       <div className="text-xs text-stone-500 mb-2 font-medium uppercase tracking-wide text-center" id={`${label.toLowerCase()}-label`}>
         {label}
       </div>
@@ -103,6 +108,7 @@ function NumberPad({
             variant="number"
             className="h-11 sm:h-12 text-lg sm:text-xl"
             ariaLabel={`${label} ${num}`}
+            testId={`${padId}-${num}`}
           >
             {num}
           </CalcButton>
@@ -112,6 +118,7 @@ function NumberPad({
           variant="number"
           className="h-11 sm:h-12 text-lg sm:text-xl"
           ariaLabel={`${label} 0`}
+          testId={`${padId}-0`}
         >
           0
         </CalcButton>
@@ -122,6 +129,7 @@ function NumberPad({
               variant="number"
               className="h-11 sm:h-12 text-lg sm:text-xl"
               ariaLabel="Decimal point"
+              testId={`${padId}-decimal`}
             >
               .
             </CalcButton>
@@ -130,6 +138,7 @@ function NumberPad({
               variant="default"
               className="h-11 sm:h-12 text-base"
               ariaLabel={`Delete last ${label.toLowerCase()} digit`}
+              testId={`${padId}-backspace`}
             >
               ⌫
             </CalcButton>
@@ -140,6 +149,7 @@ function NumberPad({
             variant="default"
             className="h-11 sm:h-12 text-base col-span-2"
             ariaLabel={`Delete last ${label.toLowerCase()} digit`}
+            testId={`${padId}-backspace`}
           >
             ⌫
           </CalcButton>
@@ -386,10 +396,10 @@ export default function FractionalCalculator() {
   // Generate accessible description of current value
   const accessibleValue = state.waitingForOperand
     ? 'Waiting for input'
-    : `${displayWhole}${state.numerator || state.denominator ? ` and ${displayNumerator} over ${displayDenominator}` : ''} equals ${runningTotal.toFixed(4)} inches`;
+    : `${displayWhole}${state.numerator || state.denominator ? ` and ${displayNumerator} over ${displayDenominator}` : ''} equals ${parseFloat(runningTotal.toFixed(4))}`;
 
   return (
-    <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden" role="application" aria-label="Fractional Calculator">
+    <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden" role="application" aria-label="Fractional Calculator" data-testid="calculator">
       {/* Screen reader announcements */}
       <div className="sr-only" aria-live="polite" aria-atomic="true">
         {accessibleValue}
@@ -403,27 +413,27 @@ export default function FractionalCalculator() {
         </div>
 
         {/* Main display with fraction notation */}
-        <div className="flex items-center justify-end gap-3 min-h-[5rem]">
+        <div className="flex items-center justify-end gap-3 min-h-[5rem]" data-testid="display">
           {state.waitingForOperand ? (
             /* Show placeholder when waiting for input */
-            <span className="text-stone-500 text-3xl sm:text-4xl font-mono">
+            <span className="text-stone-500 text-3xl sm:text-4xl font-mono" data-testid="display-placeholder">
               Enter value...
             </span>
           ) : (
             /* Current value display */
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3" data-testid="display-value">
               {/* Whole number */}
-              <span className="text-white text-4xl sm:text-5xl font-bold font-mono">
+              <span className="text-white text-4xl sm:text-5xl font-bold font-mono" data-testid="display-whole">
                 {displayWhole !== '0' || (!state.numerator && !state.denominator) ? displayWhole : ''}
               </span>
 
               {/* Fraction part */}
               {(state.numerator || state.denominator) && (
-                <div className="flex flex-col items-center text-white leading-none">
-                  <span className="text-2xl sm:text-3xl font-mono border-b-2 border-white px-2 pb-1">
+                <div className="flex flex-col items-center text-white leading-none" data-testid="display-fraction">
+                  <span className="text-2xl sm:text-3xl font-mono border-b-2 border-white px-2 pb-1" data-testid="display-numerator">
                     {displayNumerator}
                   </span>
-                  <span className="text-2xl sm:text-3xl font-mono px-2 pt-1">
+                  <span className="text-2xl sm:text-3xl font-mono px-2 pt-1" data-testid="display-denominator">
                     {displayDenominator}
                   </span>
                 </div>
@@ -433,8 +443,8 @@ export default function FractionalCalculator() {
         </div>
 
         {/* Decimal equivalent - always shows running total */}
-        <div className="text-stone-400 text-right text-sm mt-2 font-mono">
-          {`= ${runningTotal.toFixed(4)}"`}
+        <div className="text-stone-400 text-right text-sm mt-2 font-mono" data-testid="decimal-display">
+          {`= ${parseFloat(runningTotal.toFixed(4))}`}
         </div>
       </div>
 
@@ -473,22 +483,22 @@ export default function FractionalCalculator() {
       <div className="p-3 sm:p-4 bg-stone-50">
         {/* Top row: Clear, History, Operations */}
         <div className="grid grid-cols-6 gap-2 mb-3">
-          <CalcButton onClick={handleClear} variant="action" className="h-11 sm:h-12 text-lg" ariaLabel="Clear calculator">
+          <CalcButton onClick={handleClear} variant="action" className="h-11 sm:h-12 text-lg" ariaLabel="Clear calculator" testId="clear">
             C
           </CalcButton>
-          <CalcButton onClick={toggleHistory} variant="history" className="h-11 sm:h-12 text-sm" ariaLabel={state.showHistory ? 'Hide history' : 'Show history'}>
+          <CalcButton onClick={toggleHistory} variant="history" className="h-11 sm:h-12 text-sm" ariaLabel={state.showHistory ? 'Hide history' : 'Show history'} testId="history">
             {state.showHistory ? 'Hide' : 'History'}
           </CalcButton>
-          <CalcButton onClick={() => handleOperation('÷')} variant="operation" className="h-11 sm:h-12 text-xl" ariaLabel="Divide">
+          <CalcButton onClick={() => handleOperation('÷')} variant="operation" className="h-11 sm:h-12 text-xl" ariaLabel="Divide" testId="divide">
             ÷
           </CalcButton>
-          <CalcButton onClick={() => handleOperation('×')} variant="operation" className="h-11 sm:h-12 text-xl" ariaLabel="Multiply">
+          <CalcButton onClick={() => handleOperation('×')} variant="operation" className="h-11 sm:h-12 text-xl" ariaLabel="Multiply" testId="multiply">
             ×
           </CalcButton>
-          <CalcButton onClick={() => handleOperation('-')} variant="operation" className="h-11 sm:h-12 text-xl" ariaLabel="Subtract">
+          <CalcButton onClick={() => handleOperation('-')} variant="operation" className="h-11 sm:h-12 text-xl" ariaLabel="Subtract" testId="subtract">
             −
           </CalcButton>
-          <CalcButton onClick={() => handleOperation('+')} variant="operation" className="h-11 sm:h-12 text-xl" ariaLabel="Add">
+          <CalcButton onClick={() => handleOperation('+')} variant="operation" className="h-11 sm:h-12 text-xl" ariaLabel="Add" testId="add">
             +
           </CalcButton>
         </div>
@@ -501,6 +511,7 @@ export default function FractionalCalculator() {
             onDecimal={handleWholeDecimal}
             label="Whole"
             showDecimal
+            padId="whole"
           />
 
           {/* Divider */}
@@ -510,6 +521,7 @@ export default function FractionalCalculator() {
             onNumber={handleNumerator}
             onBackspace={handleNumeratorBackspace}
             label="Numerator"
+            padId="numerator"
           />
 
           {/* Fraction slash visual */}
@@ -521,11 +533,12 @@ export default function FractionalCalculator() {
             onNumber={handleDenominator}
             onBackspace={handleDenominatorBackspace}
             label="Denominator"
+            padId="denominator"
           />
         </div>
 
         {/* Equals button */}
-        <CalcButton onClick={handleEquals} variant="equals" className="w-full h-12 sm:h-14 text-2xl" ariaLabel="Calculate result">
+        <CalcButton onClick={handleEquals} variant="equals" className="w-full h-12 sm:h-14 text-2xl" ariaLabel="Calculate result" testId="equals">
           =
         </CalcButton>
       </div>

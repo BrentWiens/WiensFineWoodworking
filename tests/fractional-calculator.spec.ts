@@ -8,7 +8,7 @@ test.describe('Fractional Calculator', () => {
     await expect(page).toHaveTitle(/Fractional Calculator/);
 
     // Calculator should be visible
-    const calculator = page.locator('.max-w-2xl');
+    const calculator = page.getByRole('application', { name: 'Fractional Calculator' });
     await expect(calculator).toBeVisible();
 
     // Should have three number pads
@@ -25,10 +25,9 @@ test.describe('Fractional Calculator', () => {
   test('can enter whole numbers', async ({ page }) => {
     await page.goto('/tools/fractional-calculator', { waitUntil: 'networkidle' });
 
-    // Click number buttons in whole number pad (first pad)
-    const wholePad = page.locator('text=Whole').locator('..').locator('..');
-    await wholePad.locator('button:has-text("1")').click();
-    await wholePad.locator('button:has-text("2")').click();
+    // Click number buttons using aria-labels
+    await page.getByRole('button', { name: 'Whole 1' }).click();
+    await page.getByRole('button', { name: 'Whole 2' }).click();
 
     // Display should show "12"
     const display = page.locator('.bg-stone-800 .text-4xl, .bg-stone-800 .text-5xl');
@@ -38,16 +37,14 @@ test.describe('Fractional Calculator', () => {
   test('can enter fractions', async ({ page }) => {
     await page.goto('/tools/fractional-calculator', { waitUntil: 'networkidle' });
 
-    // Enter numerator
-    const numeratorPad = page.locator('text=Numerator').locator('..').locator('..');
-    await numeratorPad.locator('button:has-text("3")').click();
+    // Enter numerator using aria-label
+    await page.getByRole('button', { name: 'Numerator 3' }).click();
 
-    // Enter denominator
-    const denominatorPad = page.locator('text=Denominator').locator('..').locator('..');
-    await denominatorPad.locator('button:has-text("4")').click();
+    // Enter denominator using aria-label
+    await page.getByRole('button', { name: 'Denominator 4' }).click();
 
     // Display should show fraction notation (3 over 4)
-    const fractionDisplay = page.locator('.bg-stone-800 .flex.flex-col');
+    const fractionDisplay = page.getByTestId('display-fraction');
     await expect(fractionDisplay).toBeVisible();
   });
 
@@ -55,20 +52,19 @@ test.describe('Fractional Calculator', () => {
     await page.goto('/tools/fractional-calculator', { waitUntil: 'networkidle' });
 
     // Enter first number: 2
-    const wholePad = page.locator('text=Whole').locator('..').locator('..');
-    await wholePad.locator('button:has-text("2")').click();
+    await page.getByRole('button', { name: 'Whole 2' }).click();
 
     // Click + operator
-    await page.locator('button:has-text("+")').click();
+    await page.getByRole('button', { name: 'Add' }).click();
 
     // Display should show "Enter value..."
     await expect(page.locator('text=Enter value...')).toBeVisible();
 
     // Enter second number: 3
-    await wholePad.locator('button:has-text("3")').click();
+    await page.getByRole('button', { name: 'Whole 3' }).click();
 
     // Click equals
-    await page.locator('button:has-text("=")').click();
+    await page.getByRole('button', { name: 'Calculate result' }).click();
 
     // Result should be 5
     const display = page.locator('.bg-stone-800 .text-4xl, .bg-stone-800 .text-5xl');
@@ -79,11 +75,10 @@ test.describe('Fractional Calculator', () => {
     await page.goto('/tools/fractional-calculator', { waitUntil: 'networkidle' });
 
     // Enter a number
-    const wholePad = page.locator('text=Whole').locator('..').locator('..');
-    await wholePad.locator('button:has-text("5")').click();
+    await page.getByRole('button', { name: 'Whole 5' }).click();
 
     // Click Clear
-    await page.locator('button:has-text("C")').click();
+    await page.getByRole('button', { name: 'Clear calculator' }).click();
 
     // Display should show 0
     const display = page.locator('.bg-stone-800 .text-4xl, .bg-stone-800 .text-5xl');
@@ -97,13 +92,13 @@ test.describe('Fractional Calculator', () => {
     await expect(page.locator('text=No history yet')).not.toBeVisible();
 
     // Click History button
-    await page.locator('button:has-text("History")').click();
+    await page.getByRole('button', { name: 'Show history' }).click();
 
     // History panel should appear
     await expect(page.locator('text=No history yet')).toBeVisible();
 
     // Click Hide button
-    await page.locator('button:has-text("Hide")').click();
+    await page.getByRole('button', { name: 'Hide history' }).click();
 
     // History panel should disappear
     await expect(page.locator('text=No history yet')).not.toBeVisible();
@@ -113,30 +108,29 @@ test.describe('Fractional Calculator', () => {
     await page.goto('/tools/fractional-calculator', { waitUntil: 'networkidle' });
 
     // Perform a calculation
-    const wholePad = page.locator('text=Whole').locator('..').locator('..');
-    await wholePad.locator('button:has-text("5")').click();
-    await page.locator('button:has-text("+")').click();
-    await wholePad.locator('button:has-text("3")').click();
-    await page.locator('button:has-text("=")').click();
+    await page.getByRole('button', { name: 'Whole 5' }).click();
+    await page.getByRole('button', { name: 'Add' }).click();
+    await page.getByRole('button', { name: 'Whole 3' }).click();
+    await page.getByRole('button', { name: 'Calculate result' }).click();
 
     // Open history
-    await page.locator('button:has-text("History")').click();
+    await page.getByRole('button', { name: 'Show history' }).click();
 
-    // History should contain the calculation
+    // History should contain the calculation expression and result
     await expect(page.locator('text=5 + 3')).toBeVisible();
-    await expect(page.locator('text== 8')).toBeVisible();
+    // Check the history panel has the result (use more specific selector)
+    await expect(page.locator('.bg-stone-100 >> text== 8')).toBeVisible();
   });
 
   test('backspace removes last digit', async ({ page }) => {
     await page.goto('/tools/fractional-calculator', { waitUntil: 'networkidle' });
 
     // Enter 12
-    const wholePad = page.locator('text=Whole').locator('..').locator('..');
-    await wholePad.locator('button:has-text("1")').click();
-    await wholePad.locator('button:has-text("2")').click();
+    await page.getByRole('button', { name: 'Whole 1' }).click();
+    await page.getByRole('button', { name: 'Whole 2' }).click();
 
     // Click backspace in whole pad
-    await wholePad.locator('button:has-text("⌫")').click();
+    await page.getByRole('button', { name: 'Delete last whole digit' }).click();
 
     // Display should show 1
     const display = page.locator('.bg-stone-800 .text-4xl, .bg-stone-800 .text-5xl');
@@ -147,14 +141,11 @@ test.describe('Fractional Calculator', () => {
     await page.goto('/tools/fractional-calculator', { waitUntil: 'networkidle' });
 
     // Enter 1/2
-    const numeratorPad = page.locator('text=Numerator').locator('..').locator('..');
-    await numeratorPad.locator('button:has-text("1")').click();
+    await page.getByRole('button', { name: 'Numerator 1' }).click();
+    await page.getByRole('button', { name: 'Denominator 2' }).click();
 
-    const denominatorPad = page.locator('text=Denominator').locator('..').locator('..');
-    await denominatorPad.locator('button:has-text("2")').click();
-
-    // Should show decimal equivalent (0.5000)
-    await expect(page.locator('text=0.5000')).toBeVisible();
+    // Should show decimal equivalent (0.5 - trailing zeros are stripped)
+    await expect(page.getByTestId('decimal-display')).toContainText('= 0.5');
   });
 });
 
