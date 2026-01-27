@@ -483,4 +483,74 @@ describe('optimizeCutList', () => {
     expect(result.unplacedPieces).toHaveLength(0);
     expect(result.overallEfficiency).toBe(0);
   });
+
+  it('returns algorithm comparison info', () => {
+    const pieces: PieceData[] = [
+      { id: '1', width: 24, length: 36, quantity: 2, grainDirection: 'no-preference' },
+    ];
+
+    const result = optimizeCutList(pieces, sheet);
+
+    expect(result.algorithmUsed).toBeDefined();
+    expect(result.algorithmsCompared).toBeDefined();
+    expect(result.algorithmsCompared.length).toBeGreaterThan(0);
+  });
+
+  it('compares multiple algorithms', () => {
+    const pieces: PieceData[] = [
+      { id: '1', width: 20, length: 30, quantity: 5, grainDirection: 'no-preference' },
+      { id: '2', width: 15, length: 25, quantity: 3, grainDirection: 'no-preference' },
+    ];
+
+    const result = optimizeCutList(pieces, sheet);
+
+    // Should have run multiple algorithms
+    expect(result.algorithmsCompared.length).toBeGreaterThanOrEqual(5);
+
+    // Each algorithm comparison should have required fields
+    result.algorithmsCompared.forEach((algo) => {
+      expect(algo.name).toBeDefined();
+      expect(typeof algo.efficiency).toBe('number');
+      expect(typeof algo.sheetsUsed).toBe('number');
+      expect(typeof algo.unplacedCount).toBe('number');
+    });
+  });
+
+  it('selects the best algorithm based on results', () => {
+    const pieces: PieceData[] = [
+      { id: '1', width: 24, length: 36, quantity: 4, grainDirection: 'no-preference' },
+    ];
+
+    const result = optimizeCutList(pieces, sheet);
+
+    // The selected algorithm should be in the comparison list
+    const selectedAlgo = result.algorithmsCompared.find(
+      (a) => a.name === result.algorithmUsed
+    );
+    expect(selectedAlgo).toBeDefined();
+
+    // It should have the same efficiency as the result
+    expect(selectedAlgo?.efficiency).toBeCloseTo(result.overallEfficiency, 1);
+  });
+
+  it('prefers algorithms with fewer unplaced pieces', () => {
+    const limitedSheet: SheetConfigData = {
+      ...sheet,
+      sheetsAvailable: 1,
+    };
+
+    const pieces: PieceData[] = [
+      { id: '1', width: 24, length: 48, quantity: 2, grainDirection: 'no-preference' },
+      { id: '2', width: 24, length: 48, quantity: 2, grainDirection: 'no-preference' },
+    ];
+
+    const result = optimizeCutList(pieces, limitedSheet);
+
+    // The selected algorithm should have the minimum unplaced count
+    const selectedAlgo = result.algorithmsCompared.find(
+      (a) => a.name === result.algorithmUsed
+    );
+    const minUnplaced = Math.min(...result.algorithmsCompared.map((a) => a.unplacedCount));
+    expect(selectedAlgo?.unplacedCount).toBe(minUnplaced);
+  });
 });

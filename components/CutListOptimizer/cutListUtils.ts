@@ -73,6 +73,25 @@ export interface OptimizationResult {
   overallEfficiency: number;
   unplacedPieces: PieceInstance[];
   warnings: string[];
+  algorithmUsed: string;
+  algorithmsCompared: AlgorithmComparison[];
+}
+
+export interface AlgorithmComparison {
+  name: string;
+  efficiency: number;
+  sheetsUsed: number;
+  unplacedCount: number;
+}
+
+// Algorithm strategy types
+type SortStrategy = 'area' | 'longest-side' | 'perimeter' | 'width';
+type PlacementStrategy = 'first-fit' | 'best-fit';
+
+interface AlgorithmConfig {
+  name: string;
+  sortStrategy: SortStrategy;
+  placementStrategy: PlacementStrategy;
 }
 
 // === CONSTANTS ===
@@ -210,6 +229,49 @@ export function validatePiecesAgainstSheet(
 
 // === OPTIMIZATION ALGORITHM ===
 
+// Algorithm configurations to try
+const ALGORITHM_CONFIGS: AlgorithmConfig[] = [
+  { name: 'Area + First Fit', sortStrategy: 'area', placementStrategy: 'first-fit' },
+  { name: 'Area + Best Fit', sortStrategy: 'area', placementStrategy: 'best-fit' },
+  { name: 'Longest Side + First Fit', sortStrategy: 'longest-side', placementStrategy: 'first-fit' },
+  { name: 'Longest Side + Best Fit', sortStrategy: 'longest-side', placementStrategy: 'best-fit' },
+  { name: 'Perimeter + Best Fit', sortStrategy: 'perimeter', placementStrategy: 'best-fit' },
+];
+
+// Sorting functions
+function sortByArea(instances: PieceInstance[]): PieceInstance[] {
+  return [...instances].sort((a, b) => b.width * b.length - a.width * a.length);
+}
+
+function sortByLongestSide(instances: PieceInstance[]): PieceInstance[] {
+  return [...instances].sort((a, b) => {
+    const maxA = Math.max(a.width, a.length);
+    const maxB = Math.max(b.width, b.length);
+    return maxB - maxA;
+  });
+}
+
+function sortByPerimeter(instances: PieceInstance[]): PieceInstance[] {
+  return [...instances].sort((a, b) => {
+    const perimA = 2 * (a.width + a.length);
+    const perimB = 2 * (b.width + b.length);
+    return perimB - perimA;
+  });
+}
+
+function sortByWidth(instances: PieceInstance[]): PieceInstance[] {
+  return [...instances].sort((a, b) => b.width - a.width);
+}
+
+function applySortStrategy(instances: PieceInstance[], strategy: SortStrategy): PieceInstance[] {
+  switch (strategy) {
+    case 'area': return sortByArea(instances);
+    case 'longest-side': return sortByLongestSide(instances);
+    case 'perimeter': return sortByPerimeter(instances);
+    case 'width': return sortByWidth(instances);
+  }
+}
+
 function expandPiecesToInstances(pieces: PieceData[]): PieceInstance[] {
   const instances: PieceInstance[] = [];
 
@@ -306,7 +368,8 @@ function splitRectangleGuillotine(
 function tryPlacePiece(
   piece: PieceInstance,
   layout: SheetLayout,
-  kerf: number
+  kerf: number,
+  placementStrategy: PlacementStrategy = 'first-fit'
 ): PlacedPiece | null {
   const orientations = getAllowedOrientations(piece);
   let bestPlacement: PlacedPiece | null = null;
@@ -322,8 +385,17 @@ function tryPlacePiece(
       const effectiveHeight = h + kerf;
 
       if (effectiveWidth <= rect.width + kerf && effectiveHeight <= rect.height + kerf) {
-        // Score: prefer upper-left placement (smaller y, then smaller x)
-        const score = rect.y * 10000 + rect.x;
+        let score: number;
+
+        if (placementStrategy === 'best-fit') {
+          // Best Fit: minimize leftover area (prefer tighter fit)
+          const leftoverArea = (rect.width * rect.height) - (w * h);
+          // Tie-breaker: prefer upper-left
+          score = leftoverArea * 1000000 + rect.y * 1000 + rect.x;
+        } else {
+          // First Fit: prefer upper-left placement (smaller y, then smaller x)
+          score = rect.y * 10000 + rect.x;
+        }
 
         if (score < bestScore) {
           bestScore = score;
@@ -357,10 +429,12 @@ function tryPlacePiece(
   return bestPlacement;
 }
 
-export function optimizeCutList(
+// Run optimization with a specific algorithm configuration
+function runSingleAlgorithm(
   pieces: PieceData[],
-  sheet: SheetConfigData
-): OptimizationResult {
+  sheet: SheetConfigData,
+  config: AlgorithmConfig
+): { result: Omit<OptimizationResult, 'algorithmUsed' | 'algorithmsCompared'>; comparison: AlgorithmComparison } {
   const warnings: string[] = [];
   const unplacedPieces: PieceInstance[] = [];
   const sheets: SheetLayout[] = [];
@@ -368,16 +442,16 @@ export function optimizeCutList(
   // Step 1: Expand pieces by quantity
   const instances = expandPiecesToInstances(pieces);
 
-  // Step 2: Sort by area (largest first) - First Fit Decreasing
-  instances.sort((a, b) => b.width * b.length - a.width * a.length);
+  // Step 2: Sort using the configured strategy
+  const sortedInstances = applySortStrategy(instances, config.sortStrategy);
 
   // Step 3: Place each piece
-  for (const piece of instances) {
+  for (const piece of sortedInstances) {
     let placed = false;
 
     // Try existing sheets first
     for (const sheetLayout of sheets) {
-      const placement = tryPlacePiece(piece, sheetLayout, sheet.kerfWidth);
+      const placement = tryPlacePiece(piece, sheetLayout, sheet.kerfWidth, config.placementStrategy);
       if (placement) {
         sheetLayout.pieces.push(placement);
         sheetLayout.usedArea += placement.width * placement.height;
@@ -390,7 +464,7 @@ export function optimizeCutList(
     if (!placed) {
       if (sheets.length < sheet.sheetsAvailable) {
         const newSheet = createNewSheet(sheets.length, sheet);
-        const placement = tryPlacePiece(piece, newSheet, sheet.kerfWidth);
+        const placement = tryPlacePiece(piece, newSheet, sheet.kerfWidth, config.placementStrategy);
 
         if (placement) {
           newSheet.pieces.push(placement);
@@ -437,12 +511,63 @@ export function optimizeCutList(
   }
 
   return {
-    sheets,
-    totalSheets: sheets.length,
-    totalUsedArea,
-    totalWasteArea,
-    overallEfficiency,
-    unplacedPieces,
-    warnings,
+    result: {
+      sheets,
+      totalSheets: sheets.length,
+      totalUsedArea,
+      totalWasteArea,
+      overallEfficiency,
+      unplacedPieces,
+      warnings,
+    },
+    comparison: {
+      name: config.name,
+      efficiency: overallEfficiency,
+      sheetsUsed: sheets.length,
+      unplacedCount: unplacedPieces.length,
+    },
+  };
+}
+
+export function optimizeCutList(
+  pieces: PieceData[],
+  sheet: SheetConfigData
+): OptimizationResult {
+  // Run all algorithm configurations
+  const results: Array<{
+    result: Omit<OptimizationResult, 'algorithmUsed' | 'algorithmsCompared'>;
+    comparison: AlgorithmComparison;
+    config: AlgorithmConfig;
+  }> = [];
+
+  for (const config of ALGORITHM_CONFIGS) {
+    const { result, comparison } = runSingleAlgorithm(pieces, sheet, config);
+    results.push({ result, comparison, config });
+  }
+
+  // Find the best result:
+  // 1. Fewest unplaced pieces
+  // 2. Fewest sheets used
+  // 3. Highest efficiency
+  results.sort((a, b) => {
+    // First: fewer unplaced pieces is better
+    if (a.comparison.unplacedCount !== b.comparison.unplacedCount) {
+      return a.comparison.unplacedCount - b.comparison.unplacedCount;
+    }
+    // Second: fewer sheets is better
+    if (a.comparison.sheetsUsed !== b.comparison.sheetsUsed) {
+      return a.comparison.sheetsUsed - b.comparison.sheetsUsed;
+    }
+    // Third: higher efficiency is better
+    return b.comparison.efficiency - a.comparison.efficiency;
+  });
+
+  const best = results[0];
+  const algorithmsCompared = results.map(r => r.comparison);
+
+  return {
+    ...best.result,
+    algorithmUsed: best.config.name,
+    algorithmsCompared,
   };
 }

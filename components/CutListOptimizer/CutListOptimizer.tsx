@@ -354,6 +354,28 @@ export default function CutListOptimizer() {
                   </div>
                 </div>
               </div>
+
+              {/* Algorithm comparison */}
+              <div className="mt-4 pt-4 border-t border-stone-700">
+                <div className="text-stone-400 text-xs mb-2">
+                  Best algorithm: <span className="text-amber-400 font-medium">{result.algorithmUsed}</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {result.algorithmsCompared.map((algo) => (
+                    <div
+                      key={algo.name}
+                      className={`text-xs px-2 py-1 rounded ${
+                        algo.name === result.algorithmUsed
+                          ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                          : 'bg-stone-700/50 text-stone-400'
+                      }`}
+                      title={`${algo.sheetsUsed} sheets, ${algo.unplacedCount} unplaced`}
+                    >
+                      {algo.name}: {algo.efficiency.toFixed(1)}%
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
 
             {/* Warnings */}
