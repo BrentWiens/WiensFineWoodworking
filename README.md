@@ -16,7 +16,7 @@ A modern, responsive website for Wiens Fine Woodworking showcasing custom furnit
 ## Features
 
 - 📸 **Photo Gallery** - 35+ project images with lightbox modal, keyboard navigation, and smooth transitions
-- 🛠️ **Woodworking Tools** - Interactive calculators including dovetail joint visualizer and fractional calculator
+- 🛠️ **Woodworking Tools** - Interactive calculators including dovetail joint visualizer, fractional calculator, board feet calculator, and cut list optimizer
 - 🖼️ **Image Optimization** - Automatic WebP/AVIF conversion, responsive sizing, lazy loading
 - 📱 **Fully Responsive** - Mobile-first design optimized for all screen sizes
 - ⚡ **Performance** - Server-side rendering, static generation, optimized images
@@ -88,7 +88,9 @@ wiens-woodworking/
 │   ├── tools/
 │   │   ├── page.tsx          # Tools listing page
 │   │   ├── dovetail-calculator/page.tsx
-│   │   └── fractional-calculator/page.tsx
+│   │   ├── fractional-calculator/page.tsx
+│   │   ├── board-feet-calculator/page.tsx
+│   │   └── cut-list-optimizer/page.tsx
 │   ├── api/contact/route.ts  # Contact form API
 │   ├── sitemap.ts            # Dynamic sitemap
 │   └── robots.ts             # Robots.txt
@@ -104,6 +106,8 @@ wiens-woodworking/
 │   ├── GalleryWrapper.tsx
 │   ├── DovetailVisualizer/   # Dovetail calculator component
 │   ├── FractionalCalculator/ # Fractional calculator component
+│   ├── BoardFeetCalculator/  # Board feet calculator component
+│   ├── CutListOptimizer/     # Cut list optimizer component
 │   ├── Footer.tsx
 │   └── index.ts              # Barrel exports
 ├── tests/                    # Playwright E2E tests
@@ -166,8 +170,8 @@ Components use barrel exports (`components/index.ts`) for cleaner imports throug
 - **Performance:** Vercel Speed Insights tracking Core Web Vitals
 
 ### Quality Assurance
-- **E2E Testing:** Playwright test suite with 13 tests covering critical user flows
-- **Unit Testing:** Vitest tests for calculator utilities (dovetail: 22 tests, fractional: 40+ tests)
+- **E2E Testing:** Playwright test suite with 50 tests covering critical user flows
+- **Unit Testing:** Vitest tests for calculator utilities (dovetail: 22, fractional: 40+, board feet: 10, cut list: 37 tests)
 - **Performance Monitoring:** PageSpeed Insights for production performance tracking
 - **Type Safety:** Strict TypeScript configuration with `tsc --noEmit` checks
 

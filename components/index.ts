@@ -11,3 +11,4 @@ export { default as ErrorBoundary } from './ErrorBoundary';
 export { default as FractionalCalculator } from './FractionalCalculator/FractionalCalculator';
 export { default as ServiceWorkerRegistration } from './ServiceWorkerRegistration';
 export { default as BoardFeetCalculator } from './BoardFeetCalculator/BoardFeetCalculator';
+export { default as CutListOptimizer } from './CutListOptimizer/CutListOptimizer';

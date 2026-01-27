@@ -34,5 +34,17 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly',
       priority: 0.8,
     },
+    {
+      url: `${BASE_URL}/tools/board-feet-calculator`,
+      lastModified: '2025-01-27',
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
+      url: `${BASE_URL}/tools/cut-list-optimizer`,
+      lastModified: '2025-01-27',
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
   ]
 }

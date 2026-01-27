@@ -133,17 +133,29 @@ export default function ToolsPage() {
                                     Visualize and plan your dovetail joints with custom dimensions, pin angles, and spacing.
                                 </p>
                             </div>
-                        </Link>                        
+                        </Link>
 
                         <Link
-                            href="#"
-                            className="block bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow border border-stone-200"
+                            href="/tools/cut-list-optimizer"
+                            className="flex flex-col sm:flex-row gap-4 sm:gap-6 bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow border border-stone-200"
                         >
-                            <h2 className="text-2xl font-bold text-stone-800 mb-2">
-                                (Coming Soon) Cut List Optimizer                        </h2>
-                            <p className="text-stone-600">
-                                Optimize the material usage for a project. Particularly when working with sheet goods like plywood.
-                            </p>
+                            <div className="relative flex-shrink-0 aspect-[250/240] w-full max-w-[300px] mx-auto sm:mx-0">
+                                <Image
+                                    src="/images/cut-list-optimizer/cut-list-optimizer-preview.png"
+                                    alt="Cut list optimizer preview"
+                                    fill
+                                    sizes="(max-width: 640px) 100vw, 300px"
+                                    className="rounded-md object-cover"
+                                />
+                            </div>
+                            <div className="flex flex-col justify-center">
+                                <h2 className="text-2xl font-bold text-stone-800 mb-2">
+                                    Cut List Optimizer
+                                </h2>
+                                <p className="text-stone-600">
+                                    Optimize plywood cuts to minimize waste. Supports grain direction for consistent appearance.
+                                </p>
+                            </div>
                         </Link>
 
                     </div>
