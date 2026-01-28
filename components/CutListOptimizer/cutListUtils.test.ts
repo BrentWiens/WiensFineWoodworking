@@ -504,8 +504,8 @@ describe('optimizeCutList', () => {
 
     const result = optimizeCutList(pieces, sheet);
 
-    // Should have run multiple algorithms
-    expect(result.algorithmsCompared.length).toBeGreaterThanOrEqual(5);
+    // Should have run multiple algorithms (9 total: 5 guillotine + 1 shelf + 3 skyline)
+    expect(result.algorithmsCompared.length).toBe(9);
 
     // Each algorithm comparison should have required fields
     result.algorithmsCompared.forEach((algo) => {

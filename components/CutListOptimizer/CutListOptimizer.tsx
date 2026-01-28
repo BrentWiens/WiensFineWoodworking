@@ -27,6 +27,7 @@ export default function CutListOptimizer() {
   const [pieces, setPieces] = useState<PieceInput[]>([createEmptyPiece()]);
   const [result, setResult] = useState<OptimizationResult | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
+  const [isOptimizing, setIsOptimizing] = useState(false);
 
   // Parse and validate inputs
   const sheetData = useMemo(() => parseSheetConfig(sheetConfig), [sheetConfig]);
@@ -91,9 +92,15 @@ export default function CutListOptimizer() {
       return;
     }
 
-    // Run optimization
-    const optimizationResult = optimizeCutList(parsedPieces, sheet);
-    setResult(optimizationResult);
+    // Show loading state, then run optimization
+    setIsOptimizing(true);
+
+    // Use setTimeout to allow UI to update before running optimization
+    setTimeout(() => {
+      const optimizationResult = optimizeCutList(parsedPieces, sheet);
+      setResult(optimizationResult);
+      setIsOptimizing(false);
+    }, 10);
   }, [sheetConfig, pieces]);
 
   const handleClear = useCallback(() => {
@@ -132,19 +139,6 @@ export default function CutListOptimizer() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
               <label className="block text-sm font-medium text-stone-700 mb-1">
-                Width (in)
-              </label>
-              <input
-                type="text"
-                inputMode="decimal"
-                value={sheetConfig.width}
-                onChange={(e) => handleSheetChange('width', e.target.value)}
-                className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-stone-900 font-mono"
-                data-testid="sheet-width"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-stone-700 mb-1">
                 Length (in)
               </label>
               <input
@@ -154,6 +148,19 @@ export default function CutListOptimizer() {
                 onChange={(e) => handleSheetChange('length', e.target.value)}
                 className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-stone-900 font-mono"
                 data-testid="sheet-length"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-stone-700 mb-1">
+                Width (in)
+              </label>
+              <input
+                type="text"
+                inputMode="decimal"
+                value={sheetConfig.width}
+                onChange={(e) => handleSheetChange('width', e.target.value)}
+                className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-stone-900 font-mono"
+                data-testid="sheet-width"
               />
             </div>
             <div>
@@ -205,8 +212,8 @@ export default function CutListOptimizer() {
           <div className="space-y-3">
             {/* Header row */}
             <div className="grid grid-cols-12 gap-2 text-sm font-medium text-stone-600 px-1">
-              <div className="col-span-3">Width (in)</div>
               <div className="col-span-3">Length (in)</div>
+              <div className="col-span-3">Width (in)</div>
               <div className="col-span-2">Qty</div>
               <div className="col-span-3">Grain</div>
               <div className="col-span-1"></div>
@@ -223,23 +230,23 @@ export default function CutListOptimizer() {
                   <input
                     type="text"
                     inputMode="decimal"
-                    value={piece.width}
-                    onChange={(e) => handlePieceChange(piece.id, 'width', e.target.value)}
-                    placeholder="24"
+                    value={piece.length}
+                    onChange={(e) => handlePieceChange(piece.id, 'length', e.target.value)}
+                    placeholder="36"
                     className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-stone-900 font-mono placeholder:text-stone-400"
                     style={{ borderLeftColor: pieceColorMap.get(piece.id), borderLeftWidth: '4px' }}
-                    data-testid={`piece-width-${index}`}
+                    data-testid={`piece-length-${index}`}
                   />
                 </div>
                 <div className="col-span-3">
                   <input
                     type="text"
                     inputMode="decimal"
-                    value={piece.length}
-                    onChange={(e) => handlePieceChange(piece.id, 'length', e.target.value)}
-                    placeholder="36"
+                    value={piece.width}
+                    onChange={(e) => handlePieceChange(piece.id, 'width', e.target.value)}
+                    placeholder="24"
                     className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-stone-900 font-mono placeholder:text-stone-400"
-                    data-testid={`piece-length-${index}`}
+                    data-testid={`piece-width-${index}`}
                   />
                 </div>
                 <div className="col-span-2">
@@ -313,15 +320,43 @@ export default function CutListOptimizer() {
         <div className="flex gap-4">
           <button
             onClick={handleOptimize}
-            className="flex-1 py-3 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-lg transition-colors"
+            disabled={isOptimizing}
+            className="flex-1 py-3 bg-amber-500 hover:bg-amber-600 disabled:bg-amber-400 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
             type="button"
             data-testid="optimize-button"
           >
-            Optimize Cut List
+            {isOptimizing ? (
+              <>
+                <svg
+                  className="animate-spin h-5 w-5"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  />
+                </svg>
+                Optimizing...
+              </>
+            ) : (
+              'Optimize Cut List'
+            )}
           </button>
           <button
             onClick={handleClear}
-            className="px-6 py-3 bg-stone-200 hover:bg-stone-300 text-stone-800 font-semibold rounded-lg transition-colors"
+            disabled={isOptimizing}
+            className="px-6 py-3 bg-stone-200 hover:bg-stone-300 disabled:bg-stone-100 text-stone-800 font-semibold rounded-lg transition-colors"
             type="button"
             data-testid="clear-button"
           >
@@ -350,7 +385,7 @@ export default function CutListOptimizer() {
                 <div>
                   <div className="text-stone-400 text-sm">Waste</div>
                   <div className="text-white text-3xl font-bold font-mono">
-                    {result.totalWasteArea.toFixed(0)} in²
+                    {(result.totalWasteArea / 144).toFixed(1)} ft²
                   </div>
                 </div>
               </div>
@@ -519,19 +554,6 @@ function SheetVisualization({
                 >
                   {getPieceLabel(placed.piece)}
                 </text>
-                {/* Rotation indicator */}
-                {placed.piece.rotated && (
-                  <text
-                    x={x + w / 2}
-                    y={y + h / 2 + 14}
-                    fill="#000"
-                    fontSize="9"
-                    textAnchor="middle"
-                    dominantBaseline="middle"
-                  >
-                    (rotated)
-                  </text>
-                )}
               </g>
             );
           })}

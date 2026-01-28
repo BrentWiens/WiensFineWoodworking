@@ -85,13 +85,15 @@ export interface AlgorithmComparison {
 }
 
 // Algorithm strategy types
-type SortStrategy = 'area' | 'longest-side' | 'perimeter' | 'width';
+type SortStrategy = 'area' | 'longest-side' | 'perimeter' | 'width' | 'shortest-side' | 'height';
 type PlacementStrategy = 'first-fit' | 'best-fit';
+type AlgorithmType = 'guillotine' | 'shelf' | 'skyline';
 
 interface AlgorithmConfig {
   name: string;
   sortStrategy: SortStrategy;
   placementStrategy: PlacementStrategy;
+  algorithmType: AlgorithmType;
 }
 
 // === CONSTANTS ===
@@ -230,12 +232,21 @@ export function validatePiecesAgainstSheet(
 // === OPTIMIZATION ALGORITHM ===
 
 // Algorithm configurations to try
+// Note: First Fit vs Best Fit rarely differ in guillotine packing with pre-sorted pieces,
+// so we use Best Fit for guillotine (theoretically optimal) and First Fit for shelf (FFDH standard)
 const ALGORITHM_CONFIGS: AlgorithmConfig[] = [
-  { name: 'Area + First Fit', sortStrategy: 'area', placementStrategy: 'first-fit' },
-  { name: 'Area + Best Fit', sortStrategy: 'area', placementStrategy: 'best-fit' },
-  { name: 'Longest Side + First Fit', sortStrategy: 'longest-side', placementStrategy: 'first-fit' },
-  { name: 'Longest Side + Best Fit', sortStrategy: 'longest-side', placementStrategy: 'best-fit' },
-  { name: 'Perimeter + Best Fit', sortStrategy: 'perimeter', placementStrategy: 'best-fit' },
+  // Guillotine algorithms with different sorting strategies
+  { name: 'Area', sortStrategy: 'area', placementStrategy: 'best-fit', algorithmType: 'guillotine' },
+  { name: 'Longest Side', sortStrategy: 'longest-side', placementStrategy: 'best-fit', algorithmType: 'guillotine' },
+  { name: 'Perimeter', sortStrategy: 'perimeter', placementStrategy: 'best-fit', algorithmType: 'guillotine' },
+  { name: 'Width', sortStrategy: 'width', placementStrategy: 'best-fit', algorithmType: 'guillotine' },
+  { name: 'Shortest Side', sortStrategy: 'shortest-side', placementStrategy: 'best-fit', algorithmType: 'guillotine' },
+  // Shelf algorithm (FFDH - First Fit Decreasing Height)
+  { name: 'FFDH Shelf', sortStrategy: 'height', placementStrategy: 'first-fit', algorithmType: 'shelf' },
+  // Skyline algorithms - places pieces at lowest available position
+  { name: 'Skyline (Area)', sortStrategy: 'area', placementStrategy: 'best-fit', algorithmType: 'skyline' },
+  { name: 'Skyline (Longest)', sortStrategy: 'longest-side', placementStrategy: 'best-fit', algorithmType: 'skyline' },
+  { name: 'Skyline (Width)', sortStrategy: 'width', placementStrategy: 'best-fit', algorithmType: 'skyline' },
 ];
 
 // Sorting functions
@@ -263,12 +274,27 @@ function sortByWidth(instances: PieceInstance[]): PieceInstance[] {
   return [...instances].sort((a, b) => b.width - a.width);
 }
 
+function sortByShortestSide(instances: PieceInstance[]): PieceInstance[] {
+  return [...instances].sort((a, b) => {
+    const minA = Math.min(a.width, a.length);
+    const minB = Math.min(b.width, b.length);
+    return minB - minA;
+  });
+}
+
+function sortByHeight(instances: PieceInstance[]): PieceInstance[] {
+  // For shelf algorithm, sort by height (length in our coordinate system) descending
+  return [...instances].sort((a, b) => b.length - a.length);
+}
+
 function applySortStrategy(instances: PieceInstance[], strategy: SortStrategy): PieceInstance[] {
   switch (strategy) {
     case 'area': return sortByArea(instances);
     case 'longest-side': return sortByLongestSide(instances);
     case 'perimeter': return sortByPerimeter(instances);
     case 'width': return sortByWidth(instances);
+    case 'shortest-side': return sortByShortestSide(instances);
+    case 'height': return sortByHeight(instances);
   }
 }
 
@@ -340,26 +366,59 @@ function splitRectangleGuillotine(
   const consumedW = placedWidth + kerf;
   const consumedH = placedHeight + kerf;
 
-  // Right rectangle (space to the right of placed piece, full height)
+  // Calculate remaining space
   const rightWidth = rect.width - consumedW;
-  if (rightWidth >= MIN_USABLE_SIZE) {
-    newRects.push({
-      x: rect.x + consumedW,
-      y: rect.y,
-      width: rightWidth,
-      height: rect.height,
-    });
-  }
-
-  // Bottom rectangle (space below placed piece, only under the piece width)
   const bottomHeight = rect.height - consumedH;
-  if (bottomHeight >= MIN_USABLE_SIZE) {
-    newRects.push({
-      x: rect.x,
-      y: rect.y + consumedH,
-      width: Math.min(consumedW - kerf, rect.width), // Width of the piece only
-      height: bottomHeight,
-    });
+
+  // Choose split direction based on which creates more usable rectangles
+  // Horizontal split: bottom rect gets full width (better for stacking vertically)
+  // Vertical split: right rect gets full height (better for stacking horizontally)
+
+  // Use horizontal split if bottom area is larger, vertical if right area is larger
+  // This tends to keep larger contiguous areas together
+  const horizontalSplitArea = (bottomHeight >= MIN_USABLE_SIZE ? rect.width * bottomHeight : 0) +
+                              (rightWidth >= MIN_USABLE_SIZE ? rightWidth * placedHeight : 0);
+  const verticalSplitArea = (rightWidth >= MIN_USABLE_SIZE ? rightWidth * rect.height : 0) +
+                            (bottomHeight >= MIN_USABLE_SIZE ? placedWidth * bottomHeight : 0);
+
+  if (horizontalSplitArea >= verticalSplitArea) {
+    // Horizontal split: bottom rectangle gets full width
+    if (bottomHeight >= MIN_USABLE_SIZE) {
+      newRects.push({
+        x: rect.x,
+        y: rect.y + consumedH,
+        width: rect.width,
+        height: bottomHeight,
+      });
+    }
+    // Right rectangle gets only the placed piece height
+    if (rightWidth >= MIN_USABLE_SIZE && placedHeight >= MIN_USABLE_SIZE) {
+      newRects.push({
+        x: rect.x + consumedW,
+        y: rect.y,
+        width: rightWidth,
+        height: placedHeight,
+      });
+    }
+  } else {
+    // Vertical split: right rectangle gets full height
+    if (rightWidth >= MIN_USABLE_SIZE) {
+      newRects.push({
+        x: rect.x + consumedW,
+        y: rect.y,
+        width: rightWidth,
+        height: rect.height,
+      });
+    }
+    // Bottom rectangle gets only the placed piece width
+    if (bottomHeight >= MIN_USABLE_SIZE && placedWidth >= MIN_USABLE_SIZE) {
+      newRects.push({
+        x: rect.x,
+        y: rect.y + consumedH,
+        width: placedWidth,
+        height: bottomHeight,
+      });
+    }
   }
 
   return newRects;
@@ -427,6 +486,446 @@ function tryPlacePiece(
   }
 
   return bestPlacement;
+}
+
+// === SHELF (FFDH) ALGORITHM ===
+// First Fit Decreasing Height - creates horizontal shelves and packs pieces in rows
+
+interface Shelf {
+  y: number;           // Y position of shelf bottom
+  height: number;      // Height of the shelf (determined by tallest piece)
+  remainingWidth: number; // Remaining width on this shelf
+  pieces: PlacedPiece[];
+}
+
+function runShelfAlgorithm(
+  pieces: PieceData[],
+  sheet: SheetConfigData,
+  config: AlgorithmConfig
+): { result: Omit<OptimizationResult, 'algorithmUsed' | 'algorithmsCompared'>; comparison: AlgorithmComparison } {
+  const warnings: string[] = [];
+  const unplacedPieces: PieceInstance[] = [];
+  const sheets: SheetLayout[] = [];
+
+  // Expand and sort pieces
+  const instances = expandPiecesToInstances(pieces);
+  const sortedInstances = applySortStrategy(instances, config.sortStrategy);
+
+  // Track shelves per sheet
+  const sheetShelves: Map<number, Shelf[]> = new Map();
+
+  for (const piece of sortedInstances) {
+    let placed = false;
+    const orientations = getAllowedOrientations(piece);
+
+    // Try each orientation
+    for (const { w, h, rotated } of orientations) {
+      if (placed) break;
+
+      // Try existing sheets
+      for (let sheetIdx = 0; sheetIdx < sheets.length; sheetIdx++) {
+        if (placed) break;
+        const shelves = sheetShelves.get(sheetIdx) || [];
+
+        // Try existing shelves on this sheet
+        for (const shelf of shelves) {
+          // Check if piece fits on this shelf (width + kerf)
+          if (w + sheet.kerfWidth <= shelf.remainingWidth + sheet.kerfWidth && h <= shelf.height) {
+            // Place the piece
+            const x = sheet.width - shelf.remainingWidth;
+            const placement: PlacedPiece = {
+              piece: { ...piece, rotated },
+              x,
+              y: shelf.y,
+              width: w,
+              height: h,
+            };
+            shelf.pieces.push(placement);
+            shelf.remainingWidth -= (w + sheet.kerfWidth);
+            sheets[sheetIdx].pieces.push(placement);
+            sheets[sheetIdx].usedArea += w * h;
+            placed = true;
+            break;
+          }
+        }
+
+        // If not placed on existing shelf, try creating new shelf on this sheet
+        if (!placed) {
+          const currentShelfHeight = shelves.reduce((sum, s) => sum + s.height + sheet.kerfWidth, 0);
+          const availableHeight = sheet.length - currentShelfHeight;
+
+          if (h <= availableHeight && w <= sheet.width) {
+            // Create new shelf
+            const newShelf: Shelf = {
+              y: currentShelfHeight,
+              height: h,
+              remainingWidth: sheet.width - w - sheet.kerfWidth,
+              pieces: [],
+            };
+            const placement: PlacedPiece = {
+              piece: { ...piece, rotated },
+              x: 0,
+              y: newShelf.y,
+              width: w,
+              height: h,
+            };
+            newShelf.pieces.push(placement);
+            shelves.push(newShelf);
+            sheetShelves.set(sheetIdx, shelves);
+            sheets[sheetIdx].pieces.push(placement);
+            sheets[sheetIdx].usedArea += w * h;
+            placed = true;
+          }
+        }
+      }
+
+      // If still not placed and we can add a new sheet
+      if (!placed && sheets.length < sheet.sheetsAvailable) {
+        if (w <= sheet.width && h <= sheet.length) {
+          // Create new sheet with first shelf
+          const newSheetIdx = sheets.length;
+          const newSheet: SheetLayout = {
+            sheetIndex: newSheetIdx,
+            pieces: [],
+            freeRectangles: [], // Not used in shelf algorithm
+            usedArea: 0,
+            wasteArea: 0,
+            efficiency: 0,
+          };
+          sheets.push(newSheet);
+
+          const newShelf: Shelf = {
+            y: 0,
+            height: h,
+            remainingWidth: sheet.width - w - sheet.kerfWidth,
+            pieces: [],
+          };
+          const placement: PlacedPiece = {
+            piece: { ...piece, rotated },
+            x: 0,
+            y: 0,
+            width: w,
+            height: h,
+          };
+          newShelf.pieces.push(placement);
+          sheetShelves.set(newSheetIdx, [newShelf]);
+          newSheet.pieces.push(placement);
+          newSheet.usedArea += w * h;
+          placed = true;
+        }
+      }
+    }
+
+    if (!placed) {
+      unplacedPieces.push(piece);
+    }
+  }
+
+  // Calculate statistics
+  const sheetArea = sheet.width * sheet.length;
+  for (const sheetLayout of sheets) {
+    sheetLayout.wasteArea = sheetArea - sheetLayout.usedArea;
+    sheetLayout.efficiency = (sheetLayout.usedArea / sheetArea) * 100;
+  }
+
+  const totalUsedArea = sheets.reduce((sum, s) => sum + s.usedArea, 0);
+  const totalSheetArea = sheets.length * sheetArea;
+  const totalWasteArea = totalSheetArea - totalUsedArea;
+  const overallEfficiency = totalSheetArea > 0 ? (totalUsedArea / totalSheetArea) * 100 : 0;
+
+  if (unplacedPieces.length > 0) {
+    const unplacedBySize = new Map<string, number>();
+    for (const p of unplacedPieces) {
+      const key = `${p.width} x ${p.length}`;
+      unplacedBySize.set(key, (unplacedBySize.get(key) || 0) + 1);
+    }
+    const unplacedList = Array.from(unplacedBySize.entries())
+      .map(([size, count]) => count > 1 ? `${size} (${count})` : size)
+      .join(', ');
+    warnings.push(`Could not place: ${unplacedList}. You may need more sheets.`);
+  }
+
+  return {
+    result: {
+      sheets,
+      totalSheets: sheets.length,
+      totalUsedArea,
+      totalWasteArea,
+      overallEfficiency,
+      unplacedPieces,
+      warnings,
+    },
+    comparison: {
+      name: config.name,
+      efficiency: overallEfficiency,
+      sheetsUsed: sheets.length,
+      unplacedCount: unplacedPieces.length,
+    },
+  };
+}
+
+// === SKYLINE (BOTTOM-LEFT) ALGORITHM ===
+// Maintains a skyline contour and places pieces at the lowest available position
+
+interface SkylineSegment {
+  x: number;      // Start x position
+  width: number;  // Width of this segment
+  y: number;      // Height (y position of top of this segment)
+}
+
+function runSkylineAlgorithm(
+  pieces: PieceData[],
+  sheet: SheetConfigData,
+  config: AlgorithmConfig
+): { result: Omit<OptimizationResult, 'algorithmUsed' | 'algorithmsCompared'>; comparison: AlgorithmComparison } {
+  const warnings: string[] = [];
+  const unplacedPieces: PieceInstance[] = [];
+  const sheets: SheetLayout[] = [];
+
+  // Expand and sort pieces
+  const instances = expandPiecesToInstances(pieces);
+  const sortedInstances = applySortStrategy(instances, config.sortStrategy);
+
+  // Track skyline per sheet
+  const sheetSkylines: Map<number, SkylineSegment[]> = new Map();
+
+  for (const piece of sortedInstances) {
+    let placed = false;
+    const orientations = getAllowedOrientations(piece);
+
+    // Try each orientation
+    for (const { w, h, rotated } of orientations) {
+      if (placed) break;
+      const pieceWidth = w + sheet.kerfWidth;
+      const pieceHeight = h + sheet.kerfWidth;
+
+      // Try existing sheets
+      for (let sheetIdx = 0; sheetIdx < sheets.length; sheetIdx++) {
+        if (placed) break;
+        const skyline = sheetSkylines.get(sheetIdx) || [{ x: 0, width: sheet.width, y: 0 }];
+
+        // Find the best position on this skyline
+        const position = findBestSkylinePosition(skyline, pieceWidth, pieceHeight, sheet);
+        if (position) {
+          // Place the piece
+          const placement: PlacedPiece = {
+            piece: { ...piece, rotated },
+            x: position.x,
+            y: position.y,
+            width: w,
+            height: h,
+          };
+          sheets[sheetIdx].pieces.push(placement);
+          sheets[sheetIdx].usedArea += w * h;
+
+          // Update skyline
+          const newSkyline = updateSkyline(skyline, position.x, pieceWidth, position.y + pieceHeight, sheet.width);
+          sheetSkylines.set(sheetIdx, newSkyline);
+          placed = true;
+        }
+      }
+
+      // If still not placed and we can add a new sheet
+      if (!placed && sheets.length < sheet.sheetsAvailable) {
+        if (w <= sheet.width && h <= sheet.length) {
+          // Create new sheet
+          const newSheetIdx = sheets.length;
+          const newSheet: SheetLayout = {
+            sheetIndex: newSheetIdx,
+            pieces: [],
+            freeRectangles: [],
+            usedArea: 0,
+            wasteArea: 0,
+            efficiency: 0,
+          };
+          sheets.push(newSheet);
+
+          // Place at origin
+          const placement: PlacedPiece = {
+            piece: { ...piece, rotated },
+            x: 0,
+            y: 0,
+            width: w,
+            height: h,
+          };
+          newSheet.pieces.push(placement);
+          newSheet.usedArea += w * h;
+
+          // Initialize skyline with this piece
+          const initialSkyline: SkylineSegment[] = [];
+          if (pieceWidth < sheet.width) {
+            // Segment for the piece
+            initialSkyline.push({ x: 0, width: pieceWidth - sheet.kerfWidth, y: pieceHeight });
+            // Segment for remaining space
+            initialSkyline.push({ x: pieceWidth, width: sheet.width - pieceWidth, y: 0 });
+          } else {
+            initialSkyline.push({ x: 0, width: sheet.width, y: pieceHeight });
+          }
+          sheetSkylines.set(newSheetIdx, initialSkyline);
+          placed = true;
+        }
+      }
+    }
+
+    if (!placed) {
+      unplacedPieces.push(piece);
+    }
+  }
+
+  // Calculate statistics
+  const sheetArea = sheet.width * sheet.length;
+  for (const sheetLayout of sheets) {
+    sheetLayout.wasteArea = sheetArea - sheetLayout.usedArea;
+    sheetLayout.efficiency = (sheetLayout.usedArea / sheetArea) * 100;
+  }
+
+  const totalUsedArea = sheets.reduce((sum, s) => sum + s.usedArea, 0);
+  const totalSheetArea = sheets.length * sheetArea;
+  const totalWasteArea = totalSheetArea - totalUsedArea;
+  const overallEfficiency = totalSheetArea > 0 ? (totalUsedArea / totalSheetArea) * 100 : 0;
+
+  if (unplacedPieces.length > 0) {
+    const unplacedBySize = new Map<string, number>();
+    for (const p of unplacedPieces) {
+      const key = `${p.width} x ${p.length}`;
+      unplacedBySize.set(key, (unplacedBySize.get(key) || 0) + 1);
+    }
+    const unplacedList = Array.from(unplacedBySize.entries())
+      .map(([size, count]) => count > 1 ? `${size} (${count})` : size)
+      .join(', ');
+    warnings.push(`Could not place: ${unplacedList}. You may need more sheets.`);
+  }
+
+  return {
+    result: {
+      sheets,
+      totalSheets: sheets.length,
+      totalUsedArea,
+      totalWasteArea,
+      overallEfficiency,
+      unplacedPieces,
+      warnings,
+    },
+    comparison: {
+      name: config.name,
+      efficiency: overallEfficiency,
+      sheetsUsed: sheets.length,
+      unplacedCount: unplacedPieces.length,
+    },
+  };
+}
+
+// Find the best position on the skyline for a piece (lowest y that fits)
+function findBestSkylinePosition(
+  skyline: SkylineSegment[],
+  pieceWidth: number,
+  pieceHeight: number,
+  sheet: SheetConfigData
+): { x: number; y: number } | null {
+  let bestPosition: { x: number; y: number } | null = null;
+  let bestY = Infinity;
+
+  // Try each segment as a potential starting position
+  for (let i = 0; i < skyline.length; i++) {
+    const startSegment = skyline[i];
+
+    // Check if piece can start here and fit within sheet width
+    if (startSegment.x + pieceWidth > sheet.width) continue;
+
+    // Find the maximum height across all segments this piece would span
+    let maxY = startSegment.y;
+    let coveredWidth = 0;
+
+    for (let j = i; j < skyline.length && coveredWidth < pieceWidth; j++) {
+      const segment = skyline[j];
+      maxY = Math.max(maxY, segment.y);
+      coveredWidth += segment.width;
+      if (j > i) coveredWidth += 0; // Segments are contiguous
+    }
+
+    // Check if piece fits vertically
+    if (maxY + pieceHeight > sheet.length) continue;
+
+    // This is a valid position - check if it's the best (lowest)
+    if (maxY < bestY) {
+      bestY = maxY;
+      bestPosition = { x: startSegment.x, y: maxY };
+    }
+  }
+
+  return bestPosition;
+}
+
+// Update the skyline after placing a piece
+function updateSkyline(
+  skyline: SkylineSegment[],
+  pieceX: number,
+  pieceWidth: number,
+  newY: number,
+  sheetWidth: number
+): SkylineSegment[] {
+  const newSkyline: SkylineSegment[] = [];
+  const pieceEndX = pieceX + pieceWidth;
+
+  for (const segment of skyline) {
+    const segmentEndX = segment.x + segment.width;
+
+    // Segment is entirely before the piece
+    if (segmentEndX <= pieceX) {
+      newSkyline.push(segment);
+      continue;
+    }
+
+    // Segment is entirely after the piece
+    if (segment.x >= pieceEndX) {
+      newSkyline.push(segment);
+      continue;
+    }
+
+    // Segment overlaps with piece - need to split/modify
+
+    // Part before the piece
+    if (segment.x < pieceX) {
+      newSkyline.push({
+        x: segment.x,
+        width: pieceX - segment.x,
+        y: segment.y,
+      });
+    }
+
+    // The piece itself (only add once, when we first encounter overlap)
+    if (newSkyline.length === 0 || newSkyline[newSkyline.length - 1].x + newSkyline[newSkyline.length - 1].width <= pieceX) {
+      newSkyline.push({
+        x: pieceX,
+        width: pieceWidth,
+        y: newY,
+      });
+    }
+
+    // Part after the piece
+    if (segmentEndX > pieceEndX) {
+      newSkyline.push({
+        x: pieceEndX,
+        width: segmentEndX - pieceEndX,
+        y: segment.y,
+      });
+    }
+  }
+
+  // Merge adjacent segments with the same height
+  const mergedSkyline: SkylineSegment[] = [];
+  for (const segment of newSkyline) {
+    if (mergedSkyline.length > 0) {
+      const last = mergedSkyline[mergedSkyline.length - 1];
+      if (Math.abs(last.y - segment.y) < 0.001 && Math.abs(last.x + last.width - segment.x) < 0.001) {
+        last.width += segment.width;
+        continue;
+      }
+    }
+    mergedSkyline.push({ ...segment });
+  }
+
+  return mergedSkyline;
 }
 
 // Run optimization with a specific algorithm configuration
@@ -541,8 +1040,16 @@ export function optimizeCutList(
   }> = [];
 
   for (const config of ALGORITHM_CONFIGS) {
-    const { result, comparison } = runSingleAlgorithm(pieces, sheet, config);
-    results.push({ result, comparison, config });
+    // Choose algorithm implementation based on type
+    let algorithmResult: { result: Omit<OptimizationResult, 'algorithmUsed' | 'algorithmsCompared'>; comparison: AlgorithmComparison };
+    if (config.algorithmType === 'shelf') {
+      algorithmResult = runShelfAlgorithm(pieces, sheet, config);
+    } else if (config.algorithmType === 'skyline') {
+      algorithmResult = runSkylineAlgorithm(pieces, sheet, config);
+    } else {
+      algorithmResult = runSingleAlgorithm(pieces, sheet, config);
+    }
+    results.push({ result: algorithmResult.result, comparison: algorithmResult.comparison, config });
   }
 
   // Find the best result:

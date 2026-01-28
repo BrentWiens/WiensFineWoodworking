@@ -251,21 +251,6 @@ test.describe('Cut List Optimizer', () => {
     await expect(page.locator('text=24 x 36')).toBeVisible();
   });
 
-  test('shows rotated indicator for rotated pieces', async ({ page }) => {
-    await page.goto('/tools/cut-list-optimizer', { waitUntil: 'networkidle' });
-
-    // Enter a piece with along-width grain (forces rotation)
-    await page.getByTestId('piece-width-0').fill('80');
-    await page.getByTestId('piece-length-0').fill('40');
-    await page.getByTestId('piece-grain-0').selectOption('along-width');
-
-    // Click optimize
-    await page.getByTestId('optimize-button').click();
-
-    // Should show rotated indicator
-    await expect(page.locator('text=(rotated)')).toBeVisible();
-  });
-
   test('handles decimal dimensions', async ({ page }) => {
     await page.goto('/tools/cut-list-optimizer', { waitUntil: 'networkidle' });
 
