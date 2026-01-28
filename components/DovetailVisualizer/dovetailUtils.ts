@@ -6,7 +6,7 @@ export interface DovetailParams {
   boardWidth: number;
   thickness: number;
   numberOfTails: number;
-  tailAngle: '1:4' | '1:6' | '1:8';
+  tailAngle: '1:4' | '1:6' | '1:8' | '1:0';
   tailWidth?: number;
   pinWidth?: number;
   topOffset: number;
@@ -51,10 +51,11 @@ export const DEFAULT_PARAMS: DovetailParams = {
   bottomOffset: 0,
 };
 
-export const ANGLE_RATIOS: Record<string, number> = { 
-  '1:4': 1/4, 
-  '1:6': 1/6, 
-  '1:8': 1/8 
+export const ANGLE_RATIOS: Record<string, number> = {
+  '1:0': 0,    // Box joint (90°)
+  '1:4': 1/4,
+  '1:6': 1/6,
+  '1:8': 1/8
 };
 
 // Convert decimal to fraction (up to 64ths)
@@ -197,10 +198,11 @@ export function generatePinPath(g: DovetailGeometry, scale: number): string {
 // Get validation warnings
 export function getWarnings(g: DovetailGeometry): string[] {
   const warnings: string[] = [];
-  if (g.halfPinWidth < 0) warnings.push('Board too narrow for the number of tails specified');
-  if (g.thickness > g.totalTailLength || g.thickness > g.totalPinLength) 
+  if (g.halfPinWidth < 0) warnings.push('Board too narrow for the number of tails/fingers specified');
+  if (g.thickness > g.totalTailLength || g.thickness > g.totalPinLength)
     warnings.push('Material thickness exceeds board length');
-  if (g.tailExtension >= g.tailWidth / 2) 
+  // Only check tail angle warning for dovetails (not box joints where ratio is 0)
+  if (g.ratio > 0 && g.tailExtension >= g.tailWidth / 2)
     warnings.push('Tail angle too steep for tail width - tails will have no base width');
   return warnings;
 }

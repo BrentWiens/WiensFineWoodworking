@@ -196,7 +196,7 @@ describe('getWarnings', () => {
     const geometry = calculateGeometry(params)
     const warnings = getWarnings(geometry)
 
-    expect(warnings).toContain('Board too narrow for the number of tails specified')
+    expect(warnings).toContain('Board too narrow for the number of tails/fingers specified')
   })
 
   it('warns when thickness exceeds board length', () => {

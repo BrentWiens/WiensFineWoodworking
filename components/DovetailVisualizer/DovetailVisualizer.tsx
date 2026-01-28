@@ -273,9 +273,10 @@ export default function DovetailVisualizer({
             <NumberInput label="Number of Tails" value={inputValues.numberOfTails} step="1" min="1"
               onChange={v => handleChange('numberOfTails', v)} onBlur={() => handleBlur('numberOfTails')} />
             <div>
-              <label className="block text-sm font-medium text-stone-600 mb-1">Tail Angle</label>
+              <label className="block text-sm font-medium text-stone-600 mb-1">Joint Angle</label>
               <select value={params.tailAngle} onChange={e => setParams(p => ({ ...p, tailAngle: e.target.value as any }))}
                 className="w-full px-3 py-2 border border-stone-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-stone-900 font-medium">
+                <option value="1:0">Box Joint (90°)</option>
                 <option value="1:8">1:8 (7°) - Hardwood</option>
                 <option value="1:6">1:6 (9.5°) - Softwood</option>
                 <option value="1:4">1:4 (14°) - Stylistic / Thin Material</option>
