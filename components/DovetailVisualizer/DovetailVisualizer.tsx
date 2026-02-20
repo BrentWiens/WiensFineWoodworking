@@ -5,8 +5,17 @@ import {
   DovetailParams, DovetailGeometry, InputValues, DEFAULT_PARAMS,
   formatDimension, calculateGeometry, generateTailPath, generatePinPath, getWarnings
 } from './dovetailUtils';
+import UnitToggle, { UnitSystem } from '../UnitToggle';
 
 const SCALE = 20;
+
+function formatDimensionForUnit(value: number, units: UnitSystem): string {
+  if (units === 'metric') {
+    const rounded = Math.round(value * 100) / 100;
+    return `${rounded}mm`;
+  }
+  return `${formatDimension(value)}"`;
+}
 
 interface DovetailVisualizerProps {
   initialPinPieceLength?: number;
@@ -44,33 +53,34 @@ function NumberInput({
 }
 
 // Dimension markers component
-function WidthDimensions({ geometry, offsetX }: { geometry: DovetailGeometry; offsetX: number }) {
+function WidthDimensions({ geometry, offsetX, units }: { geometry: DovetailGeometry; offsetX: number; units: UnitSystem }) {
   const { halfPinWidth, tailWidth, pinWidth, numberOfTails, topOffset, bottomOffset } = geometry;
   
   type MarkerType = 'half-pin' | 'tail' | 'pin' | 'offset';
   const markers: { y1: number; y2: number; label: string; type: MarkerType }[] = [];
   let y = 0;
   
+  const fmt = (v: number) => formatDimensionForUnit(v, units);
   if (topOffset > 0) {
-    markers.push({ y1: y, y2: y + topOffset, label: formatDimension(topOffset), type: 'offset' });
+    markers.push({ y1: y, y2: y + topOffset, label: fmt(topOffset), type: 'offset' });
     y += topOffset;
   }
-  markers.push({ y1: y, y2: y + halfPinWidth, label: formatDimension(halfPinWidth), type: 'half-pin' });
+  markers.push({ y1: y, y2: y + halfPinWidth, label: fmt(halfPinWidth), type: 'half-pin' });
   y += halfPinWidth;
-  
+
   for (let i = 0; i < numberOfTails; i++) {
-    markers.push({ y1: y, y2: y + tailWidth, label: formatDimension(tailWidth), type: 'tail' });
+    markers.push({ y1: y, y2: y + tailWidth, label: fmt(tailWidth), type: 'tail' });
     y += tailWidth;
     if (i < numberOfTails - 1) {
-      markers.push({ y1: y, y2: y + pinWidth, label: formatDimension(pinWidth), type: 'pin' });
+      markers.push({ y1: y, y2: y + pinWidth, label: fmt(pinWidth), type: 'pin' });
       y += pinWidth;
     }
   }
-  
-  markers.push({ y1: y, y2: y + halfPinWidth, label: formatDimension(halfPinWidth), type: 'half-pin' });
+
+  markers.push({ y1: y, y2: y + halfPinWidth, label: fmt(halfPinWidth), type: 'half-pin' });
   y += halfPinWidth;
   if (bottomOffset > 0) {
-    markers.push({ y1: y, y2: y + bottomOffset, label: formatDimension(bottomOffset), type: 'offset' });
+    markers.push({ y1: y, y2: y + bottomOffset, label: fmt(bottomOffset), type: 'offset' });
   }
 
   const colors: Record<MarkerType, string> = {
@@ -95,14 +105,15 @@ function WidthDimensions({ geometry, offsetX }: { geometry: DovetailGeometry; of
 }
 
 // Overall dimension lines component
-function OverallDimensions({ 
-  width, height, xLineStart, xLineEnd, yLineXPos 
-}: { 
-  width: number; 
-  height: number; 
-  xLineStart: number; 
-  xLineEnd: number; 
+function OverallDimensions({
+  width, height, xLineStart, xLineEnd, yLineXPos, units
+}: {
+  width: number;
+  height: number;
+  xLineStart: number;
+  xLineEnd: number;
   yLineXPos: number;
+  units: UnitSystem;
 }) {
   return (
     <>
@@ -112,7 +123,7 @@ function OverallDimensions({
         <line x1={xLineStart * SCALE} y1={-16} x2={xLineStart * SCALE} y2={-8} stroke="#374151" strokeWidth="1" />
         <line x1={xLineEnd * SCALE} y1={-16} x2={xLineEnd * SCALE} y2={-8} stroke="#374151" strokeWidth="1" />
         <text x={((xLineStart + xLineEnd) / 2) * SCALE} y={-16} textAnchor="middle" fontSize="10" fill="#374151" fontWeight="600">
-          {formatDimension(width)}
+          {formatDimensionForUnit(width, units)}
         </text>
       </g>
       {/* Y dimension */}
@@ -122,7 +133,7 @@ function OverallDimensions({
         <line x1={yLineXPos * SCALE - 16} y1={height * SCALE} x2={yLineXPos * SCALE - 8} y2={height * SCALE} stroke="#374151" strokeWidth="1" />
         <text x={yLineXPos * SCALE - 16} y={height * SCALE / 2} textAnchor="middle" fontSize="10" fill="#374151" fontWeight="600"
           transform={`rotate(-90, ${yLineXPos * SCALE - 16}, ${height * SCALE / 2})`}>
-          {formatDimension(height)}
+          {formatDimensionForUnit(height, units)}
         </text>
       </g>
     </>
@@ -130,11 +141,12 @@ function OverallDimensions({
 }
 
 // Board SVG component
-function BoardSVG({ 
-  geometry, type 
-}: { 
-  geometry: DovetailGeometry; 
+function BoardSVG({
+  geometry, type, units
+}: {
+  geometry: DovetailGeometry;
   type: 'tail' | 'pin';
+  units: UnitSystem;
 }) {
   const isTail = type === 'tail';
   const path = isTail ? generateTailPath(geometry, SCALE) : generatePinPath(geometry, SCALE);
@@ -169,14 +181,15 @@ function BoardSVG({
       </defs>
       <path d={path} fill={fill} stroke="#8B4513" strokeWidth="2" />
       <path d={path} fill={`url(#${patternId})`} />
-      <OverallDimensions 
-        width={length} 
-        height={geometry.boardWidth} 
-        xLineStart={xLineStart} 
-        xLineEnd={xLineEnd} 
-        yLineXPos={yLineXPos} 
+      <OverallDimensions
+        width={length}
+        height={geometry.boardWidth}
+        xLineStart={xLineStart}
+        xLineEnd={xLineEnd}
+        yLineXPos={yLineXPos}
+        units={units}
       />
-      <WidthDimensions geometry={geometry} offsetX={length * SCALE + (isTail ? geometry.thickness * SCALE : 0)} />
+      <WidthDimensions geometry={geometry} offsetX={length * SCALE + (isTail ? geometry.thickness * SCALE : 0)} units={units} />
     </svg>
   );
 }
@@ -245,18 +258,23 @@ export default function DovetailVisualizer({
     }
   };
 
+  const [units, setUnits] = useState<UnitSystem>('imperial');
   const geometry = useMemo(() => calculateGeometry(params), [params]);
   const warnings = useMemo(() => getWarnings(geometry), [geometry]);
+  const isBoxJoint = params.tailAngle === '1:0';
 
   return (
     <div className="max-w-6xl mx-auto p-6 bg-white rounded-lg shadow-lg">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         <div className="space-y-4">
-          <h3 className="text-xl font-semibold text-stone-700 mb-3">Board Dimensions</h3>
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="text-xl font-semibold text-stone-700">Board Dimensions</h3>
+            <UnitToggle units={units} onChange={setUnits} />
+          </div>
           <div className="grid grid-cols-2 gap-4">
-            <NumberInput label="Tail Piece Length" value={inputValues.tailPieceLength}
+            <NumberInput label={isBoxJoint ? "Board A Length" : "Tail Piece Length"} value={inputValues.tailPieceLength}
               onChange={v => handleChange('tailPieceLength', v)} onBlur={() => handleBlur('tailPieceLength', initialTailPieceLength)} />
-            <NumberInput label="Pin Piece Length" value={inputValues.pinPieceLength}
+            <NumberInput label={isBoxJoint ? "Board B Length" : "Pin Piece Length"} value={inputValues.pinPieceLength}
               onChange={v => handleChange('pinPieceLength', v)} onBlur={() => handleBlur('pinPieceLength', initialPinPieceLength)} />
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -270,7 +288,7 @@ export default function DovetailVisualizer({
         <div className="space-y-4">
           <h3 className="text-xl font-semibold text-stone-700 mb-3">Joint Configuration</h3>
           <div className="grid grid-cols-2 gap-4">
-            <NumberInput label="Number of Tails" value={inputValues.numberOfTails} step="1" min="1"
+            <NumberInput label={isBoxJoint ? "Number of Fingers" : "Number of Tails"} value={inputValues.numberOfTails} step="1" min="1"
               onChange={v => handleChange('numberOfTails', v)} onBlur={() => handleBlur('numberOfTails')} />
             <div>
               <label className="block text-sm font-medium text-stone-600 mb-1">Joint Angle</label>
@@ -284,9 +302,9 @@ export default function DovetailVisualizer({
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <NumberInput label="Tail Width (override)" value={inputValues.tailWidth} placeholder="Auto" step="0.125" min="0.25"
+            <NumberInput label={isBoxJoint ? "Finger Width (override)" : "Tail Width (override)"} value={inputValues.tailWidth} placeholder="Auto" step="0.125" min="0.25"
               onChange={v => handleChange('tailWidth', v)} onBlur={() => handleBlur('tailWidth')} />
-            <NumberInput label="Pin Width (override)" value={inputValues.pinWidth} placeholder="Auto" step="0.125" min="0.25"
+            <NumberInput label={isBoxJoint ? "Socket Width (override)" : "Pin Width (override)"} value={inputValues.pinWidth} placeholder="Auto" step="0.125" min="0.25"
               onChange={v => handleChange('pinWidth', v)} onBlur={() => handleBlur('pinWidth')} />
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -310,9 +328,9 @@ export default function DovetailVisualizer({
       {/* Legend */}
       <div className="mb-4 flex flex-wrap gap-4 text-sm">
         {[
-          { color: '#6B7280', label: 'Half-pin' },
-          { color: '#B45309', label: 'Tail' },
-          { color: '#059669', label: 'Pin' },
+          { color: '#6B7280', label: isBoxJoint ? 'Half-finger' : 'Half-pin' },
+          { color: '#B45309', label: isBoxJoint ? 'Finger' : 'Tail' },
+          { color: '#059669', label: isBoxJoint ? 'Socket' : 'Pin' },
           ...(params.topOffset > 0 || params.bottomOffset > 0 ? [{ color: '#7C3AED', label: 'Offset' }] : [])
         ].map(({ color, label }) => (
           <span key={label} className="flex items-center gap-2">
@@ -324,15 +342,15 @@ export default function DovetailVisualizer({
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="bg-stone-50 p-6 rounded-lg border border-stone-200">
-          <h3 className="text-xl font-semibold text-stone-800 mb-4">Tail Board</h3>
+          <h3 className="text-xl font-semibold text-stone-800 mb-4">{isBoxJoint ? 'Board A' : 'Tail Board'}</h3>
           <div className="bg-white border border-stone-300 rounded p-4">
-            <BoardSVG geometry={geometry} type="tail" />
+            <BoardSVG geometry={geometry} type="tail" units={units} />
           </div>
         </div>
         <div className="bg-stone-50 p-6 rounded-lg border border-stone-200">
-          <h3 className="text-xl font-semibold text-stone-800 mb-4">Pin Board</h3>
+          <h3 className="text-xl font-semibold text-stone-800 mb-4">{isBoxJoint ? 'Board B' : 'Pin Board'}</h3>
           <div className="bg-white border border-stone-300 rounded p-4">
-            <BoardSVG geometry={geometry} type="pin" />
+            <BoardSVG geometry={geometry} type="pin" units={units} />
           </div>
         </div>
       </div>

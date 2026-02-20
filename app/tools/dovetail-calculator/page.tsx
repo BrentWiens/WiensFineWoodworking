@@ -4,15 +4,15 @@ import { Navigation, Footer, ErrorBoundary } from '@/components';
 import DovetailVisualizer from '@/components/DovetailVisualizer/DovetailVisualizer';
 
 export const metadata: Metadata = {
-    title: 'Dovetail Joint Calculator | Wiens Fine Woodworking',
-    description: 'Free dovetail joint calculator and visualizer. Plan your dovetail joints with custom dimensions, pin angles, and spacing.',
-    keywords: ['dovetail calculator', 'woodworking tools', 'dovetail joint', 'woodworking calculator'],
+    title: 'Dovetail & Box Joint Calculator | Wiens Fine Woodworking',
+    description: 'Free dovetail and box joint calculator with visualizer. Plan dovetail or box joints with custom dimensions, pin angles, finger spacing, and more.',
+    keywords: ['dovetail calculator', 'box joint calculator', 'woodworking tools', 'dovetail joint', 'box joint', 'finger joint', 'woodworking calculator'],
     alternates: {
         canonical: '/tools/dovetail-calculator',
     },
     openGraph: {
-        title: 'Dovetail Joint Calculator | Wiens Fine Woodworking',
-        description: 'Free dovetail joint calculator and visualizer. Plan your dovetail joints with custom dimensions, pin angles, and spacing.',
+        title: 'Dovetail & Box Joint Calculator | Wiens Fine Woodworking',
+        description: 'Free dovetail and box joint calculator with visualizer. Plan dovetail or box joints with custom dimensions, angles, and spacing.',
         images: [
             {
                 url: '/images/dovetail-calculator/box-dovetails-cherry-maple-walnut.jpg',
@@ -24,8 +24,8 @@ export const metadata: Metadata = {
     },
     twitter: {
         card: 'summary_large_image',
-        title: 'Dovetail Joint Calculator | Wiens Fine Woodworking',
-        description: 'Free dovetail joint calculator and visualizer',
+        title: 'Dovetail & Box Joint Calculator | Wiens Fine Woodworking',
+        description: 'Free dovetail and box joint calculator with visualizer',
         images: ['/images/dovetail-calculator/box-dovetails-cherry-maple-walnut.jpg'],
     },
 };
@@ -63,7 +63,6 @@ export default function DovetailCalculatorPage() {
                         </p>
                     </div>
                 </div>
-
                 <ErrorBoundary>
                     <DovetailVisualizer />
                 </ErrorBoundary>

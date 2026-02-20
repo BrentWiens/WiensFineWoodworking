@@ -16,7 +16,7 @@ A modern, responsive website for Wiens Fine Woodworking showcasing custom furnit
 ## Features
 
 - 📸 **Photo Gallery** - 35+ project images with lightbox modal, keyboard navigation, and smooth transitions
-- 🛠️ **Woodworking Tools** - Interactive calculators including dovetail joint visualizer, fractional calculator, board feet calculator, and cut list optimizer
+- 🛠️ **Woodworking Tools** - Interactive calculators including dovetail & box joint visualizer, fractional calculator, multi-entry board feet calculator, and cut list optimizer with 9 packing algorithms. Features imperial/metric unit toggle, localStorage persistence, and print-friendly layouts
 - 🖼️ **Image Optimization** - Automatic WebP/AVIF conversion, responsive sizing, lazy loading
 - 📱 **Fully Responsive** - Mobile-first design optimized for all screen sizes
 - ⚡ **Performance** - Server-side rendering, static generation, optimized images
@@ -104,10 +104,11 @@ wiens-woodworking/
 │   ├── ContactForm.tsx
 │   ├── Gallery.tsx
 │   ├── GalleryWrapper.tsx
-│   ├── DovetailVisualizer/   # Dovetail calculator component
+│   ├── DovetailVisualizer/   # Dovetail & box joint calculator
 │   ├── FractionalCalculator/ # Fractional calculator component
-│   ├── BoardFeetCalculator/  # Board feet calculator component
-│   ├── CutListOptimizer/     # Cut list optimizer component
+│   ├── BoardFeetCalculator/  # Multi-entry board feet calculator
+│   ├── CutListOptimizer/     # Cut list optimizer (9 algorithms)
+│   ├── UnitToggle.tsx         # Imperial/metric unit toggle
 │   ├── Footer.tsx
 │   └── index.ts              # Barrel exports
 ├── tests/                    # Playwright E2E tests
@@ -171,7 +172,7 @@ Components use barrel exports (`components/index.ts`) for cleaner imports throug
 
 ### Quality Assurance
 - **E2E Testing:** Playwright test suite with 50 tests covering critical user flows
-- **Unit Testing:** Vitest tests for calculator utilities (dovetail: 22, fractional: 40+, board feet: 10, cut list: 37 tests)
+- **Unit Testing:** Vitest tests for calculator utilities (138 tests: dovetail: 22, fractional: 53, board feet: 22, cut list: 41)
 - **Performance Monitoring:** PageSpeed Insights for production performance tracking
 - **Type Safety:** Strict TypeScript configuration with `tsc --noEmit` checks
 

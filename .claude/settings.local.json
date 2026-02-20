@@ -3,7 +3,8 @@
     "allow": [
       "Bash(npx vitest:*)",
       "Bash(npx vitest run)",
-      "Bash(node -e:*)"
+      "Bash(node -e:*)",
+      "Bash(npx tsc:*)"
     ]
   }
 }

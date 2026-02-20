@@ -24,3 +24,62 @@ body {
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
+
+/* Print-friendly styles */
+@media print {
+  nav, footer, .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 12pt;
+  }
+
+  main {
+    padding-top: 0 !important;
+    min-height: auto !important;
+  }
+
+  /* Remove background images and overlays in hero sections */
+  .relative .absolute {
+    display: none !important;
+  }
+
+  /* Ensure headings are visible without background images */
+  .relative .z-10 h1 {
+    color: black !important;
+  }
+  .relative .z-10 p {
+    color: #444 !important;
+  }
+
+  /* Remove shadows and rounded corners for cleaner print */
+  .shadow-xl, .shadow-lg {
+    box-shadow: none !important;
+  }
+
+  /* Ensure SVGs print properly */
+  svg {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* Hide action buttons */
+  button {
+    display: none !important;
+  }
+
+  /* Show input values as text-like for printing */
+  input, select {
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+
+  /* Avoid page breaks inside components */
+  .bg-stone-50, .bg-white {
+    break-inside: avoid;
+  }
+}

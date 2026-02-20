@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import {
   PieceInput,
   SheetConfig,
@@ -18,9 +18,31 @@ import {
   getPieceColor,
   getPieceLabel,
 } from './cutListUtils';
+import UnitToggle, { UnitSystem, unitLabel } from '../UnitToggle';
 
 // SVG scale: pixels per inch
 const SCALE = 6;
+
+const STORAGE_KEY = 'wiens-cut-list-optimizer';
+
+interface SavedState {
+  sheetConfig: SheetConfig;
+  pieces: PieceInput[];
+}
+
+function loadSavedState(): SavedState | null {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (!saved) return null;
+    const parsed = JSON.parse(saved);
+    if (parsed.sheetConfig && Array.isArray(parsed.pieces) && parsed.pieces.length > 0) {
+      return parsed;
+    }
+  } catch {
+    // Ignore invalid data
+  }
+  return null;
+}
 
 export default function CutListOptimizer() {
   const [sheetConfig, setSheetConfig] = useState<SheetConfig>(DEFAULT_SHEET_CONFIG);
@@ -28,6 +50,28 @@ export default function CutListOptimizer() {
   const [result, setResult] = useState<OptimizationResult | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
   const [isOptimizing, setIsOptimizing] = useState(false);
+  const [units, setUnits] = useState<UnitSystem>('imperial');
+  const initialized = useRef(false);
+
+  // Load saved state on mount
+  useEffect(() => {
+    const saved = loadSavedState();
+    if (saved) {
+      setSheetConfig(saved.sheetConfig);
+      setPieces(saved.pieces);
+    }
+    initialized.current = true;
+  }, []);
+
+  // Save state to localStorage when inputs change
+  useEffect(() => {
+    if (!initialized.current) return;
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ sheetConfig, pieces }));
+    } catch {
+      // Ignore storage errors
+    }
+  }, [sheetConfig, pieces]);
 
   // Parse and validate inputs
   const sheetData = useMemo(() => parseSheetConfig(sheetConfig), [sheetConfig]);
@@ -108,6 +152,7 @@ export default function CutListOptimizer() {
     setPieces([createEmptyPiece()]);
     setResult(null);
     setErrors([]);
+    try { localStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
   }, []);
 
   // Build piece color map for consistent colors
@@ -125,21 +170,24 @@ export default function CutListOptimizer() {
       data-testid="cut-list-optimizer"
     >
       {/* Header */}
-      <div className="bg-stone-800 p-6">
-        <h2 className="text-white text-2xl font-bold">Cut List Optimizer</h2>
-        <p className="text-stone-400 text-sm mt-1">
-          Optimize plywood cuts to minimize waste
-        </p>
+      <div className="bg-stone-800 p-6 flex justify-between items-start">
+        <div>
+          <h2 className="text-white text-2xl font-bold">Cut List Optimizer</h2>
+          <p className="text-stone-400 text-sm mt-1">
+            Optimize plywood cuts to minimize waste
+          </p>
+        </div>
+        <UnitToggle units={units} onChange={setUnits} />
       </div>
 
       <div className="p-6 space-y-6">
         {/* Sheet Configuration */}
         <div className="bg-stone-50 p-4 rounded-lg">
-          <h3 className="text-lg font-semibold text-stone-800 mb-4">Sheet Settings</h3>
+          <h3 className="text-lg font-semibold text-stone-800 mb-4">Sheets</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
               <label className="block text-sm font-medium text-stone-700 mb-1">
-                Length (in)
+                Length ({unitLabel(units)})
               </label>
               <input
                 type="text"
@@ -152,7 +200,7 @@ export default function CutListOptimizer() {
             </div>
             <div>
               <label className="block text-sm font-medium text-stone-700 mb-1">
-                Width (in)
+                Width ({unitLabel(units)})
               </label>
               <input
                 type="text"
@@ -165,7 +213,7 @@ export default function CutListOptimizer() {
             </div>
             <div>
               <label className="block text-sm font-medium text-stone-700 mb-1">
-                Blade Kerf (in)
+                Blade Kerf ({unitLabel(units)})
               </label>
               <input
                 type="text"
@@ -212,8 +260,8 @@ export default function CutListOptimizer() {
           <div className="space-y-3">
             {/* Header row */}
             <div className="grid grid-cols-12 gap-2 text-sm font-medium text-stone-600 px-1">
-              <div className="col-span-3">Length (in)</div>
-              <div className="col-span-3">Width (in)</div>
+              <div className="col-span-3">Length ({unitLabel(units)})</div>
+              <div className="col-span-3">Width ({unitLabel(units)})</div>
               <div className="col-span-2">Qty</div>
               <div className="col-span-3">Grain</div>
               <div className="col-span-1"></div>
@@ -385,7 +433,9 @@ export default function CutListOptimizer() {
                 <div>
                   <div className="text-stone-400 text-sm">Waste</div>
                   <div className="text-white text-3xl font-bold font-mono">
-                    {(result.totalWasteArea / 144).toFixed(1)} ft²
+                    {units === 'metric'
+                      ? (result.totalWasteArea / 1000000).toFixed(2) + ' m²'
+                      : (result.totalWasteArea / 144).toFixed(1) + ' ft²'}
                   </div>
                 </div>
               </div>
@@ -436,6 +486,7 @@ export default function CutListOptimizer() {
                     layout={layout}
                     sheet={sheetData}
                     pieceColorMap={pieceColorMap}
+                    units={units}
                   />
                 ))}
               </div>
@@ -454,10 +505,12 @@ function SheetVisualization({
   layout,
   sheet,
   pieceColorMap,
+  units,
 }: {
   layout: SheetLayout;
   sheet: SheetConfigData;
   pieceColorMap: Map<string, string>;
+  units: UnitSystem;
 }) {
   const padding = 40;
   // Length on X axis, Width on Y axis
@@ -567,7 +620,7 @@ function SheetVisualization({
             fontSize="12"
             textAnchor="middle"
           >
-            {sheet.length}&quot; (length)
+            {sheet.length}{units === 'metric' ? 'mm' : '"'} (length)
           </text>
           {/* Width label on left (Y axis) */}
           <text
@@ -578,7 +631,7 @@ function SheetVisualization({
             textAnchor="middle"
             transform={`rotate(-90, ${padding - 10}, ${padding + (sheet.width * SCALE) / 2})`}
           >
-            {sheet.width}&quot; (width)
+            {sheet.width}{units === 'metric' ? 'mm' : '"'} (width)
           </text>
         </svg>
       </div>
