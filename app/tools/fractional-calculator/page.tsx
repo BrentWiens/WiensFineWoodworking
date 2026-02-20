@@ -35,7 +35,7 @@ export default function FractionalCalculatorPage() {
         <>
             <Navigation />
 
-            <main className="min-h-screen pt-20 bg-stone-50">
+            <main className="min-h-screen bg-stone-50">
 
                 <div className="relative pt-30 pb-16 px-6">
                     {/* Background Image */}
