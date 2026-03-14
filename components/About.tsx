@@ -19,13 +19,13 @@ export default function About() {
                         </p>
 
                         <p className="text-stone-700 text-lg leading-relaxed">
-                            From custom furniture to unique handcrafted pieces, each project is an opportunity
+                            From custom furniture to finish carpentry and unique handcrafted pieces, each project is an opportunity
                             to bring your vision to life. I work closely with clients to ensure every detail
                             matches their needs and exceeds their expectations.
                         </p>
 
                         <p className="text-stone-700 text-lg leading-relaxed">
-                            Whether you're looking for a bold statement piece for your home, a custom gift, or
+                            Whether you're looking for a bold statement piece for your home, finish carpentry work, a custom gift, or
                             functional furniture built to last generations, I'm here to help create something
                             truly special.
                         </p>
@@ -50,6 +50,12 @@ export default function About() {
                                     <svg className="w-6 h-6 text-stone-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                     </svg>
+                                    <span>Finish carpentry — trim, moulding, built-ins, and more</span>
+                                </li>
+                                <li className="flex items-center gap-3">
+                                    <svg className="w-6 h-6 text-stone-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                    </svg>
                                     <span>Restoration and refinishing of heirloom pieces</span>
                                 </li>
                             </ul>
@@ -57,7 +63,7 @@ export default function About() {
                     </div>
 
                     <div className="lg:col-span-1">
-                        <div className="relative aspect-[3/4] max-w-sm mx-auto lg:max-w-none overflow-hidden rounded-lg shadow-lg">
+                        <div className="relative h-full min-h-80 max-w-sm mx-auto lg:max-w-none overflow-hidden rounded-lg shadow-lg">
                             <Image
                                 src="/brent-in-shop.jpg"
                                 alt="Brent Wiens in woodworking shop"

@@ -17,9 +17,9 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://wfinew.com"),
-  title: "Wiens Fine Woodworking | Custom Furniture & Handcrafted Wood Projects",
-  description: "Handcrafted furniture and custom woodworking projects built with precision and care. Quality custom furniture, cutting boards, and unique wood pieces.",
-  keywords: ["woodworking", "custom furniture", "handcrafted", "wood projects", "cutting boards", "furniture"],
+  title: "Wiens Fine Woodworking | Custom Furniture, Finish Carpentry & Handcrafted Wood Projects",
+  description: "Handcrafted furniture, finish carpentry, and custom woodworking projects built with precision and care. Quality custom furniture, trim work, built-ins, cutting boards, and unique wood pieces.",
+  keywords: ["woodworking", "custom furniture", "finish carpentry", "handcrafted", "wood projects", "cutting boards", "furniture", "trim", "built-ins", "moulding"],
   authors: [{ name: "Wiens Fine Woodworking" }],
   alternates: {
     canonical: "/",
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   openGraph: {
     title: "Wiens Fine Woodworking",
-    description: "Handcrafted furniture and custom woodworking projects",
+    description: "Handcrafted furniture, finish carpentry, and custom woodworking projects",
     type: "website",
     url: "https://wfinew.com",
     siteName: "Wiens Fine Woodworking",
@@ -43,7 +43,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Wiens Fine Woodworking",
-    description: "Handcrafted furniture and custom woodworking projects",
+    description: "Handcrafted furniture, finish carpentry, and custom woodworking projects",
     images: ["/images/handplanes.jpg"],
   },
 };
@@ -53,7 +53,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     '@context': 'https://schema.org',
     '@type': 'LocalBusiness',
     name: 'Wiens Fine Woodworking',
-    description: 'Handcrafted furniture and custom woodworking projects',
+    description: 'Handcrafted furniture, finish carpentry, and custom woodworking projects',
     url: 'https://wfinew.com',
     address: {
       '@type': 'PostalAddress',

@@ -1,6 +1,6 @@
 # Wiens Fine Woodworking
 
-A modern, responsive website for Wiens Fine Woodworking showcasing custom furniture and handcrafted wood projects.
+A modern, responsive website for Wiens Fine Woodworking showcasing custom furniture, finish carpentry, and handcrafted wood projects.
 
 🔗 **Live Site:** [wfinew.com](https://wfinew.com)
 
