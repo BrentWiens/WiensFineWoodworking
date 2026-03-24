@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import AnimatedTagline from './AnimatedTagline';
 
 export default function Hero() {
   return (
@@ -19,9 +20,7 @@ export default function Hero() {
 
       {/* Content */}
       <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
-        <p className="text-2xl md:text-3xl text-white/95 mb-8 drop-shadow-md font-light">
-          Custom tables and desks, handcrafted with precision and care in Kitchener
-        </p>
+        <AnimatedTagline />
         <div className="flex gap-4 justify-center">
           <a 
             href="/gallery" 
