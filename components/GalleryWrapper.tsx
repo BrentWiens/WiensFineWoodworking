@@ -2,34 +2,28 @@ import fs from 'fs';
 import path from 'path';
 import Gallery from './Gallery';
 
-const TABLES_AND_DESKS = new Set([
-  'coffee-table-walnut.jpg',
-  'end-table-walnut-brass.jpg',
-  'end-table-walnut.jpg',
-  'end-tables-walnut-maple.jpg',
-]);
+function GetImagesFromDir(folder: string) {
+  const dir = path.join(process.cwd(), `public/images/gallery/${folder}`);
+  const filenames = fs.readdirSync(dir);
+
+  // Filter for image files only
+  return filenames.filter(file =>
+    /\.(jpg|jpeg|png|webp)$/i.test(file)
+  );
+}
 
 // Server component that reads files
 export default function GalleryWrapper() {
-  const galleryDir = path.join(process.cwd(), 'public/images/gallery');
-  const filenames = fs.readdirSync(galleryDir);
-
-  // Filter for image files only
-  const imageFiles = filenames.filter(file =>
-    /\.(jpg|jpeg|png|webp)$/i.test(file)
-  );
-
-  const tablesAndDesks = imageFiles.filter(f => TABLES_AND_DESKS.has(f));
-  const other = imageFiles.filter(f => !TABLES_AND_DESKS.has(f));
-
   return (
     <>
       <Gallery
-        images={tablesAndDesks}
+        images={GetImagesFromDir("tables")}
+        folder="tables"
         sectionId="gallery"
       />
       <Gallery
-        images={other}
+        images={GetImagesFromDir("other")}
+        folder="other"
         title="Other Work"
         sectionId="gallery-other"
         background="stone"

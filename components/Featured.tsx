@@ -4,12 +4,12 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 const FEATURED_PROJECTS = [
-    'bed-walnut.jpg',
-    'cabinet-builtin-walnut.jpg',
-    'cuttingboard-piano-walnut-maple-cherry.jpg',
-    'end-table-walnut-brass.jpg',
-    'tea-box-walnut-brass-olive-maple.jpg',
-    'coffee-table-walnut.jpg',
+  'end-table-walnut-brass.jpg',
+  'drawers-walnut.jpg',
+  'dovetail-drawer-cherry.jpg',
+  'coffee-table-walnut.jpg',
+  'end-tables-walnut-maple.jpg',
+  'end-table-walnut.jpg',
 ];
 
 export default function FeaturedProjects() {
@@ -22,14 +22,14 @@ export default function FeaturedProjects() {
 
         {/* Featured project grid - 2 columns on mobile, 3 on desktop */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-          {FEATURED_PROJECTS.map((filename, index) => (
+          {FEATURED_PROJECTS.map((filename) => (
             <Link
               key={filename}
               href="/gallery"
               className="group relative aspect-square overflow-hidden rounded-lg bg-stone-100 shadow-md hover:shadow-xl transition-shadow"
             >
               <Image
-                src={`/images/gallery/${filename}`}
+                src={`/images/gallery/tables/${filename}`}
                 alt={`Featured woodworking project - ${filename.replace(/\.[^/.]+$/, '').replace(/-/g, ' ')}`}
                 fill
                 className="object-cover group-hover:scale-105 transition-transform duration-300"

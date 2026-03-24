@@ -5,12 +5,13 @@ import { useState, useEffect } from 'react';
 
 interface GalleryProps {
   images: string[];
+  folder: string;
   title?: string;
   sectionId?: string;
   background?: 'white' | 'stone';
 }
 
-export default function Gallery({ images, title, sectionId = 'gallery', background = 'white' }: GalleryProps) {
+export default function Gallery({ images, folder, title, sectionId = 'gallery', background = 'white' }: GalleryProps) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -82,7 +83,7 @@ export default function Gallery({ images, title, sectionId = 'gallery', backgrou
                 className="group relative aspect-square overflow-hidden rounded-lg bg-stone-100 shadow-md hover:shadow-xl transition-shadow"
               >
                 <Image
-                  src={`/images/gallery/${filename}`}
+                  src={`/images/gallery/${folder}/${filename}`}
                   alt={`Woodworking project - ${filename.replace(/\.[^/.]+$/, '').replace(/-/g, ' ')}`}
                   fill
                   className="object-cover group-hover:scale-105 transition-transform duration-300"
@@ -178,7 +179,7 @@ export default function Gallery({ images, title, sectionId = 'gallery', backgrou
           <div className="relative max-w-7xl max-h-[90vh] pointer-events-none">
             <Image
               data-testid="modal-image"
-              src={`/images/gallery/${selectedImage}`}
+              src={`/images/gallery/${folder}/${selectedImage}`}
               alt={`Woodworking project - ${selectedImage.replace(/\.[^/.]+$/, '').replace(/-/g, ' ')}`}
               width={1920}
               height={1080}
