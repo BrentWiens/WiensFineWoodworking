@@ -6,7 +6,7 @@ import Link from 'next/link';
 const FEATURED_PROJECTS = [
   'end-table-walnut-brass.jpg',
   'drawers-walnut.jpg',
-  'dovetail-drawer-cherry.jpg',
+  'cherry-desk.jpg',
   'coffee-table-walnut.jpg',
   'end-tables-walnut-maple.jpg',
   'end-table-walnut.jpg',

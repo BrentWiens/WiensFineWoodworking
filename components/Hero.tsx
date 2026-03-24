@@ -6,8 +6,8 @@ export default function Hero() {
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <Image
-          src="/handplanes.jpg"
-          alt="Hand planes"
+          src="/coffee-table-walnut-angled.jpg"
+          alt="Coffee table"
           fill
           className="object-cover"
           priority
