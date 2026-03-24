@@ -5,9 +5,12 @@ import { useState, useEffect } from 'react';
 
 interface GalleryProps {
   images: string[];
+  title?: string;
+  sectionId?: string;
+  background?: 'white' | 'stone';
 }
 
-export default function Gallery({ images }: GalleryProps) {
+export default function Gallery({ images, title, sectionId = 'gallery', background = 'white' }: GalleryProps) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -62,8 +65,11 @@ export default function Gallery({ images }: GalleryProps) {
 
   return (
     <>
-      <section id="gallery" data-testid="gallery-section" className="py-20 px-6 bg-white">
+      <section id={sectionId} data-testid="gallery-section" className={`py-20 px-6 ${background === 'stone' ? 'bg-stone-50' : 'bg-white'}`}>
         <div className="max-w-7xl mx-auto">
+          {title && (
+            <h2 className="text-3xl font-bold text-stone-800 mb-10 text-center">{title}</h2>
+          )}
           <div data-testid="gallery-grid" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {images.map((filename, index) => (
               <button

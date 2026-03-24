@@ -4,13 +4,13 @@ import { Navigation, GalleryWrapper, Footer } from '@/components';
 
 export const metadata: Metadata = {
     title: 'Gallery | Wiens Fine Woodworking',
-    description: 'Browse our complete collection of custom furniture, cutting boards, and handcrafted wood projects. Quality craftsmanship from Kitchener, Ontario.',
+    description: 'Browse custom tables and desks handcrafted in Kitchener, Ontario — dining tables, coffee tables, end tables, desks, and more.',
     alternates: {
         canonical: '/gallery',
     },
     openGraph: {
         title: 'Gallery | Wiens Fine Woodworking',
-        description: 'Browse our complete collection of custom furniture and handcrafted wood projects',
+        description: 'Browse custom tables and desks handcrafted in Kitchener, Ontario',
         images: [
             {
                 url: '/images/handplanes.jpg',
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     twitter: {
         card: 'summary_large_image',
         title: 'Gallery | Wiens Fine Woodworking',
-        description: 'Browse our complete collection of custom furniture and handcrafted wood projects',
+        description: 'Browse custom tables and desks handcrafted in Kitchener, Ontario',
         images: ['/images/handplanes.jpg'],
     },
 };
@@ -56,8 +56,8 @@ export default function GalleryPage() {
                             Project Gallery
                         </h1>
                         <p className="text-white/90 text-center text-lg max-w-2xl mx-auto drop-shadow-md">
-                            Explore our collection of custom furniture, cutting boards, and unique handcrafted pieces.
-                            Each project is built with precision, care, and quality materials.
+                            Built with precision,
+                            quality materials, and the craftsmanship to last a lifetime.
                         </p>
                     </div>
                 </div>

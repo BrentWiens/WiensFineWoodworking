@@ -19,15 +19,14 @@ export default function About() {
                         </p>
 
                         <p className="text-stone-700 text-lg leading-relaxed">
-                            From custom furniture to finish carpentry and unique handcrafted pieces, each project is an opportunity
-                            to bring your vision to life. I work closely with clients to ensure every detail
-                            matches their needs and exceeds their expectations.
+                            I specialize in custom tables and desks — from dining tables that become the heart of your home,
+                            to coffee tables, end tables, and desks built for both beauty and everyday use. Each piece is
+                            designed around your space, your style, and built to last generations.
                         </p>
 
                         <p className="text-stone-700 text-lg leading-relaxed">
-                            Whether you're looking for a bold statement piece for your home, finish carpentry work, a custom gift, or
-                            functional furniture built to last generations, I'm here to help create something
-                            truly special.
+                            Whether you're looking for a statement dining table, a functional home office desk, or the perfect
+                            accent piece for your living room, I work closely with you to bring that vision to life.
                         </p>
 
                         {/* What I Offer section */}
@@ -38,25 +37,19 @@ export default function About() {
                                     <svg className="w-6 h-6 text-stone-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                     </svg>
-                                    <span>Custom furniture design and build</span>
+                                    <span>Custom dining tables</span>
                                 </li>
                                 <li className="flex items-center gap-3">
                                     <svg className="w-6 h-6 text-stone-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                     </svg>
-                                    <span>Handcrafted cutting boards and one-of-a-kind gifts</span>
+                                    <span>Coffee tables and end tables</span>
                                 </li>
                                 <li className="flex items-center gap-3">
                                     <svg className="w-6 h-6 text-stone-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                     </svg>
-                                    <span>Finish carpentry — trim, moulding, built-ins, and more</span>
-                                </li>
-                                <li className="flex items-center gap-3">
-                                    <svg className="w-6 h-6 text-stone-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                    </svg>
-                                    <span>Restoration and refinishing of heirloom pieces</span>
+                                    <span>Desks and home office furniture</span>
                                 </li>
                             </ul>
                         </div>
