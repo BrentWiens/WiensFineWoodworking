@@ -13,9 +13,7 @@ export const metadata: Metadata = {
         description: 'Browse custom tables and desks handcrafted in Kitchener, Ontario',
         images: [
             {
-                url: '/images/handplanes.jpg',
-                width: 1200,
-                height: 630,
+                url: '/images/coffee-table-walnut-angled.jpg',
                 alt: 'Wiens Fine Woodworking Gallery',
             },
         ],
@@ -24,7 +22,7 @@ export const metadata: Metadata = {
         card: 'summary_large_image',
         title: 'Gallery | Wiens Fine Woodworking',
         description: 'Browse custom tables and desks handcrafted in Kitchener, Ontario',
-        images: ['/images/handplanes.jpg'],
+        images: ['/images/coffee-table-walnut-angled.jpg'],
     },
 };
 
@@ -39,10 +37,10 @@ export default function GalleryPage() {
                     {/* Background Image */}
                     <div className="absolute inset-0 z-0">
                         <Image
-                            src="/handplanes.jpg"
-                            alt="Handplanes"
+                            src="/coffee-table-walnut-angled.jpg"
+                            alt="Coffee table"
                             fill
-                            className="object-cover"
+                            className="object-cover object-top"
                             priority
                             quality={60}
                         />
