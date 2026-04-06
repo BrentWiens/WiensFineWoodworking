@@ -10,6 +10,14 @@ Sentry.init({
   // Add optional integrations for additional features
   integrations: [Sentry.replayIntegration()],
 
+  beforeSend(event) {
+    // Filter out browser extension noise — "Object Not Found Matching Id" is thrown
+    // by Chrome's internal Payment Handler / Autofill API, not by app code.
+    const message = event.exception?.values?.[0]?.value ?? '';
+    if (message.includes('Object Not Found Matching Id')) return null;
+    return event;
+  },
+
   // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
   tracesSampleRate: 1,
   // Enable logs to be sent to Sentry

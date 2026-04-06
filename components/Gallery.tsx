@@ -66,7 +66,7 @@ export default function Gallery({ images, folder, title, sectionId = 'gallery', 
 
   return (
     <>
-      <section id={sectionId} data-testid="gallery-section" className={`py-20 px-6 ${background === 'stone' ? 'bg-stone-50' : 'bg-white'}`}>
+      <section id={sectionId} data-testid={`${sectionId}-section`} className={`py-20 px-6 ${background === 'stone' ? 'bg-stone-50' : 'bg-white'}`}>
         <div className="max-w-7xl mx-auto">
           {title && (
             <h2 className="text-3xl font-bold text-stone-800 mb-10 text-center">{title}</h2>
