@@ -12,3 +12,4 @@ export { default as FractionalCalculator } from './FractionalCalculator/Fraction
 export { default as ServiceWorkerRegistration } from './ServiceWorkerRegistration';
 export { default as BoardFeetCalculator } from './BoardFeetCalculator/BoardFeetCalculator';
 export { default as CutListOptimizer } from './CutListOptimizer/CutListOptimizer';
+export { default as TrigCalculator } from './TrigCalculator/TrigCalculator';

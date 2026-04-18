@@ -62,27 +62,27 @@ export default function ToolsPage() {
                     </div>
                 </div>
 
-                <div className="max-w-4xl mx-auto px-6 py-12">
+                <div className="max-w-7xl mx-auto px-6 py-12">
 
-                    <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         <Link
                             href="/tools/fractional-calculator"
-                            className="flex flex-col sm:flex-row gap-4 sm:gap-6 bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow border border-stone-200"
+                            className="flex flex-col bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow border border-stone-200 overflow-hidden"
                         >
-                            <div className="relative flex-shrink-0 aspect-[5/4.3] w-full max-w-[300px] mx-auto sm:mx-0">
+                            <div className="relative aspect-[5/4] w-full">
                                 <Image
                                     src="/images/fractional-calculator/fractional-calculator-preview.png"
                                     alt="Fractional calculator preview"
                                     fill
-                                    sizes="(max-width: 640px) 100vw, 300px"
-                                    className="rounded-md object-cover"
+                                    sizes="(max-width: 768px) 100vw, 50vw"
+                                    className="object-cover"
                                 />
                             </div>
-                            <div className="flex flex-col justify-center">
-                                <h2 className="text-2xl font-bold text-stone-800 mb-2">
+                            <div className="p-5">
+                                <h2 className="text-xl font-bold text-stone-800 mb-2">
                                     Fractional Calculator
                                 </h2>
-                                <p className="text-stone-600">
+                                <p className="text-stone-600 text-sm">
                                     A convenient fractional calculator.
                                     Add, subtract, multiply, and divide fractions with ease.
                                 </p>
@@ -91,69 +91,92 @@ export default function ToolsPage() {
 
                         <Link
                             href="/tools/board-feet-calculator"
-                            className="flex flex-col sm:flex-row gap-4 sm:gap-6 bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow border border-stone-200"
+                            className="flex flex-col bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow border border-stone-200 overflow-hidden"
                         >
-                            <div className="relative flex-shrink-0 aspect-[4/5.1] w-full max-w-[300px] mx-auto sm:mx-0">
+                            <div className="relative aspect-[5/4] w-full">
                                 <Image
                                     src="/images/board-feet-calculator/board-feet-calculator-preview.png"
                                     alt="Board feet calculator preview"
                                     fill
-                                    sizes="(max-width: 640px) 100vw, 300px"
-                                    className="rounded-md object-cover"
+                                    sizes="(max-width: 768px) 100vw, 50vw"
+                                    className="object-cover object-top"
                                 />
                             </div>
-                            <div className="flex flex-col justify-center">
-                                <h2 className="text-2xl font-bold text-stone-800 mb-2">
+                            <div className="p-5">
+                                <h2 className="text-xl font-bold text-stone-800 mb-2">
                                     Board Feet Calculator
                                 </h2>
-                                <p className="text-stone-600">
+                                <p className="text-stone-600 text-sm">
                                     Calculate lumber volume in board feet from thickness, width, and length.
                                 </p>
                             </div>
                         </Link>
 
                         <Link
-                            href="/tools/dovetail-calculator"
-                            className="flex flex-col sm:flex-row gap-4 sm:gap-6 bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow border border-stone-200"
+                            href="/tools/cut-list-optimizer"
+                            className="flex flex-col bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow border border-stone-200 overflow-hidden"
                         >
-                            <div className="relative flex-shrink-0 aspect-[250/240] w-full max-w-[300px] mx-auto sm:mx-0">
+                            <div className="relative aspect-[5/4] w-full">
                                 <Image
-                                    src="/images/dovetail-calculator/dovetail-calculator-preview.png"
-                                    alt="Dovetail joint preview"
+                                    src="/images/cut-list-optimizer/cut-list-optimizer-preview.png"
+                                    alt="Cut list optimizer preview"
                                     fill
-                                    sizes="(max-width: 640px) 100vw, 300px"
-                                    className="rounded-md object-cover"
+                                    sizes="(max-width: 768px) 100vw, 50vw"
+                                    className="object-cover object-top"
                                 />
                             </div>
-                            <div className="flex flex-col justify-center">
-                                <h2 className="text-2xl font-bold text-stone-800 mb-2">
-                                    Dovetail Joint Calculator
+                            <div className="p-5">
+                                <h2 className="text-xl font-bold text-stone-800 mb-2">
+                                    Cut List Optimizer
                                 </h2>
-                                <p className="text-stone-600">
-                                    Visualize and plan your dovetail joints with custom dimensions, pin angles, and spacing.
+                                <p className="text-stone-600 text-sm">
+                                    Optimize plywood cuts to minimize waste. Supports grain direction for consistent appearance.
                                 </p>
                             </div>
                         </Link>
 
                         <Link
-                            href="/tools/cut-list-optimizer"
-                            className="flex flex-col sm:flex-row gap-4 sm:gap-6 bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow border border-stone-200"
+                            href="/tools/trig-calculator"
+                            className="flex flex-col bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow border border-stone-200 overflow-hidden"
                         >
-                            <div className="relative flex-shrink-0 aspect-[250/240] w-full max-w-[300px] mx-auto sm:mx-0">
+                            <div className="relative aspect-[5/4] w-full">
                                 <Image
-                                    src="/images/cut-list-optimizer/cut-list-optimizer-preview.png"
-                                    alt="Cut list optimizer preview"
+                                    src="/images/trigonometry-calculator/trig-calculator.png"
+                                    alt="Trigonometry calculator preview"
                                     fill
-                                    sizes="(max-width: 640px) 100vw, 300px"
-                                    className="rounded-md object-cover"
+                                    sizes="(max-width: 768px) 100vw, 50vw"
+                                    className="object-cover"
                                 />
                             </div>
-                            <div className="flex flex-col justify-center">
-                                <h2 className="text-2xl font-bold text-stone-800 mb-2">
-                                    Cut List Optimizer
+                            <div className="p-5">
+                                <h2 className="text-xl font-bold text-stone-800 mb-2">
+                                    Trigonometry Calculator
                                 </h2>
-                                <p className="text-stone-600">
-                                    Optimize plywood cuts to minimize waste. Supports grain direction for consistent appearance.
+                                <p className="text-stone-600 text-sm">
+                                    Solve any right triangle. Enter two known sides or angles to calculate the rest. Supports fractional input.
+                                </p>
+                            </div>
+                        </Link>
+
+                        <Link
+                            href="/tools/dovetail-calculator"
+                            className="flex flex-col bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow border border-stone-200 overflow-hidden"
+                        >
+                            <div className="relative aspect-[5/4] w-full">
+                                <Image
+                                    src="/images/dovetail-calculator/dovetail-calculator-preview.png"
+                                    alt="Dovetail joint preview"
+                                    fill
+                                    sizes="(max-width: 768px) 100vw, 50vw"
+                                    className="object-cover object-top"
+                                />
+                            </div>
+                            <div className="p-5">
+                                <h2 className="text-xl font-bold text-stone-800 mb-2">
+                                    Dovetail Joint Calculator
+                                </h2>
+                                <p className="text-stone-600 text-sm">
+                                    Visualize and plan your dovetail joints with custom dimensions, pin angles, and spacing.
                                 </p>
                             </div>
                         </Link>
