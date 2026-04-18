@@ -4,6 +4,7 @@ import Gallery from './Gallery';
 
 function GetImagesFromDir(folder: string) {
   const dir = path.join(process.cwd(), `public/images/gallery/${folder}`);
+  if (!fs.existsSync(dir)) return [];
   const filenames = fs.readdirSync(dir);
 
   // Filter for image files only
@@ -20,6 +21,12 @@ export default function GalleryWrapper() {
         images={GetImagesFromDir("tables")}
         folder="tables"
         sectionId="gallery"
+      />
+      <Gallery
+        images={GetImagesFromDir("finish-carpentry")}
+        folder="finish-carpentry"
+        title="Finish Carpentry"
+        sectionId="gallery-finish-carpentry"
       />
       <Gallery
         images={GetImagesFromDir("other")}

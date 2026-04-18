@@ -176,14 +176,14 @@ export default function Gallery({ images, folder, title, sectionId = 'gallery', 
           )}
 
           {/* Image - now directly in the modal container */}
-          <div className="relative max-w-7xl max-h-[90vh] pointer-events-none">
+          <div className="relative w-[90vw] h-[90vh] max-w-7xl pointer-events-none">
             <Image
               data-testid="modal-image"
               src={`/images/gallery/${folder}/${selectedImage}`}
               alt={`Woodworking project - ${selectedImage.replace(/\.[^/.]+$/, '').replace(/-/g, ' ')}`}
-              width={1920}
-              height={1080}
-              className="object-contain max-h-[90vh] w-auto"
+              fill
+              sizes="90vw"
+              className="object-contain"
               quality={95}
               onLoad={() => setIsLoading(false)}
             />
