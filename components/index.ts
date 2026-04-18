@@ -13,3 +13,4 @@ export { default as ServiceWorkerRegistration } from './ServiceWorkerRegistratio
 export { default as BoardFeetCalculator } from './BoardFeetCalculator/BoardFeetCalculator';
 export { default as CutListOptimizer } from './CutListOptimizer/CutListOptimizer';
 export { default as TrigCalculator } from './TrigCalculator/TrigCalculator';
+export { default as ToolCard } from './ToolCard';

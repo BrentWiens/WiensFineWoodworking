@@ -8,11 +8,56 @@ interface ContactFormData {
   turnstileToken: string;
 }
 
+const MAX_BODY_BYTES = 10_000;
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_MAX = 3;
+
+const requestLog = new Map<string, number[]>();
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const timestamps = (requestLog.get(ip) ?? []).filter(t => now - t < RATE_LIMIT_WINDOW_MS);
+  if (timestamps.length >= RATE_LIMIT_MAX) {
+    requestLog.set(ip, timestamps);
+    return true;
+  }
+  timestamps.push(now);
+  requestLog.set(ip, timestamps);
+  return false;
+}
+
+function escapeHtml(input: string): string {
+  return input
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function getClientIp(request: NextRequest): string {
+  const forwarded = request.headers.get('x-forwarded-for');
+  if (forwarded) return forwarded.split(',')[0].trim();
+  return request.headers.get('x-real-ip') ?? 'unknown';
+}
+
 export async function POST(request: NextRequest) {
   try {
+    const contentLength = Number(request.headers.get('content-length') ?? '0');
+    if (contentLength > MAX_BODY_BYTES) {
+      return NextResponse.json({ error: 'Payload too large' }, { status: 413 });
+    }
+
+    const ip = getClientIp(request);
+    if (isRateLimited(ip)) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again in a minute.' },
+        { status: 429 }
+      );
+    }
+
     const { name, email, message, turnstileToken }: ContactFormData = await request.json();
 
-    // Validate required fields
     if (!name || !email || !message || !turnstileToken) {
       return NextResponse.json(
         { error: 'All fields are required' },
@@ -42,7 +87,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Configure email transporter
+    const safeName = escapeHtml(name);
+    const safeEmail = escapeHtml(email);
+    const safeMessage = escapeHtml(message).replace(/\n/g, '<br>');
+
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
@@ -51,7 +99,6 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Email to you (the business owner)
     await transporter.sendMail({
       from: process.env.GMAIL_USER,
       to: process.env.GMAIL_USER,
@@ -62,26 +109,26 @@ export async function POST(request: NextRequest) {
           <h2 style="color: #2C1810; border-bottom: 2px solid #78716C; padding-bottom: 10px;">
             New Contact Form Submission
           </h2>
-          
+
           <div style="background-color: #f5f5f4; padding: 20px; border-radius: 8px; margin: 20px 0;">
             <p style="margin: 10px 0;">
               <strong style="color: #44403c;">Name:</strong><br>
-              ${name}
+              ${safeName}
             </p>
-            
+
             <p style="margin: 10px 0;">
               <strong style="color: #44403c;">Email:</strong><br>
-              <a href="mailto:${email}" style="color: #2563eb;">${email}</a>
+              <a href="mailto:${safeEmail}" style="color: #2563eb;">${safeEmail}</a>
             </p>
-            
+
             <p style="margin: 10px 0;">
               <strong style="color: #44403c;">Message:</strong><br>
-              ${message.replace(/\n/g, '<br>')}
+              ${safeMessage}
             </p>
           </div>
-          
+
           <p style="color: #78716C; font-size: 14px;">
-            You can reply directly to this email to respond to ${name}.
+            You can reply directly to this email to respond to ${safeName}.
           </p>
         </div>
       `,

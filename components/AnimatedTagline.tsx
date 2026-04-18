@@ -11,14 +11,18 @@ export default function AnimatedTagline() {
   const [visible, setVisible] = useState(true);
 
   useEffect(() => {
-    const timer = setInterval(() => {
+    let fadeTimeout: ReturnType<typeof setTimeout> | undefined;
+    const interval = setInterval(() => {
       setVisible(false);
-      setTimeout(() => {
+      fadeTimeout = setTimeout(() => {
         setIndex(i => (i + 1) % WORDS.length);
         setVisible(true);
       }, DURATION);
     }, INTERVAL);
-    return () => clearInterval(timer);
+    return () => {
+      clearInterval(interval);
+      if (fadeTimeout) clearTimeout(fadeTimeout);
+    };
   }, []);
 
   return (

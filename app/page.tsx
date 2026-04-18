@@ -23,7 +23,7 @@ export default function Home() {
     <>
       <Navigation />
 
-      <main className="min-h-screen">
+      <main id="main-content" className="min-h-screen">
         <Hero />
         <Featured />
         <About />

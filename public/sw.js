@@ -1,4 +1,4 @@
-const CACHE_NAME = 'wiens-woodworking-v1';
+const CACHE_NAME = 'wiens-woodworking-v2';
 
 // Assets to cache on install
 const PRECACHE_ASSETS = [
@@ -6,6 +6,9 @@ const PRECACHE_ASSETS = [
   '/tools',
   '/tools/dovetail-calculator',
   '/tools/fractional-calculator',
+  '/tools/board-feet-calculator',
+  '/tools/cut-list-optimizer',
+  '/tools/trig-calculator',
   '/gallery',
   '/manifest.json',
 ];

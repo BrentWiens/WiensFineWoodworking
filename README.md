@@ -61,17 +61,17 @@ GMAIL_APP_PASSWORD=your_gmail_app_password
 ### Running Tests
 
 ```bash
-# Run Playwright E2E tests
-npm run test
-
-# Run Playwright tests with UI mode (interactive)
-npm run test:ui
-
 # Run Vitest unit tests
-npm run test:unit
+npm test
 
 # Run unit tests in watch mode
-npm run test:unit:watch
+npm run test:watch
+
+# Run Playwright E2E tests
+npm run test:e2e
+
+# Run Playwright tests with UI mode (interactive)
+npm run test:e2e:ui
 
 # Type check the project
 npm run type-check

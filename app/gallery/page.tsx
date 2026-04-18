@@ -31,7 +31,7 @@ export default function GalleryPage() {
         <>
             <Navigation />
 
-            <main className="min-h-screen">
+            <main id="main-content" className="min-h-screen">
                 {/* Hero header with background - now starts at top */}
                 <div className="relative pt-30 pb-16 px-6">
                     {/* Background Image */}
