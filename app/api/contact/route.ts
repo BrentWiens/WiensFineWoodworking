@@ -4,6 +4,8 @@ import nodemailer from 'nodemailer';
 interface ContactFormData {
   name: string;
   email: string;
+  phone: string;
+  city: string;
   message: string;
   turnstileToken: string;
 }
@@ -56,9 +58,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { name, email, message, turnstileToken }: ContactFormData = await request.json();
+    const { name, email, phone, city, message, turnstileToken }: ContactFormData = await request.json();
 
-    if (!name || !email || !message || !turnstileToken) {
+    if (!name || !email || !phone || !city || !message || !turnstileToken) {
       return NextResponse.json(
         { error: 'All fields are required' },
         { status: 400 }
@@ -89,6 +91,8 @@ export async function POST(request: NextRequest) {
 
     const safeName = escapeHtml(name);
     const safeEmail = escapeHtml(email);
+    const safePhone = escapeHtml(phone);
+    const safeCity = escapeHtml(city);
     const safeMessage = escapeHtml(message).replace(/\n/g, '<br>');
 
     const transporter = nodemailer.createTransport({
@@ -119,6 +123,16 @@ export async function POST(request: NextRequest) {
             <p style="margin: 10px 0;">
               <strong style="color: #44403c;">Email:</strong><br>
               <a href="mailto:${safeEmail}" style="color: #2563eb;">${safeEmail}</a>
+            </p>
+
+            <p style="margin: 10px 0;">
+              <strong style="color: #44403c;">Phone:</strong><br>
+              <a href="tel:${safePhone}" style="color: #2563eb;">${safePhone}</a>
+            </p>
+
+            <p style="margin: 10px 0;">
+              <strong style="color: #44403c;">City:</strong><br>
+              ${safeCity}
             </p>
 
             <p style="margin: 10px 0;">

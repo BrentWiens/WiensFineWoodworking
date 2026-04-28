@@ -7,6 +7,8 @@ export default function ContactForm() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    phone: '',
+    city: '',
     message: '',
   });
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
@@ -43,7 +45,7 @@ export default function ContactForm() {
       }
 
       setStatus('success');
-      setFormData({ name: '', email: '', message: '' });
+      setFormData({ name: '', email: '', phone: '', city: '', message: '' });
       setTurnstileToken(null);
       turnstileRef.current?.reset();
     } catch (error) {
@@ -81,6 +83,36 @@ export default function ContactForm() {
           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
           className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-800 focus:border-transparent outline-none text-stone-900 placeholder:text-stone-500"
           placeholder="your.email@example.com"
+        />
+      </div>
+
+      <div>
+        <label htmlFor="phone" className="block text-stone-700 font-medium mb-2">
+          Phone *
+        </label>
+        <input
+          type="tel"
+          id="phone"
+          required
+          value={formData.phone}
+          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+          className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-800 focus:border-transparent outline-none text-stone-900 placeholder:text-stone-500"
+          placeholder="(555) 123-4567"
+        />
+      </div>
+
+      <div>
+        <label htmlFor="city" className="block text-stone-700 font-medium mb-2">
+          City *
+        </label>
+        <input
+          type="text"
+          id="city"
+          required
+          value={formData.city}
+          onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+          className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-800 focus:border-transparent outline-none text-stone-900 placeholder:text-stone-500"
+          placeholder="Your city"
         />
       </div>
 
