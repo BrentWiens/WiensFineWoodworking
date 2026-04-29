@@ -158,7 +158,6 @@ Components use barrel exports (`components/index.ts`) for cleaner imports throug
 
 ## Performance
 
-- **Lighthouse Score:** 90+ (Performance, Accessibility, Best Practices, SEO)
 - **First Contentful Paint:** < 1.5s
 - **Time to Interactive:** < 3s
 - **Image Loading:** Lazy loading with Next.js Image optimization
@@ -186,12 +185,6 @@ Components use barrel exports (`components/index.ts`) for cleaner imports throug
 - **CI/CD:** Automatic deployment via Vercel on push to `main`
 - **Preview Deployments:** Every PR gets a unique preview URL
 - **Zero Downtime:** Atomic deployments with instant rollback capability
-
-### Performance Metrics (Lighthouse)
-- Performance: 95+
-- Accessibility: 100
-- Best Practices: 100
-- SEO: 100
 
 ### Monitoring Dashboard
 - **Sentry:** [Sentry Dashboard](https://wiens-fine-woodworking.sentry.io/dashboard/default-overview/)
