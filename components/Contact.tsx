@@ -10,7 +10,7 @@ export default function Contact() {
     <section id="contact" className="py-20 px-6 bg-white">
       <div className="max-w-4xl mx-auto">
         <h2 className="text-4xl font-bold text-stone-800 mb-4 text-center">
-          Let's Work Together
+          Let&apos;s Work Together
         </h2>
         <p className="text-stone-600 mb-12 text-lg text-center">
           Have a custom project in mind? Get in touch to discuss your woodworking needs.

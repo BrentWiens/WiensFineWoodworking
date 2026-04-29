@@ -13,7 +13,7 @@ export default function About() {
                     {/* Text content - takes 2 columns on desktop */}
                     <div className="lg:col-span-2 space-y-6">
                         <p className="text-stone-700 text-lg leading-relaxed">
-                            I'm Brent Wiens, and I pride myself on traditional craftsmanship meeting modern design.
+                            I&apos;m Brent Wiens, and I pride myself on traditional craftsmanship meeting modern design.
                             Every piece I create is built with meticulous attention to detail, superb functionality, quality materials,
                             and a passion for the timeless art of woodworking.
                         </p>
@@ -25,7 +25,7 @@ export default function About() {
                         </p>
 
                         <p className="text-stone-700 text-lg leading-relaxed">
-                            Whether you're looking for a statement dining table, a functional home office desk, or the perfect
+                            Whether you&apos;re looking for a statement dining table, a functional home office desk, or the perfect
                             accent piece for your living room, I work closely with you to bring that vision to life.
                         </p>
 

@@ -167,8 +167,8 @@ export default function FractionalCalculator() {
     const wholeValue = parseFloat(state.whole) || 0;
     const whole = Math.floor(wholeValue);
     const decimalPart = wholeValue - whole;
-    let numerator = parseInt(state.numerator, 10) || 0;
-    let denominator = parseInt(state.denominator, 10) || 1;
+    const numerator = parseInt(state.numerator, 10) || 0;
+    const denominator = parseInt(state.denominator, 10) || 1;
 
     // If denominator is 0, treat as 1
     const safeDenom = denominator === 0 ? 1 : denominator;
@@ -257,11 +257,6 @@ export default function FractionalCalculator() {
       denominator: prev.denominator.slice(0, -1),
     }));
   }, []);
-
-  // Check if current input has any value entered
-  const hasCurrentInput = useCallback(() => {
-    return state.whole !== '' || state.numerator !== '' || state.denominator !== '';
-  }, [state.whole, state.numerator, state.denominator]);
 
   // Handle operation
   const handleOperation = useCallback((op: Operation) => {
@@ -376,8 +371,6 @@ export default function FractionalCalculator() {
   const displayWhole = state.whole || '0';
   const displayNumerator = state.numerator || '0';
   const displayDenominator = state.denominator || '1';
-  const hasInput = hasCurrentInput();
-
   // Calculate running total - what the result would be if equals was pressed now
   const runningTotal = (() => {
     if (state.previousValue && state.operation && !state.waitingForOperand) {

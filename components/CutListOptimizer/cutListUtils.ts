@@ -198,7 +198,7 @@ export function validatePiecesAgainstSheet(
 ): string[] {
   const errors: string[] = [];
 
-  pieces.forEach((piece, index) => {
+  pieces.forEach((piece) => {
     const fitsNormal = piece.width <= sheet.width && piece.length <= sheet.length;
     const fitsRotated = piece.length <= sheet.width && piece.width <= sheet.length;
 
@@ -719,7 +719,7 @@ function runSkylineAlgorithm(
           sheets[sheetIdx].usedArea += w * h;
 
           // Update skyline
-          const newSkyline = updateSkyline(skyline, position.x, pieceWidth, position.y + pieceHeight, sheet.width);
+          const newSkyline = updateSkyline(skyline, position.x, pieceWidth, position.y + pieceHeight);
           sheetSkylines.set(sheetIdx, newSkyline);
           placed = true;
         }
@@ -861,8 +861,7 @@ function updateSkyline(
   skyline: SkylineSegment[],
   pieceX: number,
   pieceWidth: number,
-  newY: number,
-  sheetWidth: number
+  newY: number
 ): SkylineSegment[] {
   const newSkyline: SkylineSegment[] = [];
   const pieceEndX = pieceX + pieceWidth;

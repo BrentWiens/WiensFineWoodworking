@@ -252,7 +252,7 @@ export default function DovetailVisualizer({
         setParams(p => ({ ...p, [field]: 0 }));
       }
     } else if (!val || isNaN(num) || num <= 0) {
-      const reset = defaultVal ?? (DEFAULT_PARAMS as any)[field];
+      const reset = defaultVal ?? DEFAULT_PARAMS[field as keyof typeof DEFAULT_PARAMS];
       setInputValues(p => ({ ...p, [field]: String(reset) }));
       setParams(p => ({ ...p, [field]: reset }));
     }
@@ -292,7 +292,7 @@ export default function DovetailVisualizer({
               onChange={v => handleChange('numberOfTails', v)} onBlur={() => handleBlur('numberOfTails')} />
             <div>
               <label className="block text-sm font-medium text-stone-600 mb-1">Joint Angle</label>
-              <select value={params.tailAngle} onChange={e => setParams(p => ({ ...p, tailAngle: e.target.value as any }))}
+              <select value={params.tailAngle} onChange={e => setParams(p => ({ ...p, tailAngle: e.target.value as DovetailParams['tailAngle'] }))}
                 className="w-full px-3 py-2 border border-stone-300 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-stone-900 font-medium">
                 <option value="1:0">Box Joint (90°)</option>
                 <option value="1:8">1:8 (7°) - Hardwood</option>

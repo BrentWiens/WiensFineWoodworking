@@ -6,7 +6,6 @@ import {
   SheetConfig,
   GrainDirection,
   OptimizationResult,
-  PlacedPiece,
   SheetLayout,
   SheetConfigData,
   DEFAULT_SHEET_CONFIG,
@@ -45,23 +44,19 @@ function loadSavedState(): SavedState | null {
 }
 
 export default function CutListOptimizer() {
-  const [sheetConfig, setSheetConfig] = useState<SheetConfig>(DEFAULT_SHEET_CONFIG);
-  const [pieces, setPieces] = useState<PieceInput[]>([createEmptyPiece()]);
+  const [sheetConfig, setSheetConfig] = useState<SheetConfig>(() => {
+    const saved = loadSavedState();
+    return saved ? saved.sheetConfig : DEFAULT_SHEET_CONFIG;
+  });
+  const [pieces, setPieces] = useState<PieceInput[]>(() => {
+    const saved = loadSavedState();
+    return saved ? saved.pieces : [createEmptyPiece()];
+  });
   const [result, setResult] = useState<OptimizationResult | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [units, setUnits] = useState<UnitSystem>('imperial');
-  const initialized = useRef(false);
-
-  // Load saved state on mount
-  useEffect(() => {
-    const saved = loadSavedState();
-    if (saved) {
-      setSheetConfig(saved.sheetConfig);
-      setPieces(saved.pieces);
-    }
-    initialized.current = true;
-  }, []);
+  const initialized = useRef(true);
 
   // Save state to localStorage when inputs change
   useEffect(() => {

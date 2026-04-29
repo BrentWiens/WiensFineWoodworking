@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 interface GalleryProps {
   images: string[];
@@ -19,24 +19,24 @@ export default function Gallery({ images, folder, title, sectionId = 'gallery', 
   const currentIndex = selectedImage ? images.indexOf(selectedImage) : -1;
 
   // Navigation functions
-  const goToPrevious = () => {
+  const goToPrevious = useCallback(() => {
     if (currentIndex > 0) {
       setIsLoading(true);
       setSelectedImage(images[currentIndex - 1]);
     }
-  };
+  }, [currentIndex, images]);
 
-  const goToNext = () => {
+  const goToNext = useCallback(() => {
     if (currentIndex < images.length - 1) {
       setIsLoading(true);
       setSelectedImage(images[currentIndex + 1]);
     }
-  };
+  }, [currentIndex, images]);
 
-  const closeModal = () => {
+  const closeModal = useCallback(() => {
     setSelectedImage(null);
     setIsLoading(false);
-  };
+  }, []);
 
   // Keyboard navigation
   useEffect(() => {
@@ -50,7 +50,7 @@ export default function Gallery({ images, folder, title, sectionId = 'gallery', 
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedImage, currentIndex]);
+  }, [selectedImage, closeModal, goToPrevious, goToNext]);
 
   // Prevent body scroll when modal is open
   useEffect(() => {

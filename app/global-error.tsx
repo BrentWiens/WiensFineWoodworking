@@ -22,7 +22,7 @@ export default function Error({
           Something went wrong!
         </h2>
         <p className="text-stone-600 mb-8">
-          We've been notified and are looking into it.
+          We&apos;ve been notified and are looking into it.
         </p>
         <button
           onClick={reset}
