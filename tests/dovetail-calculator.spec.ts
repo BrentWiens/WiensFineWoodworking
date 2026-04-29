@@ -67,10 +67,10 @@ test.describe('Dovetail Calculator', () => {
     await page.goto('/tools/dovetail-calculator', { waitUntil: 'networkidle' });
 
     await page.locator('select').selectOption('1:0');
-    await expect(page.getByText('Number of Fingers')).toBeVisible();
+    await expect(page.locator('label', { hasText: 'Number of Fingers' })).toBeVisible();
 
     await page.locator('select').selectOption('1:8');
-    await expect(page.getByText('Number of Tails')).toBeVisible();
+    await expect(page.locator('label', { hasText: 'Number of Tails' })).toBeVisible();
     await expect(page.getByText('Tail Board')).toBeVisible();
     await expect(page.getByText('Pin Board')).toBeVisible();
   });

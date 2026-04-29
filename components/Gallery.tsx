@@ -3,6 +3,21 @@
 import Image from 'next/image';
 import { useState, useEffect, useCallback } from 'react';
 
+const FOLDER_LABELS: Record<string, string> = {
+  tables: 'Custom table',
+  'finish-carpentry': 'Finish carpentry',
+  other: 'Handcrafted',
+};
+
+function formatAltText(filename: string, folder: string): string {
+  const name = filename
+    .replace(/\.[^/.]+$/, '')
+    .replace(/-/g, ' ')
+    .replace(/\b\w/g, c => c.toUpperCase());
+  const prefix = FOLDER_LABELS[folder] ?? 'Woodworking';
+  return `${prefix} - ${name}`;
+}
+
 interface GalleryProps {
   images: string[];
   folder: string;
@@ -84,7 +99,7 @@ export default function Gallery({ images, folder, title, sectionId = 'gallery', 
               >
                 <Image
                   src={`/images/gallery/${folder}/${filename}`}
-                  alt={`Woodworking project - ${filename.replace(/\.[^/.]+$/, '').replace(/-/g, ' ')}`}
+                  alt={formatAltText(filename, folder)}
                   fill
                   className="object-cover group-hover:scale-105 transition-transform duration-300"
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"

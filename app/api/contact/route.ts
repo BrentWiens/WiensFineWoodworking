@@ -58,7 +58,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { name, email, phone, city, message, turnstileToken }: ContactFormData = await request.json();
+    const { name, email, phone, city, message, turnstileToken, website }: ContactFormData & { website?: string } = await request.json();
+
+    if (website) {
+      return NextResponse.json({ success: true });
+    }
 
     if (!name || !email || !phone || !city || !message || !turnstileToken) {
       return NextResponse.json(

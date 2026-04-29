@@ -11,6 +11,7 @@ export default function ContactForm() {
     city: '',
     message: '',
   });
+  const [honeypot, setHoneypot] = useState('');
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
@@ -18,6 +19,8 @@ export default function ContactForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (honeypot) return;
 
     if (!turnstileToken) {
       setStatus('error');
@@ -56,6 +59,20 @@ export default function ContactForm() {
 
   return (
     <form onSubmit={handleSubmit} data-testid="contact-form" className="max-w-2xl mx-auto space-y-6">
+      {/* Honeypot field - hidden from humans, catches bots */}
+      <div className="absolute -left-[9999px]" aria-hidden="true">
+        <label htmlFor="website">Website</label>
+        <input
+          type="text"
+          id="website"
+          name="website"
+          tabIndex={-1}
+          autoComplete="off"
+          value={honeypot}
+          onChange={(e) => setHoneypot(e.target.value)}
+        />
+      </div>
+
       <div>
         <label htmlFor="name" className="block text-stone-700 font-medium mb-2">
           Name *

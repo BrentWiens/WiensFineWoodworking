@@ -23,9 +23,10 @@ interface DovetailVisualizerProps {
   initialBoardWidth?: number;
 }
 
-// Reusable input component
-function NumberInput({ 
-  label, value, onChange, onBlur, placeholder, step = "0.5", min = "0.5" 
+let inputIdCounter = 0;
+
+function NumberInput({
+  label, value, onChange, onBlur, placeholder, step = "0.5", min = "0.5"
 }: {
   label: string;
   value: string;
@@ -35,10 +36,12 @@ function NumberInput({
   step?: string;
   min?: string;
 }) {
+  const [id] = useState(() => `dovetail-input-${inputIdCounter++}`);
   return (
     <div>
-      <label className="block text-sm font-medium text-stone-600 mb-1">{label}</label>
+      <label htmlFor={id} className="block text-sm font-medium text-stone-600 mb-1">{label}</label>
       <input
+        id={id}
         type="number"
         value={value}
         onChange={(e) => onChange(e.target.value)}

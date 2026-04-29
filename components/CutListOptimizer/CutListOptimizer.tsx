@@ -181,10 +181,11 @@ export default function CutListOptimizer() {
           <h3 className="text-lg font-semibold text-stone-800 mb-4">Sheets</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
-              <label className="block text-sm font-medium text-stone-700 mb-1">
+              <label htmlFor="sheet-length" className="block text-sm font-medium text-stone-700 mb-1">
                 Length ({unitLabel(units)})
               </label>
               <input
+                id="sheet-length"
                 type="text"
                 inputMode="decimal"
                 value={sheetConfig.length}
@@ -194,10 +195,11 @@ export default function CutListOptimizer() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-stone-700 mb-1">
+              <label htmlFor="sheet-width" className="block text-sm font-medium text-stone-700 mb-1">
                 Width ({unitLabel(units)})
               </label>
               <input
+                id="sheet-width"
                 type="text"
                 inputMode="decimal"
                 value={sheetConfig.width}
@@ -207,10 +209,11 @@ export default function CutListOptimizer() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-stone-700 mb-1">
+              <label htmlFor="sheet-kerf" className="block text-sm font-medium text-stone-700 mb-1">
                 Blade Kerf ({unitLabel(units)})
               </label>
               <input
+                id="sheet-kerf"
                 type="text"
                 inputMode="decimal"
                 value={sheetConfig.kerfWidth}
@@ -220,10 +223,11 @@ export default function CutListOptimizer() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-stone-700 mb-1">
+              <label htmlFor="sheets-available" className="block text-sm font-medium text-stone-700 mb-1">
                 Sheets Available
               </label>
               <input
+                id="sheets-available"
                 type="text"
                 inputMode="numeric"
                 value={sheetConfig.sheetsAvailable}
