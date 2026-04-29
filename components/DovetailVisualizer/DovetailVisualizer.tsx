@@ -264,7 +264,7 @@ export default function DovetailVisualizer({
   const isBoxJoint = params.tailAngle === '1:0';
 
   return (
-    <div className="max-w-6xl mx-auto p-6 bg-white rounded-lg shadow-lg">
+    <div data-testid="dovetail-calculator" className="max-w-6xl mx-auto p-6 bg-white rounded-lg shadow-lg">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         <div className="space-y-4">
           <div className="flex justify-between items-center mb-3">

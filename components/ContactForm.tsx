@@ -55,7 +55,7 @@ export default function ContactForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-6">
+    <form onSubmit={handleSubmit} data-testid="contact-form" className="max-w-2xl mx-auto space-y-6">
       <div>
         <label htmlFor="name" className="block text-stone-700 font-medium mb-2">
           Name *
@@ -147,6 +147,7 @@ export default function ContactForm() {
 
       <button
         type="submit"
+        data-testid="contact-submit"
         disabled={status === 'loading' || !turnstileToken}
         className="w-full bg-stone-800 text-white px-8 py-3 rounded-lg hover:bg-stone-700 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
       >
@@ -154,7 +155,7 @@ export default function ContactForm() {
       </button>
 
       {status === 'success' && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+        <div data-testid="contact-success" className="p-4 bg-green-50 border border-green-200 rounded-lg">
           <p className="text-green-800 text-center font-medium">
             ✓ Message sent successfully! I&apos;ll get back to you within 24 hours.
           </p>
@@ -162,7 +163,7 @@ export default function ContactForm() {
       )}
 
       {status === 'error' && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+        <div data-testid="contact-error" className="p-4 bg-red-50 border border-red-200 rounded-lg">
           <p className="text-red-800 text-center font-medium">
             {errorMessage}
           </p>

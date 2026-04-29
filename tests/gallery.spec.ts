@@ -220,6 +220,71 @@ test.describe('Gallery', () => {
   });
 });
 
+test.describe('Gallery Sections', () => {
+  test('finish carpentry section exists', async ({ page }) => {
+    await page.goto('/gallery', { waitUntil: 'networkidle' });
+
+    const section = page.getByTestId('gallery-finish-carpentry-section');
+    await expect(section).toBeVisible();
+
+    // Should have a title
+    await expect(section.getByText('Finish Carpentry')).toBeVisible();
+  });
+
+  test('other work section exists', async ({ page }) => {
+    await page.goto('/gallery', { waitUntil: 'networkidle' });
+
+    const section = page.getByTestId('gallery-other-section');
+    await expect(section).toBeVisible();
+
+    await expect(section.getByText('Other Work')).toBeVisible();
+  });
+
+  test('gallery sections appear in correct order', async ({ page }) => {
+    await page.goto('/gallery', { waitUntil: 'networkidle' });
+
+    const tables = page.getByTestId('gallery-section');
+    const finishCarpentry = page.getByTestId('gallery-finish-carpentry-section');
+    const other = page.getByTestId('gallery-other-section');
+
+    // All three should exist
+    await expect(tables).toBeVisible();
+    await expect(finishCarpentry).toBeVisible();
+    await expect(other).toBeVisible();
+
+    // Tables should come before finish carpentry, which comes before other
+    const tablesBox = await tables.boundingBox();
+    const finishBox = await finishCarpentry.boundingBox();
+    const otherBox = await other.boundingBox();
+
+    expect(tablesBox!.y).toBeLessThan(finishBox!.y);
+    expect(finishBox!.y).toBeLessThan(otherBox!.y);
+  });
+});
+
+test.describe('Gallery Modal Sizing', () => {
+  test('modal image container fills available space', async ({ page }) => {
+    await page.goto('/gallery', { waitUntil: 'networkidle' });
+
+    const gallerySection = page.getByTestId('gallery-section');
+    await gallerySection.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(500);
+    await gallerySection.getByTestId('gallery-image-0').click();
+
+    await expect(page.getByTestId('gallery-modal')).toBeVisible();
+
+    // The image container should use most of the viewport
+    const imageContainer = page.getByTestId('modal-image').locator('..');
+    const box = await imageContainer.boundingBox();
+    const viewport = page.viewportSize()!;
+
+    // Container should be approximately 90% of viewport width (90vw)
+    expect(box!.width).toBeGreaterThan(viewport.width * 0.8);
+    // Container should be approximately 90% of viewport height (90vh)
+    expect(box!.height).toBeGreaterThan(viewport.height * 0.8);
+  });
+});
+
 test.describe('Navigation', () => {
   test('navigation links work correctly', async ({ page }) => {
     await page.goto('/', { waitUntil: 'networkidle' });

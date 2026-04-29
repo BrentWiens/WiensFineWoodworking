@@ -22,6 +22,7 @@ export default function Contact() {
             {/* Contact button */}
             <div className="flex justify-center">
               <button
+                data-testid="contact-show-form"
                 onClick={() => setShowForm(true)}
                 className="bg-stone-800 text-white px-10 py-4 rounded-lg hover:bg-stone-700 transition-colors font-semibold text-lg shadow-lg"
               >
