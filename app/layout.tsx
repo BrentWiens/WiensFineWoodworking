@@ -10,9 +10,14 @@ const geist = Geist({
   subsets: ["latin"],
 });
 
+// preload:false because the mono face is only used by the calculator pages, but
+// this layout is shared by every route — preloading it made the homepage and
+// gallery fetch a font they never render a single character with. Without the
+// preload hint the browser fetches it only when something actually applies it.
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  preload: false,
 });
 
 export const metadata: Metadata = {

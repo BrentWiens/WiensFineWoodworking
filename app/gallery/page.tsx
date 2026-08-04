@@ -1,6 +1,10 @@
 import { Metadata } from 'next';
 import Image from 'next/image';
-import { Navigation, GalleryWrapper, ProjectIndex, Footer } from '@/components';
+import { Navigation, Footer } from '@/components';
+// Imported directly rather than via the barrel: both pull in the project registry,
+// and routing them through the barrel put that data on every other page too.
+import GalleryWrapper from '@/components/GalleryWrapper';
+import ProjectIndex from '@/components/ProjectIndex';
 
 export const metadata: Metadata = {
     title: 'Gallery | Wiens Fine Woodworking',

@@ -3,7 +3,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState, useEffect, useCallback } from 'react';
-import { getProjectByImage } from '@/lib/projects';
 
 const FOLDER_LABELS: Record<string, string> = {
   tables: 'Custom table',
@@ -26,9 +25,17 @@ interface GalleryProps {
   title?: string;
   sectionId?: string;
   background?: 'white' | 'stone';
+  /**
+   * Maps image filename to its project slug, resolved on the server.
+   *
+   * This used to call into `lib/projects` directly, but this is a client
+   * component, so doing that shipped the whole project registry — every title,
+   * description and materials list — to the browser just to look up a slug.
+   */
+  projectSlugs?: Record<string, string>;
 }
 
-export default function Gallery({ images, folder, title, sectionId = 'gallery', background = 'white' }: GalleryProps) {
+export default function Gallery({ images, folder, title, sectionId = 'gallery', background = 'white', projectSlugs = {} }: GalleryProps) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -36,7 +43,7 @@ export default function Gallery({ images, folder, title, sectionId = 'gallery', 
   const currentIndex = selectedImage ? images.indexOf(selectedImage) : -1;
 
   // The project page behind the photo currently open, if there is one.
-  const selectedProject = selectedImage ? getProjectByImage(folder, selectedImage) : undefined;
+  const selectedProjectSlug = selectedImage ? projectSlugs[selectedImage] : undefined;
 
   // Navigation functions
   const goToPrevious = useCallback(() => {
@@ -217,10 +224,10 @@ export default function Gallery({ images, folder, title, sectionId = 'gallery', 
             <div data-testid="modal-image-name" className="text-stone-300 pointer-events-none">
               {selectedImage.replace(/\.[^/.]+$/, '').replace(/-/g, ' ')}
             </div>
-            {selectedProject && (
+            {selectedProjectSlug && (
               <Link
                 data-testid="modal-project-link"
-                href={`/projects/${selectedProject.slug}`}
+                href={`/projects/${selectedProjectSlug}`}
                 onClick={(e) => e.stopPropagation()}
                 className="mt-1 text-white underline underline-offset-4 hover:text-stone-300 transition-colors"
               >
