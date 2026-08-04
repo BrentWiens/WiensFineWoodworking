@@ -14,10 +14,24 @@ const MAX_BODY_BYTES = 10_000;
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX = 3;
 
+// Best-effort only: this lives in the memory of a single serverless instance, so it
+// resets on cold start and is not shared across instances. Cloudflare Turnstile is
+// the real bot defence; this just blunts rapid repeat submissions from one client.
 const requestLog = new Map<string, number[]>();
+
+function pruneExpired(now: number): void {
+  // Without this, every IP ever seen stays in the map for the life of the instance.
+  for (const [key, timestamps] of requestLog) {
+    if (timestamps.every(t => now - t >= RATE_LIMIT_WINDOW_MS)) {
+      requestLog.delete(key);
+    }
+  }
+}
 
 function isRateLimited(ip: string): boolean {
   const now = Date.now();
+  pruneExpired(now);
+
   const timestamps = (requestLog.get(ip) ?? []).filter(t => now - t < RATE_LIMIT_WINDOW_MS);
   if (timestamps.length >= RATE_LIMIT_MAX) {
     requestLog.set(ip, timestamps);

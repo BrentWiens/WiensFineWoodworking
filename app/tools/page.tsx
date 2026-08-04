@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import { TOOLS_OG_IMAGE, TOOLS_TWITTER_IMAGE } from '@/lib/metadata';
 import Image from 'next/image';
 import { Navigation, Footer, ToolCard } from '@/components';
 
@@ -11,20 +12,13 @@ export const metadata: Metadata = {
     openGraph: {
         title: 'Tools | Wiens Fine Woodworking',
         description: 'Free woodworking tools and calculators for your projects',
-        images: [
-            {
-                url: '/images/handplanes.jpg',
-                width: 1200,
-                height: 630,
-                alt: 'Wiens Fine Woodworking Tools',
-            },
-        ],
+        images: TOOLS_OG_IMAGE,
     },
     twitter: {
         card: 'summary_large_image',
         title: 'Tools | Wiens Fine Woodworking',
         description: 'Free woodworking tools and calculators for your projects',
-        images: ['/images/handplanes.jpg'],
+        images: TOOLS_TWITTER_IMAGE,
     },
 };
 

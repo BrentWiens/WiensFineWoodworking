@@ -1,7 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import ContactForm from './ContactForm';
+import dynamic from 'next/dynamic';
+
+// The form pulls in the Cloudflare Turnstile widget, which nobody needs until they
+// actually click through to it. Splitting it out keeps that weight off first load.
+const ContactForm = dynamic(() => import('./ContactForm'), {
+  ssr: false,
+  loading: () => (
+    <div className="max-w-2xl mx-auto py-12 text-center text-stone-500">Loading form…</div>
+  ),
+});
 
 export default function Contact() {
   const [showForm, setShowForm] = useState(false);

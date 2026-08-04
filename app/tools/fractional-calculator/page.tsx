@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
+import { TOOLS_OG_IMAGE, TOOLS_TWITTER_IMAGE } from '@/lib/metadata';
 import Image from 'next/image';
-import { Navigation, Footer, ErrorBoundary } from '@/components';
+import { Navigation, Footer, ErrorBoundary, CommissionCta } from '@/components';
 import FractionalCalculator from '@/components/FractionalCalculator/FractionalCalculator';
 
 export const metadata: Metadata = {
@@ -13,20 +14,13 @@ export const metadata: Metadata = {
     openGraph: {
         title: 'Fractional Calculator | Wiens Fine Woodworking',
         description: 'Free fractional calculator for woodworking. Add, subtract, multiply, and divide fractions with ease.',
-        images: [
-            {
-                url: '/images/handplanes.jpg',
-                width: 1200,
-                height: 630,
-                alt: 'Fractional Calculator',
-            },
-        ],
+        images: TOOLS_OG_IMAGE,
     },
     twitter: {
         card: 'summary_large_image',
         title: 'Fractional Calculator | Wiens Fine Woodworking',
         description: 'Free fractional calculator for woodworking',
-        images: ['/images/handplanes.jpg'],
+        images: TOOLS_TWITTER_IMAGE,
     },
 };
 
@@ -69,6 +63,8 @@ export default function FractionalCalculatorPage() {
                         <FractionalCalculator />
                     </ErrorBoundary>
                 </div>
+                <CommissionCta />
+
             </main>
 
             <Footer />

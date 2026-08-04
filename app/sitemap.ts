@@ -1,7 +1,18 @@
 import { MetadataRoute } from 'next'
+import { PROJECTS } from '@/lib/projects'
 
 const BASE_URL = 'https://wfinew.com'
-const LAST_MODIFIED = '2026-04-18'
+
+/**
+ * Evaluated once per build, so it always reflects the current deploy instead of a
+ * hardcoded date that silently drifts out of accuracy.
+ *
+ * Reading real per-file mtimes was tried and abandoned: Vercel builds from a fresh
+ * git clone, which stamps every file with the checkout time, so per-file mtimes all
+ * collapse to the build time anyway — while forcing Turbopack to trace the whole
+ * project into the server bundle.
+ */
+const LAST_MODIFIED = new Date()
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const tools = [
@@ -31,11 +42,17 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly',
       priority: 0.8,
     },
+    ...PROJECTS.map(project => ({
+      url: `${BASE_URL}/projects/${project.slug}`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'yearly' as const,
+      priority: 0.7,
+    })),
     ...tools.map(slug => ({
       url: `${BASE_URL}/tools/${slug}`,
       lastModified: LAST_MODIFIED,
       changeFrequency: 'monthly' as const,
-      priority: 0.7,
+      priority: 0.6,
     })),
   ]
 }

@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
+import { TOOLS_OG_IMAGE, TOOLS_TWITTER_IMAGE } from '@/lib/metadata';
 import Image from 'next/image';
-import { Navigation, Footer, ErrorBoundary } from '@/components';
+import { Navigation, Footer, ErrorBoundary, CommissionCta } from '@/components';
 import BoardFeetCalculator from '@/components/BoardFeetCalculator/BoardFeetCalculator';
 
 export const metadata: Metadata = {
@@ -13,20 +14,13 @@ export const metadata: Metadata = {
     openGraph: {
         title: 'Board Feet Calculator | Wiens Fine Woodworking',
         description: 'Free board feet calculator for woodworking. Calculate lumber volume with ease.',
-        images: [
-            {
-                url: '/images/handplanes.jpg',
-                width: 1200,
-                height: 630,
-                alt: 'Board Feet Calculator',
-            },
-        ],
+        images: TOOLS_OG_IMAGE,
     },
     twitter: {
         card: 'summary_large_image',
         title: 'Board Feet Calculator | Wiens Fine Woodworking',
         description: 'Free board feet calculator for woodworking',
-        images: ['/images/handplanes.jpg'],
+        images: TOOLS_TWITTER_IMAGE,
     },
 };
 
@@ -68,6 +62,8 @@ export default function BoardFeetCalculatorPage() {
                         <BoardFeetCalculator />
                     </ErrorBoundary>
                 </div>
+                <CommissionCta />
+
             </main>
 
             <Footer />

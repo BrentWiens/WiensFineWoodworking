@@ -1,23 +1,10 @@
-import dynamic from 'next/dynamic';
-import { Navigation, Footer, Hero } from '@/components';
+import { Navigation, Footer, Hero, Featured, About, Testimonials, Contact } from '@/components';
 
-// Lazy load below-the-fold components for faster initial page load
-const Featured = dynamic(() => import('@/components/Featured'), {
-  loading: () => <div className="min-h-[400px]" />,
-});
-
-const About = dynamic(() => import('@/components/About'), {
-  loading: () => <div className="min-h-[400px]" />,
-});
-
-const Testimonials = dynamic(() => import('@/components/Testimonials'), {
-  loading: () => <div className="min-h-[300px]" />,
-});
-
-const Contact = dynamic(() => import('@/components/Contact'), {
-  loading: () => <div className="min-h-[200px]" />,
-});
-
+// These were previously wrapped in next/dynamic. Featured, About and Testimonials
+// are Server Components — they ship no client JS, so there was nothing to split out,
+// and the loading placeholders only added layout shift. Contact is the one client
+// component here; its weight (the Turnstile widget) is deferred inside Contact.tsx
+// instead, where it can be loaded on demand rather than on page load.
 export default function Home() {
   return (
     <>

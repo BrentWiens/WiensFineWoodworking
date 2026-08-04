@@ -6,7 +6,7 @@ A modern, responsive website for Wiens Fine Woodworking showcasing custom furnit
 
 ## Tech Stack
 
-- **Framework:** Next.js 16.2 (App Router)
+- **Framework:** Next.js 16.3 (App Router)
 - **Language:** TypeScript 6
 - **Styling:** Tailwind CSS v4
 - **Deployment:** Vercel
@@ -14,15 +14,26 @@ A modern, responsive website for Wiens Fine Woodworking showcasing custom furnit
 - **CI:** GitHub Actions (lint, type-check, unit tests, E2E tests)
 - **Monitoring:** Sentry, Vercel Analytics, Vercel Speed Insights
 
+### Pinned major versions
+
+Two majors are available but deliberately held back — both are blocked on
+`eslint-config-next` and should be retried when it catches up:
+
+| Package | On | Latest | Why held |
+| --- | --- | --- | --- |
+| `typescript` | 6 | 7 | `typescript-eslint` (bundled in `eslint-config-next`) refuses to load against the TS 7 API, so `npm run lint` fails outright. TS 7 type-checks the project cleanly — it is only the lint step that breaks. |
+| `eslint` | 9 | 10 | `eslint-plugin-react` (also bundled in `eslint-config-next`) calls `context.getFilename`, removed in ESLint 10. |
+
 ## Features
 
-- 📸 **Photo Gallery** - 35+ project images across 3 sections (Tables, Finish Carpentry, Other Work) with lightbox modal, keyboard navigation, and smooth transitions
+- 📸 **Photo Gallery** - 43 project images across 3 sections (Tables, Finish Carpentry, Other Work) with lightbox modal, keyboard navigation, and smooth transitions
+- 📄 **Project Pages** - Every piece has its own indexable page at `/projects/[slug]` with materials, breadcrumbs, Schema.org `CreativeWork` markup, and prev/next navigation
 - 🛠️ **Woodworking Tools** - 5 interactive calculators: dovetail & box joint visualizer, fractional calculator, board feet calculator, cut list optimizer (9 packing algorithms), and trigonometry calculator. Features imperial/metric unit toggle, localStorage persistence, and print-friendly layouts
 - 🖼️ **Image Optimization** - Automatic WebP/AVIF conversion, responsive sizing, lazy loading
 - 📱 **Fully Responsive** - Mobile-first design optimized for all screen sizes
 - ⚡ **Performance** - Server-side rendering, static generation, optimized images
 - 🎨 **Modern UI** - Clean design with smooth animations and hover effects
-- 🔍 **SEO Optimized** - Meta tags, canonical URLs, OpenGraph, Twitter Cards, Schema.org LocalBusiness structured data
+- 🔍 **SEO Optimized** - Meta tags, canonical URLs, OpenGraph, Twitter Cards, and Schema.org structured data (`LocalBusiness` with service area and offer catalog, plus `CreativeWork` and `BreadcrumbList` on each project page)
 - 🔒 **Secure Contact Form** - Cloudflare Turnstile bot protection, rate limiting, input sanitization, email notifications
 
 ## Local Development
@@ -90,9 +101,13 @@ wiens-woodworking/
 ├── app/                      # Next.js App Router
 │   ├── page.tsx              # Homepage
 │   ├── layout.tsx            # Root layout & metadata
+│   ├── opengraph-image.jpg   # Site-wide social share image (1200x630)
 │   ├── global-error.tsx      # Error boundary
 │   ├── globals.css           # Global styles
-│   ├── gallery/page.tsx      # Photo gallery page
+│   ├── gallery/
+│   │   ├── page.tsx          # Photo gallery page
+│   │   └── opengraph-image.jpg
+│   ├── projects/[slug]/      # Per-project detail pages (SSG)
 │   ├── tools/
 │   │   ├── page.tsx          # Tools listing page
 │   │   ├── dovetail-calculator/page.tsx
@@ -121,17 +136,33 @@ wiens-woodworking/
 │   ├── CutListOptimizer/     # Cut list optimizer (9 algorithms)
 │   ├── TrigCalculator/       # Right triangle solver
 │   ├── UnitToggle.tsx        # Imperial/metric unit toggle
+│   ├── ProjectIndex.tsx      # Crawlable list of all project pages
+│   ├── CommissionCta.tsx     # Soft CTA shown on the tool pages
 │   ├── ErrorBoundary.tsx
 │   ├── ServiceWorkerRegistration.tsx
 │   ├── Footer.tsx
 │   └── index.ts              # Barrel exports
+├── lib/
+│   ├── projects.ts           # Project registry backing /projects/[slug]
+│   └── metadata.ts           # Shared OG image for the /tools section
 ├── tests/                    # Playwright E2E tests
 ├── public/
-│   ├── images/gallery/       # Project photos (35+ images)
+│   ├── images/gallery/       # Project photos (43 images)
+│   ├── og/tools.jpg          # Shared social image for /tools pages
 │   ├── sw.js                 # Service worker
 │   └── manifest.json         # PWA manifest
 └── README.md
 ```
+
+### Adding a project
+
+Project pages are driven entirely by [`lib/projects.ts`](lib/projects.ts). Add the
+photo under `public/images/gallery/<category>/`, add an entry to `PROJECTS`, and the
+detail page, gallery index link, and sitemap entry all follow automatically.
+
+Note that the `description` fields in that file are conservative placeholders — they
+restate only what is verifiable from the photo filename. Replacing them with the real
+story of each commission is what makes these pages worth indexing.
 
 ## Deployment
 
@@ -176,22 +207,23 @@ Components use barrel exports (`components/index.ts`) for cleaner imports throug
 ## Production Readiness
 
 ### Monitoring & Observability
-- **Error Tracking:** Sentry for client and server-side error monitoring
+- **Error Tracking:** Sentry for client and server-side error monitoring. Session Replay is deliberately disabled — it pulls rrweb into the client bundle (~120KB uncompressed) which is a poor trade for a marketing site. Traces are sampled at 10% and `sendDefaultPii` is off
 - **Analytics:** Vercel Analytics for page views and user insights
 - **Performance:** Vercel Speed Insights tracking Core Web Vitals
 
 ### Quality Assurance
-- **E2E Testing:** Playwright test suite covering gallery, contact form, and all 5 calculator tools
+- **E2E Testing:** 120 Playwright tests covering the gallery, project pages, contact form, page metadata, and all 5 calculator tools
 - **Unit Testing:** Vitest tests for calculator utilities (172 tests: dovetail: 22, fractional: 53, board feet: 22, cut list: 41, trig: 34)
-- **CI:** GitHub Actions runs lint, type-check, unit tests, and E2E tests on every push and PR
+- **Metadata regression tests:** [`tests/metadata.spec.ts`](tests/metadata.spec.ts) asserts that every page's `og:image` and `twitter:image` resolve to a real 200 response, not just that the tag exists — a previous bug pointed them at a path that 404'd, so every social share preview rendered blank
+- **CI:** GitHub Actions runs lint, type-check, unit tests, and E2E tests on every push and PR. E2E runs against the production build (`npm run start`) rather than the dev server, so it exercises static generation and real response headers
 - **Type Safety:** Strict TypeScript configuration with `tsc --noEmit` checks
 
 ### Security
-- **Bot Protection:** Cloudflare Turnstile on contact form
-- **Rate Limiting:** Contact form limited to 3 requests/minute per IP
+- **Bot Protection:** Cloudflare Turnstile on contact form, plus a honeypot field checked server-side
+- **Rate Limiting:** Contact form limited to 3 requests/minute per IP (best-effort; per-instance in-memory, so Turnstile is the real defence)
 - **Input Sanitization:** HTML escaping on all contact form fields
 - **HTTPS:** Enforced via Vercel
-- **Security Headers:** CSP, X-Frame-Options, etc.
+- **Security Headers:** Set in [`next.config.ts`](next.config.ts) — Content-Security-Policy, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, and HSTS. The CSP uses `'unsafe-inline'` for scripts because nonces would require middleware, which would opt every route out of static generation
 
 ### Continuous Integration/Deployment
 - **CI:** GitHub Actions (lint, type-check, Vitest, Playwright) on every push/PR

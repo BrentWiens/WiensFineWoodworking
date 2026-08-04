@@ -10,12 +10,8 @@ Sentry.init({
   environment: process.env.NODE_ENV,
   enabled: process.env.NODE_ENV === 'production',
 
-  // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
-  tracesSampleRate: 1,
-  
-  // Session Replay - see what users did before an error
-  replaysOnErrorSampleRate: 1.0, // Capture 100% of sessions with errors
-  replaysSessionSampleRate: 0.1, // Capture 10% of normal sessions
+  // Sample 10% of traces — see instrumentation-client.ts for rationale.
+  tracesSampleRate: 0.1,
 
   // Ignore common errors that aren't actionable
   ignoreErrors: [

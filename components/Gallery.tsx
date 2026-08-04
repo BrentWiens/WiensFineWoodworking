@@ -1,7 +1,9 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { useState, useEffect, useCallback } from 'react';
+import { getProjectByImage } from '@/lib/projects';
 
 const FOLDER_LABELS: Record<string, string> = {
   tables: 'Custom table',
@@ -32,6 +34,9 @@ export default function Gallery({ images, folder, title, sectionId = 'gallery', 
 
   // Get current image index
   const currentIndex = selectedImage ? images.indexOf(selectedImage) : -1;
+
+  // The project page behind the photo currently open, if there is one.
+  const selectedProject = selectedImage ? getProjectByImage(folder, selectedImage) : undefined;
 
   // Navigation functions
   const goToPrevious = useCallback(() => {
@@ -205,13 +210,23 @@ export default function Gallery({ images, folder, title, sectionId = 'gallery', 
           </div>
 
           {/* Image counter and name */}
-          <div data-testid="modal-image-counter" className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white text-sm bg-black/50 px-4 py-2 rounded flex flex-col items-center gap-1 pointer-events-none">
-            <div className="font-semibold">
+          <div data-testid="modal-image-counter" className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white text-sm bg-black/50 px-4 py-2 rounded flex flex-col items-center gap-1">
+            <div className="font-semibold pointer-events-none">
               {currentIndex + 1} / {images.length}
             </div>
-            <div data-testid="modal-image-name" className="text-stone-300">
+            <div data-testid="modal-image-name" className="text-stone-300 pointer-events-none">
               {selectedImage.replace(/\.[^/.]+$/, '').replace(/-/g, ' ')}
             </div>
+            {selectedProject && (
+              <Link
+                data-testid="modal-project-link"
+                href={`/projects/${selectedProject.slug}`}
+                onClick={(e) => e.stopPropagation()}
+                className="mt-1 text-white underline underline-offset-4 hover:text-stone-300 transition-colors"
+              >
+                View project details →
+              </Link>
+            )}
           </div>
         </div>
       )}

@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
+import { TOOLS_OG_IMAGE, TOOLS_TWITTER_IMAGE } from '@/lib/metadata';
 import Image from 'next/image';
-import { Navigation, Footer, ErrorBoundary } from '@/components';
+import { Navigation, Footer, ErrorBoundary, CommissionCta } from '@/components';
 import CutListOptimizer from '@/components/CutListOptimizer/CutListOptimizer';
 
 export const metadata: Metadata = {
@@ -13,20 +14,13 @@ export const metadata: Metadata = {
     openGraph: {
         title: 'Cut List Optimizer | Wiens Fine Woodworking',
         description: 'Free cut list optimizer for plywood. Minimize waste with grain direction support.',
-        images: [
-            {
-                url: '/images/handplanes.jpg',
-                width: 1200,
-                height: 630,
-                alt: 'Cut List Optimizer',
-            },
-        ],
+        images: TOOLS_OG_IMAGE,
     },
     twitter: {
         card: 'summary_large_image',
         title: 'Cut List Optimizer | Wiens Fine Woodworking',
         description: 'Free cut list optimizer for plywood and sheet goods',
-        images: ['/images/handplanes.jpg'],
+        images: TOOLS_TWITTER_IMAGE,
     },
 };
 
@@ -68,6 +62,8 @@ export default function CutListOptimizerPage() {
                         <CutListOptimizer />
                     </ErrorBoundary>
                 </div>
+                <CommissionCta />
+
             </main>
 
             <Footer />

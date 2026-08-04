@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
+import { TOOLS_OG_IMAGE, TOOLS_TWITTER_IMAGE } from '@/lib/metadata';
 import Image from 'next/image';
-import { Navigation, Footer, ErrorBoundary } from '@/components';
+import { Navigation, Footer, ErrorBoundary, CommissionCta } from '@/components';
 import DovetailVisualizer from '@/components/DovetailVisualizer/DovetailVisualizer';
 
 export const metadata: Metadata = {
@@ -13,20 +14,13 @@ export const metadata: Metadata = {
     openGraph: {
         title: 'Dovetail & Box Joint Calculator | Wiens Fine Woodworking',
         description: 'Free dovetail and box joint calculator with visualizer. Plan dovetail or box joints with custom dimensions, angles, and spacing.',
-        images: [
-            {
-                url: '/images/dovetail-calculator/box-dovetails-cherry-maple-walnut.jpg',
-                width: 1200,
-                height: 630,
-                alt: 'Dovetail Joint Calculator',
-            },
-        ],
+        images: TOOLS_OG_IMAGE,
     },
     twitter: {
         card: 'summary_large_image',
         title: 'Dovetail & Box Joint Calculator | Wiens Fine Woodworking',
         description: 'Free dovetail and box joint calculator with visualizer',
-        images: ['/images/dovetail-calculator/box-dovetails-cherry-maple-walnut.jpg'],
+        images: TOOLS_TWITTER_IMAGE,
     },
 };
 
@@ -66,6 +60,8 @@ export default function DovetailCalculatorPage() {
                 <ErrorBoundary>
                     <DovetailVisualizer />
                 </ErrorBoundary>
+                <CommissionCta />
+
             </main>
 
             <Footer />

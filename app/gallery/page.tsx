@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import Image from 'next/image';
-import { Navigation, GalleryWrapper, Footer } from '@/components';
+import { Navigation, GalleryWrapper, ProjectIndex, Footer } from '@/components';
 
 export const metadata: Metadata = {
     title: 'Gallery | Wiens Fine Woodworking',
@@ -11,18 +11,11 @@ export const metadata: Metadata = {
     openGraph: {
         title: 'Gallery | Wiens Fine Woodworking',
         description: 'Browse custom tables and desks handcrafted in Kitchener, Ontario',
-        images: [
-            {
-                url: '/images/coffee-table-walnut-angled.jpg',
-                alt: 'Wiens Fine Woodworking Gallery',
-            },
-        ],
     },
     twitter: {
         card: 'summary_large_image',
         title: 'Gallery | Wiens Fine Woodworking',
         description: 'Browse custom tables and desks handcrafted in Kitchener, Ontario',
-        images: ['/images/coffee-table-walnut-angled.jpg'],
     },
 };
 
@@ -61,6 +54,7 @@ export default function GalleryPage() {
                 </div>
 
                 <GalleryWrapper />
+                <ProjectIndex />
             </main>
 
             <Footer />

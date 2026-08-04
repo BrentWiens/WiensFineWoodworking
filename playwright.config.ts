@@ -20,8 +20,14 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: 'npm run dev',
+    // CI already runs `npm run build` before the E2E step, so serve that build
+    // rather than `next dev`. The dev server compiles routes on first request, and
+    // with several workers hitting cold routes at once that produced timeouts that
+    // had nothing to do with the code under test. It also means CI exercises the
+    // static generation and response headers that actually ship.
+    command: process.env.CI ? 'npm run start' : 'npm run dev',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
+    timeout: 120_000,
   },
 });
