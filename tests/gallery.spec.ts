@@ -230,3 +230,53 @@ test.describe('Social Media Links', () => {
     await expect(igLink).toHaveAttribute('rel', 'noopener noreferrer');
   });
 });
+
+test.describe('Lightbox accessibility', () => {
+  async function openLightboxInFirstSection(page: import('@playwright/test').Page) {
+    await page.goto('/gallery', { waitUntil: 'networkidle' });
+    await page.getByTestId('gallery-section').getByTestId('gallery-image-0').click();
+    await expect(page.getByTestId('gallery-modal')).toBeVisible();
+  }
+
+  test('exposes the lightbox as a modal dialog', async ({ page }) => {
+    await openLightboxInFirstSection(page);
+
+    const modal = page.getByTestId('gallery-modal');
+    await expect(modal).toHaveAttribute('role', 'dialog');
+    await expect(modal).toHaveAttribute('aria-modal', 'true');
+    await expect(modal).toHaveAttribute('aria-label', /Project photo 1 of \d+/);
+  });
+
+  test('moves focus into the dialog on open', async ({ page }) => {
+    await openLightboxInFirstSection(page);
+
+    const focusedInModal = await page.evaluate(() => {
+      const modal = document.querySelector('[data-testid="gallery-modal"]');
+      return !!modal && !!document.activeElement && modal.contains(document.activeElement);
+    });
+    expect(focusedInModal).toBe(true);
+  });
+
+  test('keeps Tab inside the dialog', async ({ page }) => {
+    await openLightboxInFirstSection(page);
+
+    // Cycle well past the number of focusable controls; focus must never escape.
+    for (let i = 0; i < 12; i++) {
+      await page.keyboard.press('Tab');
+      const stillInside = await page.evaluate(() => {
+        const modal = document.querySelector('[data-testid="gallery-modal"]');
+        return !!modal && !!document.activeElement && modal.contains(document.activeElement);
+      });
+      expect(stillInside, `focus escaped after ${i + 1} tab(s)`).toBe(true);
+    }
+  });
+
+  test('returns focus to the thumbnail after closing', async ({ page }) => {
+    await openLightboxInFirstSection(page);
+    await page.keyboard.press('Escape');
+    await expect(page.getByTestId('gallery-modal')).not.toBeVisible();
+
+    const thumb = page.getByTestId('gallery-section').getByTestId('gallery-image-0');
+    await expect(thumb).toBeFocused();
+  });
+});

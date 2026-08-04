@@ -96,3 +96,30 @@ test('security headers are present', async ({ request }) => {
   expect(headers['x-frame-options']).toBe('DENY');
   expect(headers['referrer-policy']).toBe('strict-origin-when-cross-origin');
 });
+
+test('every page has exactly one h1', async ({ page }) => {
+  for (const path of ['/', '/gallery', '/tools', '/tools/trig-calculator', '/projects/walnut-coffee-table']) {
+    await page.goto(path);
+    await expect(page.locator('h1'), `${path} should have exactly one h1`).toHaveCount(1);
+  }
+});
+
+test('the homepage h1 reads cleanly despite the animated tagline', async ({ page }) => {
+  await page.goto('/');
+
+  // Asserts on text content, which is what a crawler indexes — only the currently
+  // shown word may be present. Stacking all three read "[diningcoffeeend] tables…".
+  await expect(page.locator('h1')).toHaveText(
+    /^\[(dining|coffee|end)\] tables and desks, handcrafted in Kitchener$/
+  );
+});
+
+test('contact form status region is announced to screen readers', async ({ page }) => {
+  await page.goto('/', { waitUntil: 'networkidle' });
+  await page.locator('#contact').scrollIntoViewIfNeeded();
+  await page.getByTestId('contact-show-form').click();
+  await expect(page.getByTestId('contact-form')).toBeVisible();
+
+  const status = page.getByRole('status');
+  await expect(status).toHaveAttribute('aria-live', 'polite');
+});

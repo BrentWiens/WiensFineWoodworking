@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 const FOLDER_LABELS: Record<string, string> = {
   tables: 'Custom table',
@@ -36,6 +36,9 @@ interface GalleryProps {
 export default function Gallery({ images, folder, title, sectionId = 'gallery', background = 'white', projectSlugs = {} }: GalleryProps) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
+  // The thumbnail that opened the modal, so focus can go back where it came from.
+  const triggerRef = useRef<HTMLElement | null>(null);
 
   const currentIndex = selectedImage ? images.indexOf(selectedImage) : -1;
 
@@ -60,9 +63,12 @@ export default function Gallery({ images, folder, title, sectionId = 'gallery', 
   const closeModal = useCallback(() => {
     setSelectedImage(null);
     setIsLoading(false);
+    // Send focus back to the thumbnail rather than dropping it to the document.
+    triggerRef.current?.focus();
+    triggerRef.current = null;
   }, []);
 
-  // Keyboard navigation
+  // Keyboard handling: navigation, dismissal, and keeping Tab inside the dialog.
   useEffect(() => {
     if (!selectedImage) return;
 
@@ -70,11 +76,37 @@ export default function Gallery({ images, folder, title, sectionId = 'gallery', 
       if (e.key === 'Escape') closeModal();
       if (e.key === 'ArrowLeft') goToPrevious();
       if (e.key === 'ArrowRight') goToNext();
+
+      if (e.key !== 'Tab') return;
+
+      // Without this, Tab walks out of the overlay and into the page behind it,
+      // which is still visually covered — keyboard users lose their place entirely.
+      const focusable = modalRef.current?.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled])'
+      );
+      if (!focusable?.length) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedImage, closeModal, goToPrevious, goToNext]);
+
+  // Move focus into the dialog when it opens.
+  useEffect(() => {
+    if (!selectedImage) return;
+    modalRef.current?.querySelector<HTMLElement>('button')?.focus();
+  }, [selectedImage]);
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -100,7 +132,8 @@ export default function Gallery({ images, folder, title, sectionId = 'gallery', 
               <button
                 key={filename}
                 data-testid={`gallery-image-${index}`}
-                onClick={() => {
+                onClick={(e) => {
+                  triggerRef.current = e.currentTarget;
                   setSelectedImage(filename);
                   setIsLoading(true);
                 }}
@@ -139,7 +172,11 @@ export default function Gallery({ images, folder, title, sectionId = 'gallery', 
       {/* Lightbox Modal */}
       {selectedImage && (
         <div
+          ref={modalRef}
           data-testid="gallery-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Project photo ${currentIndex + 1} of ${images.length}`}
           className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4"
           onClick={closeModal}
         >

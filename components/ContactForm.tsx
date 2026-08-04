@@ -199,21 +199,25 @@ export default function ContactForm() {
         {status === 'loading' ? 'Sending...' : 'Send Message'}
       </button>
 
-      {status === 'success' && (
-        <div data-testid="contact-success" className="p-4 bg-green-50 border border-green-200 rounded-lg">
-          <p className="text-green-800 text-center font-medium">
-            ✓ Message sent successfully! I&apos;ll get back to you within 24 hours.
-          </p>
-        </div>
-      )}
+      {/* aria-live so the outcome is announced. Without it a screen reader user
+          submits the form and hears nothing at all. */}
+      <div role="status" aria-live="polite">
+        {status === 'success' && (
+          <div data-testid="contact-success" className="p-4 bg-green-50 border border-green-200 rounded-lg">
+            <p className="text-green-800 text-center font-medium">
+              ✓ Message sent successfully! I&apos;ll get back to you within 24 hours.
+            </p>
+          </div>
+        )}
 
-      {status === 'error' && (
-        <div data-testid="contact-error" className="p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-red-800 text-center font-medium">
-            {errorMessage}
-          </p>
-        </div>
-      )}
+        {status === 'error' && (
+          <div data-testid="contact-error" className="p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-800 text-center font-medium">
+              {errorMessage}
+            </p>
+          </div>
+        )}
+      </div>
 
       {/* Rendered outside the error box on purpose: the worst case is the captcha
           silently never loading, where there is no error to report but the form is
