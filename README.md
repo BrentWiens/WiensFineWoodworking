@@ -12,7 +12,7 @@ A modern, responsive website for Wiens Fine Woodworking showcasing custom furnit
 - **Deployment:** Vercel
 - **Testing:** Vitest (unit), Playwright (E2E)
 - **CI:** GitHub Actions (lint, type-check, unit tests, E2E tests)
-- **Monitoring:** Sentry, Vercel Analytics, Vercel Speed Insights
+- **Monitoring:** Vercel Analytics, Vercel Speed Insights, Vercel runtime logs
 
 ### Pinned major versions
 
@@ -34,7 +34,7 @@ Two majors are available but deliberately held back — both are blocked on
 - ⚡ **Performance** - Server-side rendering, static generation, optimized images
 - 🎨 **Modern UI** - Clean design with smooth animations and hover effects
 - 🔍 **SEO Optimized** - Meta tags, canonical URLs, OpenGraph, Twitter Cards, and Schema.org structured data (`LocalBusiness` with service area and offer catalog, plus `CreativeWork` and `BreadcrumbList` on each project page)
-- 🔒 **Secure Contact Form** - Cloudflare Turnstile bot protection, rate limiting, input sanitization, email notifications
+- 🔒 **Secure Contact Form** - Cloudflare Turnstile bot protection, rate limiting, input sanitization, email notifications, and a social-media fallback shown whenever the form becomes unusable so an enquiry is never silently lost
 
 ## Local Development
 ```bash
@@ -58,9 +58,6 @@ npm run dev
 Create a `.env.local` file in the root directory with the following variables:
 
 ```bash
-# Sentry Error Tracking
-NEXT_PUBLIC_SENTRY_DSN=your_sentry_dsn
-
 # Cloudflare Turnstile (Bot Protection)
 NEXT_PUBLIC_TURNSTILE_SITE_KEY=your_turnstile_site_key
 TURNSTILE_SECRET_KEY=your_turnstile_secret_key
@@ -138,6 +135,7 @@ wiens-woodworking/
 │   ├── UnitToggle.tsx        # Imperial/metric unit toggle
 │   ├── ProjectIndex.tsx      # Crawlable list of all project pages
 │   ├── CommissionCta.tsx     # Soft CTA shown on the tool pages
+│   ├── SocialLinks.tsx       # Shared Facebook/Instagram links
 │   ├── ErrorBoundary.tsx
 │   ├── ServiceWorkerRegistration.tsx
 │   ├── Footer.tsx
@@ -189,12 +187,24 @@ npm start
 - **E2E Testing** - Playwright test suite for critical user flows
 - **Unit Testing** - Vitest for pure utility functions
 - **CI/CD** - GitHub Actions for automated quality gates
-- **Production monitoring** - Sentry error tracking, Vercel Analytics
+- **Production monitoring** - Vercel Analytics, Speed Insights and runtime logs
 
 ## Key Technical Decisions
 
 ### Server Components by Default
 Most components are Server Components for optimal performance. Only the Gallery uses `'use client'` for interactive lightbox functionality.
+
+### No client-side error reporting
+Sentry was removed deliberately. See *Monitoring & Observability* below for the
+reasoning and what replaced it.
+
+### The contact form always offers a way out
+Turnstile can fail to load entirely — an ad blocker or corporate network blocking
+`challenges.cloudflare.com` — and when it does the library fires no callback at all.
+Previously that left the submit button disabled forever with nothing on screen
+explaining why, and the enquiry was simply lost. `ContactForm` now treats "the widget
+never appeared within 12s" as a failure alongside a failed send, and surfaces
+Facebook/Instagram links so the visitor can still reach out.
 
 ### Image Optimization Strategy
 - Gallery thumbnails: 75% quality, responsive sizes
@@ -207,7 +217,7 @@ Components use barrel exports (`components/index.ts`) for cleaner imports throug
 ## Production Readiness
 
 ### Monitoring & Observability
-- **Error Tracking:** Sentry for client and server-side error monitoring. Session Replay is deliberately disabled — it pulls rrweb into the client bundle (~120KB uncompressed) which is a poor trade for a marketing site. Traces are sampled at 10% and `sendDefaultPii` is off
+- **Error Tracking:** None by design. Sentry was removed — on 55 statically generated pages it caught very little while costing 426KB of client JS (45% of the bundle) and 11 integration points. Unhandled errors log to the browser console; server-side failures in `/api/contact` log to the Vercel runtime logs, which is where a broken mail transport would show up
 - **Analytics:** Vercel Analytics for page views and user insights
 - **Performance:** Vercel Speed Insights tracking Core Web Vitals
 
@@ -232,7 +242,6 @@ Components use barrel exports (`components/index.ts`) for cleaner imports throug
 - **Zero Downtime:** Atomic deployments with instant rollback capability
 
 ### Monitoring Dashboard
-- **Sentry:** [Sentry Dashboard](https://wiens-fine-woodworking.sentry.io/dashboard/default-overview/)
 - **Vercel Analytics:** [Vercel Analytics](https://vercel.com/brent-wiens-projects/wiens-fine-woodworking/analytics)
 
 ## Browser Support

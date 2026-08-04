@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect } from 'react';
-import * as Sentry from '@sentry/nextjs';
 
 export default function Error({
   error,
@@ -11,8 +10,9 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Log error to Sentry
-    Sentry.captureException(error);
+    // Surfaces in the browser console and, for server-rendered failures, in the
+    // Vercel runtime logs.
+    console.error('Unhandled application error:', error);
   }, [error]);
 
   return (
@@ -22,7 +22,8 @@ export default function Error({
           Something went wrong!
         </h2>
         <p className="text-stone-600 mb-8">
-          We&apos;ve been notified and are looking into it.
+          Sorry about that. Try again, and if it keeps happening you can reach me
+          on Facebook or Instagram.
         </p>
         <button
           onClick={reset}

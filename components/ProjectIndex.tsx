@@ -15,9 +15,6 @@ export default function ProjectIndex() {
     <section id="all-projects" className="py-20 px-6 bg-white border-t border-stone-200">
       <div className="max-w-7xl mx-auto">
         <h2 className="text-3xl font-bold text-stone-800 mb-4 text-center">All Projects</h2>
-        <p className="text-stone-600 text-center mb-12 max-w-2xl mx-auto">
-          Each piece has its own page with the materials and details behind it.
-        </p>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
           {ORDER.map(category => {

@@ -99,7 +99,7 @@ export const PROJECTS: Project[] = [
     title: 'Oak Desk',
     category: 'tables',
     images: ['oak-desk.jpg'],
-    woods: ['Oak'],
+    woods: ['Red Oak'],
     description: 'A custom home office desk in solid oak.',
   },
   {
@@ -107,7 +107,7 @@ export const PROJECTS: Project[] = [
     title: 'Refinished Desk',
     category: 'tables',
     images: ['desk-refinished.jpg'],
-    woods: [],
+    woods: ['Pine'],
     description: 'An existing desk stripped and refinished rather than replaced.',
   },
   {
@@ -115,7 +115,7 @@ export const PROJECTS: Project[] = [
     title: 'Media Console',
     category: 'tables',
     images: ['media-console.jpg'],
-    woods: [],
+    woods: ['Walnut'],
     description: 'A custom media console built to fit a specific wall and equipment.',
   },
   {
@@ -158,7 +158,7 @@ export const PROJECTS: Project[] = [
     title: 'Maple Cabinet with Bowtie Inlays',
     category: 'finish-carpentry',
     images: ['cabinet-maple-bowties.jpg'],
-    woods: ['Maple'],
+    woods: ['Maple', 'Zebrawood'],
     description:
       'A maple cabinet with inlaid bowtie keys, a detail that is both structural and decorative.',
   },
@@ -184,7 +184,7 @@ export const PROJECTS: Project[] = [
     title: 'Custom Entryway',
     category: 'finish-carpentry',
     images: ['entryway.jpg'],
-    woods: [],
+    woods: ['Ipe', 'Oak'],
     description: 'Built-in entryway storage fitted to the space.',
   },
   {
@@ -192,7 +192,7 @@ export const PROJECTS: Project[] = [
     title: 'Ladder and Railing',
     category: 'finish-carpentry',
     images: ['ladder-and-railing.jpg'],
-    woods: [],
+    woods: ['Maple'],
     description: 'A custom ladder and matching railing built as a single piece of joinery.',
   },
   {
@@ -353,7 +353,7 @@ export const PROJECTS: Project[] = [
     title: 'Tissue Box Cover',
     category: 'other',
     images: ['kleenex-1.jpg', 'kleenex-2.jpg'],
-    woods: [],
+    woods: ['Walnut', 'White Oak'],
     description: 'A small wooden cover made to conceal a cardboard tissue box.',
   },
   {
@@ -361,7 +361,7 @@ export const PROJECTS: Project[] = [
     title: 'Trivets',
     category: 'other',
     images: ['trivets.jpg'],
-    woods: [],
+    woods: ['Red Oak', 'Ash'],
     description: 'A set of wooden trivets.',
   },
 ];

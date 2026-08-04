@@ -16,3 +16,4 @@ export { default as TrigCalculator } from './TrigCalculator/TrigCalculator';
 export { default as ToolCard } from './ToolCard';
 export { default as ProjectIndex } from './ProjectIndex';
 export { default as CommissionCta } from './CommissionCta';
+export { default as SocialLinks } from './SocialLinks';

@@ -1,7 +1,14 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile';
+import SocialLinks from './SocialLinks';
+
+// How long to wait for the Turnstile widget to appear before assuming it never
+// will. It normally renders in a second or two; if challenges.cloudflare.com is
+// blocked the script fails silently and no callback ever fires, which would
+// otherwise leave the submit button disabled forever with nothing explaining why.
+const WIDGET_LOAD_TIMEOUT_MS = 12_000;
 
 export default function ContactForm() {
   const [formData, setFormData] = useState({
@@ -15,7 +22,18 @@ export default function ContactForm() {
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
+  // True once the form has become a dead end — the send failed, or the captcha
+  // could not load at all. Not set for the ordinary "you haven't done the captcha
+  // yet" nudge, which the visitor can simply resolve themselves.
+  const [showSocialFallback, setShowSocialFallback] = useState(false);
+  const [widgetReady, setWidgetReady] = useState(false);
   const turnstileRef = useRef<TurnstileInstance | null>(null);
+
+  useEffect(() => {
+    if (widgetReady) return;
+    const timer = setTimeout(() => setShowSocialFallback(true), WIDGET_LOAD_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, [widgetReady]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,12 +42,14 @@ export default function ContactForm() {
 
     if (!turnstileToken) {
       setStatus('error');
+      setShowSocialFallback(false);
       setErrorMessage('Please complete the verification');
       return;
     }
 
     setStatus('loading');
     setErrorMessage('');
+    setShowSocialFallback(false);
 
     try {
       const response = await fetch('/api/contact', {
@@ -54,6 +74,9 @@ export default function ContactForm() {
       turnstileRef.current?.reset();
     } catch (error) {
       setStatus('error');
+      // The message did not get through, so give people another way to reach me
+      // rather than letting the enquiry die here.
+      setShowSocialFallback(true);
       setErrorMessage(error instanceof Error ? error.message : 'Failed to send message. Please try again.');
     }
   };
@@ -154,9 +177,13 @@ export default function ContactForm() {
         <Turnstile
           ref={turnstileRef}
           siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
+          onWidgetLoad={() => setWidgetReady(true)}
           onSuccess={(token) => setTurnstileToken(token)}
           onError={() => {
             setStatus('error');
+            // The widget loaded but the challenge itself failed, so the visitor
+            // still cannot get a message through this form.
+            setShowSocialFallback(true);
             setErrorMessage('Verification failed. Please try again.');
           }}
           onExpire={() => setTurnstileToken(null)}
@@ -185,6 +212,23 @@ export default function ContactForm() {
           <p className="text-red-800 text-center font-medium">
             {errorMessage}
           </p>
+        </div>
+      )}
+
+      {/* Rendered outside the error box on purpose: the worst case is the captcha
+          silently never loading, where there is no error to report but the form is
+          still unusable. Wording stays neutral so it reads correctly whether the
+          send failed or verification never appeared. */}
+      {showSocialFallback && (
+        <div
+          data-testid="contact-error-social"
+          className="p-4 bg-amber-50 border border-amber-200 rounded-lg"
+        >
+          <p className="text-amber-900 text-center mb-4">
+            Having trouble with this form? Send me a message on Facebook or Instagram
+            instead and I&apos;ll get right back to you.
+          </p>
+          <SocialLinks className="justify-center" />
         </div>
       )}
     </form>
