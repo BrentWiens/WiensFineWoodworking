@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import { TOOLS_OG_IMAGE, TOOLS_TWITTER_IMAGE } from '@/lib/metadata';
-import Image from 'next/image';
 import { Navigation, Footer, ErrorBoundary, CommissionCta } from '@/components';
+import PageHero from '@/components/PageHero';
 import TrigCalculator from '@/components/TrigCalculator/TrigCalculator';
 
 export const metadata: Metadata = {
@@ -31,31 +31,13 @@ export default function TrigCalculatorPage() {
 
             <main id="main-content" className="min-h-screen bg-stone-50">
 
-                <div className="relative pt-30 pb-16 px-6">
-                    {/* Background Image */}
-                    <div className="absolute inset-0 z-0">
-                        <Image
-                            src="/handplanes.jpg"
-                            alt="Handplanes"
-                            fill
-                            className="object-cover"
-                            priority
-                            quality={60}
-                        />
-                        {/* Dark overlay for text readability */}
-                        <div className="absolute inset-0 bg-black/40"></div>
-                    </div>
-
-                    {/* Content */}
-                    <div className="relative z-10 max-w-7xl mx-auto">
-                        <h1 className="text-5xl font-bold text-white mb-4 text-center drop-shadow-lg">
-                            Trigonometry Calculator
-                        </h1>
-                        <p className="text-white/90 text-center text-lg max-w-2xl mx-auto drop-shadow-md">
-                            Solve any right triangle. Enter two known measurements and calculate the rest.
-                        </p>
-                    </div>
-                </div>
+                <PageHero
+                    title="Trigonometry Calculator"
+                    subtitle="Solve any right triangle. Enter two known measurements and calculate the rest."
+                    imageSrc="/handplanes.jpg"
+                    imageAlt="Handplanes"
+                    overlay="medium"
+                />
 
                 <div className="py-8 px-4">
                     <ErrorBoundary>

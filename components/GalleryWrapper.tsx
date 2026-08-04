@@ -23,13 +23,11 @@ function GetImagesFromDir(folder: string) {
   if (!fs.existsSync(dir)) return [];
   const filenames = fs.readdirSync(dir);
 
-  // Filter for image files only
   return filenames.filter(file =>
     /\.(jpg|jpeg|png|webp)$/i.test(file)
   );
 }
 
-// Server component that reads files
 export default function GalleryWrapper() {
   return (
     <>

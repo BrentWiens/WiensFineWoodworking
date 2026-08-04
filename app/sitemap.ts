@@ -4,13 +4,11 @@ import { PROJECTS } from '@/lib/projects'
 const BASE_URL = 'https://wfinew.com'
 
 /**
- * Evaluated once per build, so it always reflects the current deploy instead of a
- * hardcoded date that silently drifts out of accuracy.
+ * Evaluated once per build, so it tracks the current deploy.
  *
- * Reading real per-file mtimes was tried and abandoned: Vercel builds from a fresh
- * git clone, which stamps every file with the checkout time, so per-file mtimes all
- * collapse to the build time anyway — while forcing Turbopack to trace the whole
- * project into the server bundle.
+ * Don't swap this for per-file mtimes: Vercel builds from a fresh git clone, which
+ * stamps every file with the checkout time, so they all collapse to the build time
+ * anyway — while forcing Turbopack to trace the whole project into the server bundle.
  */
 const LAST_MODIFIED = new Date()
 

@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import { TOOLS_OG_IMAGE, TOOLS_TWITTER_IMAGE } from '@/lib/metadata';
-import Image from 'next/image';
 import { Navigation, Footer, ToolCard } from '@/components';
+import PageHero from '@/components/PageHero';
 
 export const metadata: Metadata = {
     title: 'Tools | Wiens Fine Woodworking',
@@ -70,31 +70,13 @@ export default function ToolsPage() {
 
             <main id="main-content" className="min-h-screen bg-stone-50">
                 {/* Hero header with background - now starts at top */}
-                <div className="relative pt-30 pb-16 px-6">
-                    {/* Background Image */}
-                    <div className="absolute inset-0 z-0">
-                        <Image
-                            src="/handplanes.jpg"
-                            alt="Handplanes"
-                            fill
-                            className="object-cover"
-                            priority
-                            quality={60}
-                        />
-                        {/* Dark overlay for text readability */}
-                        <div className="absolute inset-0 bg-black/50"></div>
-                    </div>
-
-                    {/* Content */}
-                    <div className="relative z-10 max-w-7xl mx-auto">
-                        <h1 className="text-5xl font-bold text-white mb-4 text-center drop-shadow-lg">
-                            Tools
-                        </h1>
-                        <p className="text-white/90 text-center text-lg max-w-2xl mx-auto drop-shadow-md">
-                            A collection of tools used in woodworking design and craftsmanship.
-                        </p>
-                    </div>
-                </div>
+                <PageHero
+                    title="Tools"
+                    subtitle="A collection of tools used in woodworking design and craftsmanship."
+                    imageSrc="/handplanes.jpg"
+                    imageAlt="Handplanes"
+                    overlay="dark"
+                />
 
                 <div className="max-w-7xl mx-auto px-6 py-12">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

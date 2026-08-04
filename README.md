@@ -92,9 +92,8 @@ npm run lint
 ## Project Structure
 ```
 wiens-woodworking/
-├── .github/workflows/        # CI pipelines
-│   ├── ci.yml                # Lint, type-check, unit & E2E tests
-│   └── lighthouse.yml        # Lighthouse CI (manual trigger)
+├── .github/workflows/
+│   └── ci.yml                # Lint, type-check, unit & E2E tests
 ├── app/                      # Next.js App Router
 │   ├── page.tsx              # Homepage
 │   ├── layout.tsx            # Root layout & metadata
@@ -136,6 +135,7 @@ wiens-woodworking/
 │   ├── ProjectIndex.tsx      # Crawlable list of all project pages
 │   ├── CommissionCta.tsx     # Soft CTA shown on the tool pages
 │   ├── SocialLinks.tsx       # Shared Facebook/Instagram links
+│   ├── PageHero.tsx          # Shared full-bleed page header
 │   ├── ErrorBoundary.tsx
 │   ├── ServiceWorkerRegistration.tsx
 │   ├── Footer.tsx

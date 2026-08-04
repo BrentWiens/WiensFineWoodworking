@@ -1,13 +1,12 @@
 import type { Metadata } from 'next';
 
 /**
- * Shared OpenGraph image for the /tools section.
+ * Shared OpenGraph image for the six /tools pages.
  *
- * The `opengraph-image.jpg` file convention only applies to the exact segment it
- * sits in — it does NOT cascade to nested routes. An `app/tools/opengraph-image.jpg`
- * therefore covered /tools but left all five calculator subpages with no share
- * image at all. Rather than copy the same photo into six directories, the six pages
- * reference this one file explicitly.
+ * Referenced explicitly rather than using the `opengraph-image.jpg` file
+ * convention, because that convention applies only to the exact segment it sits in
+ * and does NOT cascade to nested routes — so an `app/tools/opengraph-image.jpg`
+ * would leave all five calculator subpages with no share image at all.
  */
 export const TOOLS_OG_IMAGE: NonNullable<Metadata['openGraph']>['images'] = [
   {

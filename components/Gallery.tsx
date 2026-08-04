@@ -26,11 +26,9 @@ interface GalleryProps {
   sectionId?: string;
   background?: 'white' | 'stone';
   /**
-   * Maps image filename to its project slug, resolved on the server.
-   *
-   * This used to call into `lib/projects` directly, but this is a client
-   * component, so doing that shipped the whole project registry — every title,
-   * description and materials list — to the browser just to look up a slug.
+   * Image filename -> project slug, resolved on the server. Must stay a prop:
+   * this is a client component, so importing `lib/projects` here would ship the
+   * whole registry to the browser to look up a slug.
    */
   projectSlugs?: Record<string, string>;
 }
@@ -39,7 +37,6 @@ export default function Gallery({ images, folder, title, sectionId = 'gallery', 
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Get current image index
   const currentIndex = selectedImage ? images.indexOf(selectedImage) : -1;
 
   // The project page behind the photo currently open, if there is one.
