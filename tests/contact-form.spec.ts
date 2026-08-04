@@ -162,14 +162,25 @@ test.describe('Contact Form', () => {
 });
 
 test.describe('Contact form failure fallback', () => {
-  // One test here deliberately waits out the widget-load timeout in ContactForm.
-  test.describe.configure({ timeout: 45_000 });
+  // One test here deliberately waits out the widget-load timeout in ContactForm,
+  // on top of the lazy-chunk wait below.
+  test.describe.configure({ timeout: 60_000 });
 
   async function openForm(page: import('@playwright/test').Page) {
     const contactSection = page.locator('#contact');
     await contactSection.scrollIntoViewIfNeeded();
-    await page.getByTestId('contact-show-form').click();
-    await expect(page.getByTestId('contact-form')).toBeVisible();
+
+    // The reveal button is server-rendered, so Playwright can click it before React
+    // has hydrated and attached the handler — the click is then silently lost and
+    // the form never opens. Retry until it actually does. Only shows up under
+    // parallel load, where hydration lags far enough behind first paint to lose the
+    // race, which is why this passed in isolation and failed in a full run.
+    await expect(async () => {
+      if (!(await page.getByTestId('contact-form').isVisible())) {
+        await page.getByTestId('contact-show-form').click();
+      }
+      await expect(page.getByTestId('contact-form')).toBeVisible({ timeout: 2_000 });
+    }).toPass({ timeout: 30_000 });
   }
 
   test('points people to social media when Turnstile cannot load', async ({ page }) => {

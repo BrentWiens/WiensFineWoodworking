@@ -7,6 +7,13 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
+  // Local runs hit `next dev`, which compiles each route and lazy chunk on first
+  // request. With several workers that regularly pushes a first paint past the 5s
+  // default and produces failures unrelated to the code under test — worst on a cold
+  // .next, where whichever test lands on a route first pays the whole compile.
+  // CI runs against the prebuilt production server and never needs this headroom.
+  expect: { timeout: 15_000 },
+
   use: {
     baseURL: 'http://localhost:3000',
     trace: 'on-first-retry',
