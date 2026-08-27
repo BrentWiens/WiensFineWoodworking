@@ -120,7 +120,7 @@ export default function CutListOptimizer() {
     }
 
     if (parsedPieces.length === 0) {
-      setErrors(['Please add at least one piece.']);
+      setErrors(['Enter dimensions for at least one piece.']);
       return;
     }
 
@@ -244,17 +244,7 @@ export default function CutListOptimizer() {
 
         {/* Pieces List */}
         <div>
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold text-stone-800">Pieces</h3>
-            <button
-              onClick={handleAddPiece}
-              className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-medium rounded-lg transition-colors"
-              type="button"
-              data-testid="add-piece"
-            >
-              + Add Piece
-            </button>
-          </div>
+          <h3 className="text-lg font-semibold text-stone-800 mb-4">Pieces</h3>
 
           <div className="space-y-3">
             {/* Header row */}
@@ -363,12 +353,13 @@ export default function CutListOptimizer() {
           </div>
         )}
 
-        {/* Action Buttons */}
-        <div className="flex gap-4">
+        {/* Action Buttons — Add Piece lives down here, next to the list it appends
+            to, so entering a long cut list doesn't mean scrolling back to the top. */}
+        <div className="flex flex-wrap gap-3">
           <button
             onClick={handleOptimize}
             disabled={isOptimizing}
-            className="flex-1 py-3 bg-amber-500 hover:bg-amber-600 disabled:bg-amber-400 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
+            className="basis-full sm:basis-0 sm:flex-1 py-3 bg-amber-500 hover:bg-amber-600 disabled:bg-amber-400 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
             type="button"
             data-testid="optimize-button"
           >
@@ -401,9 +392,18 @@ export default function CutListOptimizer() {
             )}
           </button>
           <button
+            onClick={handleAddPiece}
+            disabled={isOptimizing}
+            className="flex-1 sm:flex-none px-6 py-3 border-2 border-amber-500 text-amber-700 hover:bg-amber-50 disabled:opacity-50 font-semibold rounded-lg transition-colors"
+            type="button"
+            data-testid="add-piece"
+          >
+            + Add Piece
+          </button>
+          <button
             onClick={handleClear}
             disabled={isOptimizing}
-            className="px-6 py-3 bg-stone-200 hover:bg-stone-300 disabled:bg-stone-100 text-stone-800 font-semibold rounded-lg transition-colors"
+            className="flex-1 sm:flex-none px-6 py-3 bg-stone-200 hover:bg-stone-300 disabled:bg-stone-100 text-stone-800 font-semibold rounded-lg transition-colors"
             type="button"
             data-testid="clear-button"
           >

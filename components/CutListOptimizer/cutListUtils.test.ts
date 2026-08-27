@@ -192,6 +192,22 @@ describe('parsePieces', () => {
     expect(result.pieces[0].grainDirection).toBe('along-length');
   });
 
+  it('skips blank rows instead of reporting them, keeping row numbers intact', () => {
+    const pieces: PieceInput[] = [
+      { id: '1', width: '24', length: '36', quantity: '1', grainDirection: 'no-preference' },
+      { id: '2', width: '', length: '', quantity: '1', grainDirection: 'no-preference' },
+      { id: '3', width: '  ', length: '', quantity: '', grainDirection: 'no-preference' },
+      { id: '4', width: '12', length: '', quantity: '1', grainDirection: 'no-preference' },
+    ];
+
+    const result = parsePieces(pieces);
+
+    expect(result.pieces).toHaveLength(1);
+    expect(result.pieces[0].width).toBe(24);
+    // Only the half-filled row is an error, and it still names its own row number.
+    expect(result.errors).toEqual(['Row 4: Invalid length']);
+  });
+
   it('returns error for invalid width', () => {
     const pieces: PieceInput[] = [
       { id: '1', width: '', length: '36', quantity: '1', grainDirection: 'no-preference' },

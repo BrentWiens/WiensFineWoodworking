@@ -1,19 +1,3 @@
-/**
- * Project registry backing /projects/[slug].
- *
- * Each gallery photo previously existed only inside a client-side lightbox, which
- * meant 40+ pieces of work shared a single indexable URL. These entries give each
- * piece its own page, title and description so they can rank individually.
- *
- * IMPORTANT — the `description` fields below are deliberately conservative: they
- * restate only what is verifiable from the photo filenames (piece type, wood
- * species, visible joinery). They are placeholders. Replacing them with the real
- * story of each commission — the brief, the client's room, why a species was
- * chosen, what was tricky — is what will actually make these pages rank. Thin,
- * templated pages are worth less than one good gallery page, so treat this as
- * scaffolding to fill in rather than finished copy.
- */
-
 export type ProjectCategory = 'tables' | 'finish-carpentry' | 'other';
 
 export interface Project {
@@ -69,6 +53,15 @@ export const PROJECTS: Project[] = [
     woods: ['Walnut', 'Maple'],
     description:
       'A set of end tables pairing dark walnut tops with contrasting maple legs.',
+  },
+  {
+    slug: 'walnut-table-set',
+    title: 'Walnut Table Set',
+    category: 'tables',
+    images: ['walnut-tables.jpg'],
+    woods: ['Walnut'],
+    description:
+      'A matched set of occasional tables in solid walnut — a long console with a shaped top and lower shelf, alongside three shelved side tables.',
   },
   {
     slug: 'cherry-end-table',

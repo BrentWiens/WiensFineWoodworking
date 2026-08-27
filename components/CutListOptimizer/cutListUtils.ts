@@ -158,11 +158,22 @@ export function parseSheetConfig(config: SheetConfig): SheetConfigData | null {
   return { width, length, kerfWidth, sheetsAvailable };
 }
 
+/**
+ * True for a row the user has typed no dimensions into. Adding rows is cheap and
+ * blank ones carry no intent, so they are skipped rather than reported as errors —
+ * a half-filled row still is, since that's a mistake worth surfacing.
+ */
+export function isPieceRowEmpty(piece: PieceInput): boolean {
+  return piece.width.trim() === '' && piece.length.trim() === '';
+}
+
 export function parsePieces(pieces: PieceInput[]): { pieces: PieceData[]; errors: string[] } {
   const errors: string[] = [];
   const parsedPieces: PieceData[] = [];
 
   pieces.forEach((piece, index) => {
+    if (isPieceRowEmpty(piece)) return;
+
     const width = parseFloat(piece.width);
     const length = parseFloat(piece.length);
     const quantity = parseInt(piece.quantity, 10);

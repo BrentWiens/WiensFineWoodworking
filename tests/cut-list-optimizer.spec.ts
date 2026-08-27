@@ -118,14 +118,40 @@ test.describe('Cut List Optimizer', () => {
     await expect(page.getByText('Sheet 1', { exact: true })).toBeVisible();
   });
 
-  test('shows validation error for empty piece dimensions', async ({ page }) => {
+  test('asks for dimensions when every row is blank', async ({ page }) => {
     await page.goto('/tools/cut-list-optimizer', { waitUntil: 'networkidle' });
 
     // Leave dimensions empty and click optimize
     await page.getByTestId('optimize-button').click();
 
-    // Should show error
-    await expect(page.locator('text=Invalid width')).toBeVisible();
+    await expect(page.locator('text=Enter dimensions for at least one piece')).toBeVisible();
+  });
+
+  test('ignores blank rows left over from adding pieces', async ({ page }) => {
+    await page.goto('/tools/cut-list-optimizer', { waitUntil: 'networkidle' });
+
+    await page.getByTestId('piece-width-0').fill('24');
+    await page.getByTestId('piece-length-0').fill('36');
+
+    // Two spare rows the user tabbed past without filling in
+    await page.getByTestId('add-piece').click();
+    await page.getByTestId('add-piece').click();
+
+    await page.getByTestId('optimize-button').click();
+
+    await expect(page.locator('text=Sheets Used')).toBeVisible();
+    await expect(page.locator('text=Invalid width')).not.toBeVisible();
+  });
+
+  test('still flags a half-filled row', async ({ page }) => {
+    await page.goto('/tools/cut-list-optimizer', { waitUntil: 'networkidle' });
+
+    // Width without a length is a mistake, not an untouched row
+    await page.getByTestId('piece-width-0').fill('24');
+
+    await page.getByTestId('optimize-button').click();
+
+    await expect(page.locator('text=Invalid length')).toBeVisible();
   });
 
   test('shows validation error for invalid sheet config', async ({ page }) => {

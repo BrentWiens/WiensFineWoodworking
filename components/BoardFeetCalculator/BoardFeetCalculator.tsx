@@ -101,17 +101,7 @@ export default function BoardFeetCalculator() {
         {/* Header */}
         <div className="flex justify-between items-center">
           <h3 className="text-lg font-semibold text-stone-800">Lumber</h3>
-          <div className="flex items-center gap-3">
-            <UnitToggle units={units} onChange={setUnits} />
-            <button
-              onClick={handleAdd}
-              className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-medium rounded-lg transition-colors"
-              type="button"
-              data-testid="add-entry"
-            >
-              + Add Entry
-            </button>
-          </div>
+          <UnitToggle units={units} onChange={setUnits} />
         </div>
 
         {/* Column headers */}
@@ -221,15 +211,26 @@ export default function BoardFeetCalculator() {
             : 'All dimensions in inches. Board feet = (Thickness \u00d7 Width \u00d7 Length \u00d7 Qty) / 144'}
         </p>
 
-        {/* Clear Button */}
-        <button
-          onClick={handleClear}
-          className="w-full py-3 bg-stone-200 hover:bg-stone-300 text-stone-800 font-semibold rounded-lg transition-colors"
-          type="button"
-          data-testid="clear-button"
-        >
-          Clear All
-        </button>
+        {/* Add Entry sits with Clear at the foot of the list rather than in the
+            header, so adding a run of boards doesn't mean scrolling back up. */}
+        <div className="flex gap-3">
+          <button
+            onClick={handleAdd}
+            className="flex-1 py-3 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-lg transition-colors"
+            type="button"
+            data-testid="add-entry"
+          >
+            + Add Entry
+          </button>
+          <button
+            onClick={handleClear}
+            className="flex-1 py-3 bg-stone-200 hover:bg-stone-300 text-stone-800 font-semibold rounded-lg transition-colors"
+            type="button"
+            data-testid="clear-button"
+          >
+            Clear All
+          </button>
+        </div>
       </div>
     </div>
   );
