@@ -4,6 +4,7 @@ import "./globals.css";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { ServiceWorkerRegistration } from "@/components";
+import { GOOGLE_BUSINESS_URL } from "@/lib/metadata";
 
 const geist = Geist({
   variable: "--font-geist-sans",
@@ -74,10 +75,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       addressRegion: 'ON',
       addressCountry: 'CA',
     },
-    // CID URL, not the share.google shortlink — the shortlink carries utm tracking
-    // params and redirects twice. The CID (hex 0x78544eeed2a492de in the Maps URL)
-    // is the stable identifier for the listing.
-    hasMap: 'https://www.google.com/maps?cid=8670641970238231262',
+    hasMap: GOOGLE_BUSINESS_URL,
     areaServed: [
       { '@type': 'City', name: 'Kitchener' },
       { '@type': 'City', name: 'Waterloo' },

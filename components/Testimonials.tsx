@@ -1,3 +1,5 @@
+import { GOOGLE_BUSINESS_URL } from '@/lib/metadata';
+
 export default function Testimonials() {
   const testimonials = [
     {
@@ -55,6 +57,35 @@ export default function Testimonials() {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Links out rather than restating ratings here: Google ignores review markup
+            for a LocalBusiness on its own site as self-serving, so stars only ever
+            render on the profile itself. */}
+        <div className="mt-12 text-center">
+          <a
+            href={GOOGLE_BUSINESS_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 font-medium text-stone-700 underline underline-offset-4 hover:text-stone-900 transition-colors"
+          >
+            Read all reviews on Google
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M13.5 6H18v4.5M17.5 6.5L10 14M15 13.5V18a1 1 0 01-1 1H6a1 1 0 01-1-1V10a1 1 0 011-1h4.5"
+              />
+            </svg>
+            <span className="sr-only">(opens in a new tab)</span>
+          </a>
         </div>
       </div>
     </section>

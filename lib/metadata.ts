@@ -18,3 +18,15 @@ export const TOOLS_OG_IMAGE: NonNullable<Metadata['openGraph']>['images'] = [
 ];
 
 export const TOOLS_TWITTER_IMAGE = ['/og/tools.jpg'];
+
+/**
+ * The Google Business Profile listing, addressed by CID.
+ *
+ * Used for `hasMap` in the LocalBusiness schema and for the review link on the
+ * homepage. Not the `share.google/…` shortlink the GBP share button hands out —
+ * that one redirects twice and carries utm tracking params.
+ *
+ * The CID is the decimal form of the hex pair in the Maps place URL
+ * (`0x882bf5a54aa47f5f:0x78544eeed2a492de` — the half after the colon).
+ */
+export const GOOGLE_BUSINESS_URL = 'https://www.google.com/maps?cid=8670641970238231262';
