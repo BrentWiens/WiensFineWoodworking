@@ -47,9 +47,12 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  // Deliberately omitted: telephone, geo coordinates and priceRange. Google will
-  // use them if present, but only add them once they are real — inventing them is
-  // worse than leaving them out.
+  // Deliberately omitted: geo coordinates and priceRange. Google will use them if
+  // present, but only add them once they are real — inventing them is worse than
+  // leaving them out.
+  //
+  // telephone must stay byte-identical to the number on the Google Business Profile;
+  // local ranking leans on name/address/phone matching across listings.
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'LocalBusiness',
@@ -64,12 +67,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       '@type': 'Person',
       name: 'Brent Wiens',
     },
+    telephone: '+1-226-338-4441',
     address: {
       '@type': 'PostalAddress',
       addressLocality: 'Kitchener',
       addressRegion: 'ON',
       addressCountry: 'CA',
     },
+    // CID URL, not the share.google shortlink — the shortlink carries utm tracking
+    // params and redirects twice. The CID (hex 0x78544eeed2a492de in the Maps URL)
+    // is the stable identifier for the listing.
+    hasMap: 'https://www.google.com/maps?cid=8670641970238231262',
     areaServed: [
       { '@type': 'City', name: 'Kitchener' },
       { '@type': 'City', name: 'Waterloo' },
