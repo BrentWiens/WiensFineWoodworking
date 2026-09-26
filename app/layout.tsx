@@ -63,7 +63,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       'Custom dining tables, coffee tables, end tables, desks and finish carpentry, handcrafted in Kitchener, Ontario.',
     url: 'https://wfinew.com',
     image: 'https://wfinew.com/coffee-table-walnut-angled.jpg',
-    logo: 'https://wfinew.com/favicon.ico',
+    logo: 'https://wfinew.com/icons/icon-512.png',
     founder: {
       '@type': 'Person',
       name: 'Brent Wiens',

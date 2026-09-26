@@ -147,6 +147,7 @@ wiens-woodworking/
 ├── public/
 │   ├── images/gallery/       # Project photos (43 images)
 │   ├── og/tools.jpg          # Shared social image for /tools pages
+│   ├── icons/                # 192/512 PWA icons (512 doubles as maskable)
 │   ├── sw.js                 # Service worker
 │   └── manifest.json         # PWA manifest
 └── README.md

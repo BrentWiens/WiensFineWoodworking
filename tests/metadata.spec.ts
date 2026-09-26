@@ -123,3 +123,37 @@ test('contact form status region is announced to screen readers', async ({ page 
   const status = page.getByRole('status');
   await expect(status).toHaveAttribute('aria-live', 'polite');
 });
+
+/**
+ * The manifest used to list only the 48px favicon, so "Add to Home Screen" fell back
+ * to a blurry upscale or a screenshot. Guard that the icons it names exist and are
+ * the size they claim — browsers silently skip icons whose real size doesn't match.
+ */
+test('web manifest icons resolve at their declared sizes', async ({ request }) => {
+  const manifest = await (await request.get('/manifest.json')).json();
+  const icons: { src: string; sizes: string; purpose?: string }[] = manifest.icons;
+
+  expect(icons.some(i => i.sizes === '192x192')).toBe(true);
+  expect(icons.some(i => i.sizes === '512x512' && i.purpose === 'maskable')).toBe(true);
+
+  for (const icon of icons) {
+    const response = await request.get(icon.src);
+    expect(response.status(), `${icon.src} does not resolve`).toBe(200);
+    expect(response.headers()['content-type']).toContain('image/png');
+
+    // PNG IHDR: width and height are big-endian uint32s at bytes 16 and 20.
+    const png = await response.body();
+    expect(`${png.readUInt32BE(16)}x${png.readUInt32BE(20)}`).toBe(icon.sizes);
+  }
+});
+
+test('homepage declares an apple-touch-icon that resolves', async ({ page, request }) => {
+  await page.goto('/');
+
+  const href = await page.locator('link[rel="apple-touch-icon"]').getAttribute('href');
+  expect(href, 'missing apple-touch-icon').toBeTruthy();
+
+  const response = await request.get(href!);
+  expect(response.status()).toBe(200);
+  expect(response.headers()['content-type']).toContain('image/png');
+});
