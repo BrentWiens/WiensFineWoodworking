@@ -45,6 +45,9 @@ jobs:
 
   e2e-tests:
     runs-on: ubuntu-latest
+    env:
+      # See the `images.unoptimized` comment in next.config.ts.
+      E2E_UNOPTIMIZED_IMAGES: '1'
     steps:
       - uses: actions/checkout@v4
 

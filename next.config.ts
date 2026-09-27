@@ -30,6 +30,12 @@ const csp = [
 
 const nextConfig: NextConfig = {
   images: {
+    // CI's E2E build only. Under `next start`, the optimizer can wedge an image for
+    // the life of the server when the browser disconnects mid-optimization — which
+    // every test does as it closes its page — and every later request for that
+    // image hangs, so /gallery never finishes loading. Production is unaffected:
+    // Vercel serves /_next/image from its own optimizer, not this server.
+    unoptimized: process.env.E2E_UNOPTIMIZED_IMAGES === '1',
     formats: ['image/avif', 'image/webp'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
