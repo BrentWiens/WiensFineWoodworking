@@ -29,11 +29,27 @@ describe('project registry', () => {
     }
   });
 
-  it('gives every project a title, description and at least one image', () => {
+  it('gives every project a title, kind, description, story and at least one image', () => {
     for (const project of PROJECTS) {
       expect(project.title.trim(), `${project.slug} has no title`).not.toBe('');
+      expect(project.kind.trim(), `${project.slug} has no kind`).not.toBe('');
       expect(project.description.trim(), `${project.slug} has no description`).not.toBe('');
+      expect(project.story.length, `${project.slug} has no story`).toBeGreaterThan(0);
       expect(project.images.length, `${project.slug} has no images`).toBeGreaterThan(0);
+    }
+  });
+
+  it('gives every project a unique name', () => {
+    const titles = PROJECTS.map(p => p.title);
+    expect(new Set(titles).size).toBe(titles.length);
+  });
+
+  it('keeps descriptions short enough to show in full in search results', () => {
+    for (const project of PROJECTS) {
+      expect(
+        project.description.length,
+        `${project.slug} description is ${project.description.length} chars`
+      ).toBeLessThanOrEqual(160);
     }
   });
 

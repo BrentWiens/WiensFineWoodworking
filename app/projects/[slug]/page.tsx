@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
-import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Navigation, Footer } from '@/components';
+import ProjectPhotos from '@/components/ProjectPhotos';
+import { getImageDimensions } from '@/lib/imageDimensions';
 import {
   CATEGORY_LABELS,
   PROJECTS,
@@ -26,14 +27,14 @@ export async function generateMetadata({
   const project = getProject(slug);
   if (!project) return {};
 
-  const title = `${project.title} | Wiens Fine Woodworking`;
+  const title = `${project.title} — ${project.kind} | Wiens Fine Woodworking`;
   const url = `/projects/${project.slug}`;
 
   return {
     title,
     description: project.description,
     keywords: [
-      project.title.toLowerCase(),
+      project.kind.toLowerCase(),
       ...project.woods.map(w => `${w.toLowerCase()} furniture`),
       'custom furniture Kitchener',
       'woodworking Ontario',
@@ -46,7 +47,7 @@ export async function generateMetadata({
       type: 'article',
       // Points at the full-size gallery photo rather than a purpose-built 1200x630
       // crop. Social platforms will letterbox or crop it to fit their card.
-      images: [{ url: imagePath(project), alt: project.title }],
+      images: [{ url: imagePath(project), alt: `${project.title} — ${project.kind}` }],
     },
     twitter: {
       card: 'summary_large_image',
@@ -73,6 +74,7 @@ export default async function ProjectPage({
     '@context': 'https://schema.org',
     '@type': 'CreativeWork',
     name: project.title,
+    alternateName: project.kind,
     description: project.description,
     url: `${BASE_URL}/projects/${project.slug}`,
     image: project.images.map(f => `${BASE_URL}/images/gallery/${project.category}/${f}`),
@@ -133,11 +135,22 @@ export default async function ProjectPage({
             </ol>
           </nav>
 
+          <p className="text-sm font-semibold uppercase tracking-wider text-stone-500 mb-2">
+            {project.kind}
+          </p>
           <h1 className="text-4xl sm:text-5xl font-bold text-stone-800 mb-4">{project.title}</h1>
 
-          <p className="text-lg text-stone-700 leading-relaxed mb-6 max-w-3xl">
+          <p className="text-xl text-stone-700 leading-relaxed mb-4 max-w-3xl">
             {project.description}
           </p>
+
+          <div className="space-y-4 mb-6 max-w-3xl">
+            {project.story.map(paragraph => (
+              <p key={paragraph} className="text-stone-600 leading-relaxed">
+                {paragraph}
+              </p>
+            ))}
+          </div>
 
           {/* Spec chips */}
           <dl className="flex flex-wrap gap-x-8 gap-y-3 mb-10 text-sm">
@@ -157,29 +170,19 @@ export default async function ProjectPage({
             </div>
           </dl>
 
-          {/* Photos */}
-          <div className="space-y-6 mb-12">
-            {project.images.map((filename, index) => (
-              <div
-                key={filename}
-                className="relative aspect-[4/3] w-full overflow-hidden rounded-lg bg-stone-100 shadow-md"
-              >
-                <Image
-                  src={`/images/gallery/${project.category}/${filename}`}
-                  alt={
-                    index === 0
-                      ? project.title
-                      : `${project.title} — additional view ${index + 1}`
-                  }
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 1024px) 100vw, 960px"
-                  quality={80}
-                  priority={index === 0}
-                />
-              </div>
-            ))}
-          </div>
+          <ProjectPhotos
+            photos={project.images.map((_, index) => {
+              const src = imagePath(project, index);
+              return {
+                src,
+                alt:
+                  index === 0
+                    ? `${project.title} — ${project.kind}`
+                    : `${project.title} — ${project.kind}, view ${index + 1}`,
+                ...getImageDimensions(src),
+              };
+            })}
+          />
 
           {/* Commission CTA */}
           <div className="bg-stone-800 text-white rounded-lg p-8 sm:p-10 text-center mb-12">

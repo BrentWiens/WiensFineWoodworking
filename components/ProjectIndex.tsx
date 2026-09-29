@@ -31,9 +31,12 @@ export default function ProjectIndex() {
                     <li key={project.slug}>
                       <Link
                         href={`/projects/${project.slug}`}
-                        className="text-stone-600 hover:text-stone-900 hover:underline underline-offset-4 transition-colors"
+                        className="group text-stone-600 hover:text-stone-900 transition-colors"
                       >
-                        {project.title}
+                        <span className="font-medium group-hover:underline underline-offset-4">
+                          {project.title}
+                        </span>
+                        <span className="block text-sm text-stone-500">{project.kind}</span>
                       </Link>
                     </li>
                   ))}

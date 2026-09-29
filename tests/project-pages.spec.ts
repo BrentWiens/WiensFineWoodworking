@@ -25,6 +25,16 @@ test.describe('Project detail pages', () => {
     await expect(page.getByText('Kitchener, Ontario')).toBeVisible();
   });
 
+  test('shows what the piece is and its full write-up', async ({ page }) => {
+    const project = getProject('walnut-maple-end-tables')!;
+    await page.goto(`/projects/${project.slug}`);
+
+    await expect(page.getByText(project.kind, { exact: true })).toBeVisible();
+    for (const paragraph of project.story) {
+      await expect(page.getByText(paragraph)).toBeVisible();
+    }
+  });
+
   test('shows a breadcrumb back to the gallery', async ({ page }) => {
     await page.goto('/projects/walnut-coffee-table');
 
@@ -44,15 +54,17 @@ test.describe('Project detail pages', () => {
   });
 
   test('emits CreativeWork and BreadcrumbList structured data', async ({ page }) => {
-    await page.goto('/projects/walnut-cherry-maple-chessboard');
+    const project = getProject('walnut-cherry-maple-chessboard')!;
+    await page.goto(`/projects/${project.slug}`);
 
     const blocks = await page.locator('script[type="application/ld+json"]').allTextContents();
     const parsed = blocks.map(b => JSON.parse(b));
 
     const creativeWork = parsed.find(p => p['@type'] === 'CreativeWork');
     expect(creativeWork).toBeTruthy();
-    expect(creativeWork.name).toBe('Walnut, Cherry and Maple Chessboard');
-    expect(creativeWork.material).toEqual(['Walnut', 'Cherry', 'Maple']);
+    expect(creativeWork.name).toBe(project.title);
+    expect(creativeWork.alternateName).toBe(project.kind);
+    expect(creativeWork.material).toEqual(project.woods);
 
     const breadcrumbs = parsed.find(p => p['@type'] === 'BreadcrumbList');
     expect(breadcrumbs).toBeTruthy();
@@ -63,9 +75,11 @@ test.describe('Project detail pages', () => {
     // walnut-end-table sits between walnut-coffee-table and walnut-end-table-brass.
     await page.goto('/projects/walnut-end-table');
 
+    const prev = getProject('walnut-coffee-table')!;
+    const next = getProject('walnut-end-table-brass')!;
     const nav = page.getByRole('navigation', { name: 'More projects' });
-    await expect(nav.getByRole('link', { name: /Walnut Coffee Table/ })).toBeVisible();
-    await expect(nav.getByRole('link', { name: /Walnut End Table with Brass/ })).toBeVisible();
+    await expect(nav.getByRole('link', { name: prev.title })).toBeVisible();
+    await expect(nav.getByRole('link', { name: next.title })).toBeVisible();
   });
 
   test('unknown slug returns the 404 page', async ({ page }) => {
@@ -91,10 +105,63 @@ test.describe('Project index on the gallery page', () => {
 
     const index = page.locator('#all-projects');
     await index.scrollIntoViewIfNeeded();
-    await index.getByRole('link', { name: 'Zebrawood Shadow Box' }).click();
+    // Looked up rather than hardcoded, so renaming the piece doesn't break the test.
+    const project = getProject('zebrawood-shadow-box')!;
+    await index.getByRole('link', { name: project.title }).click();
 
     await expect(page).toHaveURL(/\/projects\/zebrawood-shadow-box$/);
-    await expect(page.locator('h1')).toHaveText('Zebrawood Shadow Box');
+    await expect(page.locator('h1')).toHaveText(project.title);
+  });
+});
+
+test.describe('Project page photos', () => {
+  // The photo buttons are server-rendered, so a click can land before React hydrates
+  // and be silently lost. Retry until the dialog actually opens.
+  async function openPhoto(page: import('@playwright/test').Page, index: number) {
+    await expect(async () => {
+      if (!(await page.getByTestId('gallery-modal').isVisible())) {
+        await page.getByTestId(`project-photo-${index}`).click();
+      }
+      await expect(page.getByTestId('gallery-modal')).toBeVisible({ timeout: 2_000 });
+    }).toPass({ timeout: 30_000 });
+  }
+
+  test('shows each photo whole, at its own aspect ratio', async ({ page }) => {
+    // Portrait (1500x2000): the fixed 4:3 box used to crop the top and bottom off.
+    await page.goto('/projects/custom-entryway');
+
+    const img = page.getByTestId('project-photo-0').locator('img');
+    await expect(img).toBeVisible();
+    await expect
+      .poll(() => img.evaluate((el: HTMLImageElement) => el.complete && el.naturalWidth > 0))
+      .toBe(true);
+
+    const { shown, natural } = await img.evaluate((el: HTMLImageElement) => ({
+      shown: el.clientWidth / el.clientHeight,
+      natural: el.naturalWidth / el.naturalHeight,
+    }));
+    expect(shown).toBeCloseTo(natural, 1);
+  });
+
+  test('opens a photo full size and steps through the rest', async ({ page }) => {
+    const project = getProject('custom-kitchen-cabinetry')!;
+    await page.goto(`/projects/${project.slug}`);
+
+    await openPhoto(page, 0);
+    const modal = page.getByTestId('gallery-modal');
+    await expect(modal).toHaveAttribute('role', 'dialog');
+    await expect(page.getByTestId('modal-image-counter')).toContainText(
+      `1 / ${project.images.length}`
+    );
+
+    await page.getByTestId('modal-next-button').click();
+    await expect(page.getByTestId('modal-image-counter')).toContainText(
+      `2 / ${project.images.length}`
+    );
+
+    await page.keyboard.press('Escape');
+    await expect(modal).not.toBeVisible();
+    await expect(page.getByTestId('project-photo-0')).toBeFocused();
   });
 });
 

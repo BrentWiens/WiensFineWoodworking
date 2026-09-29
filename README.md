@@ -159,9 +159,12 @@ Project pages are driven entirely by [`lib/projects.ts`](lib/projects.ts). Add t
 photo under `public/images/gallery/<category>/`, add an entry to `PROJECTS`, and the
 detail page, gallery index link, and sitemap entry all follow automatically.
 
-Note that the `description` fields in that file are conservative placeholders — they
-restate only what is verifiable from the photo filename. Replacing them with the real
-story of each commission is what makes these pages worth indexing.
+Each project has a `title` (the piece's name), a plain-words `kind` (what it is, which
+carries the search terms), a one-line `description` (page lead and meta description,
+kept under 160 characters) and a `story` of one or more paragraphs. The current copy
+was drafted from the photos alone, so it describes only what's visible — adding who a
+piece was for, the design problem it solved and how it was finished is what makes
+these pages worth indexing.
 
 ## Deployment
 

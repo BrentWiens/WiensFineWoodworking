@@ -2,7 +2,8 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef } from 'react';
+import Lightbox from './Lightbox';
 
 const FOLDER_LABELS: Record<string, string> = {
   tables: 'Custom table',
@@ -17,6 +18,10 @@ function formatAltText(filename: string, folder: string): string {
     .replace(/\b\w/g, c => c.toUpperCase());
   const prefix = FOLDER_LABELS[folder] ?? 'Woodworking';
   return `${prefix} - ${name}`;
+}
+
+function formatCaption(filename: string): string {
+  return filename.replace(/\.[^/.]+$/, '').replace(/-/g, ' ');
 }
 
 interface GalleryProps {
@@ -34,91 +39,19 @@ interface GalleryProps {
 }
 
 export default function Gallery({ images, folder, title, sectionId = 'gallery', background = 'white', projectSlugs = {} }: GalleryProps) {
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const modalRef = useRef<HTMLDivElement>(null);
-  // The thumbnail that opened the modal, so focus can go back where it came from.
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  // The thumbnail that opened the lightbox, so focus can go back where it came from.
   const triggerRef = useRef<HTMLElement | null>(null);
 
-  const currentIndex = selectedImage ? images.indexOf(selectedImage) : -1;
-
   // The project page behind the photo currently open, if there is one.
-  const selectedProjectSlug = selectedImage ? projectSlugs[selectedImage] : undefined;
+  const selectedProjectSlug =
+    selectedIndex !== null ? projectSlugs[images[selectedIndex]] : undefined;
 
-  // Navigation functions
-  const goToPrevious = useCallback(() => {
-    if (currentIndex > 0) {
-      setIsLoading(true);
-      setSelectedImage(images[currentIndex - 1]);
-    }
-  }, [currentIndex, images]);
-
-  const goToNext = useCallback(() => {
-    if (currentIndex < images.length - 1) {
-      setIsLoading(true);
-      setSelectedImage(images[currentIndex + 1]);
-    }
-  }, [currentIndex, images]);
-
-  const closeModal = useCallback(() => {
-    setSelectedImage(null);
-    setIsLoading(false);
-    // Send focus back to the thumbnail rather than dropping it to the document.
+  const closeLightbox = useCallback(() => {
+    setSelectedIndex(null);
     triggerRef.current?.focus();
     triggerRef.current = null;
   }, []);
-
-  // Keyboard handling: navigation, dismissal, and keeping Tab inside the dialog.
-  useEffect(() => {
-    if (!selectedImage) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') closeModal();
-      if (e.key === 'ArrowLeft') goToPrevious();
-      if (e.key === 'ArrowRight') goToNext();
-
-      if (e.key !== 'Tab') return;
-
-      // Without this, Tab walks out of the overlay and into the page behind it,
-      // which is still visually covered — keyboard users lose their place entirely.
-      const focusable = modalRef.current?.querySelectorAll<HTMLElement>(
-        'a[href], button:not([disabled])'
-      );
-      if (!focusable?.length) return;
-
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedImage, closeModal, goToPrevious, goToNext]);
-
-  // Move focus into the dialog when it opens.
-  useEffect(() => {
-    if (!selectedImage) return;
-    modalRef.current?.querySelector<HTMLElement>('button')?.focus();
-  }, [selectedImage]);
-
-  // Prevent body scroll when modal is open
-  useEffect(() => {
-    if (selectedImage) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [selectedImage]);
 
   return (
     <>
@@ -134,8 +67,7 @@ export default function Gallery({ images, folder, title, sectionId = 'gallery', 
                 data-testid={`gallery-image-${index}`}
                 onClick={(e) => {
                   triggerRef.current = e.currentTarget;
-                  setSelectedImage(filename);
-                  setIsLoading(true);
+                  setSelectedIndex(index);
                 }}
                 className="group relative aspect-square overflow-hidden rounded-lg bg-stone-100 shadow-md hover:shadow-xl transition-shadow"
               >
@@ -169,107 +101,28 @@ export default function Gallery({ images, folder, title, sectionId = 'gallery', 
         </div>
       </section>
 
-      {/* Lightbox Modal */}
-      {selectedImage && (
-        <div
-          ref={modalRef}
-          data-testid="gallery-modal"
-          role="dialog"
-          aria-modal="true"
-          aria-label={`Project photo ${currentIndex + 1} of ${images.length}`}
-          className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4"
-          onClick={closeModal}
+      {selectedIndex !== null && (
+        <Lightbox
+          images={images.map(filename => ({
+            src: `/images/gallery/${folder}/${filename}`,
+            alt: `Woodworking project - ${formatCaption(filename)}`,
+            caption: formatCaption(filename),
+          }))}
+          index={selectedIndex}
+          onIndexChange={setSelectedIndex}
+          onClose={closeLightbox}
         >
-          {/* Close button */}
-          <button
-            data-testid="modal-close-button"
-            onClick={(e) => {
-              e.stopPropagation();
-              closeModal();
-            }}
-            className="absolute top-4 right-4 text-white hover:text-stone-300 transition-colors z-10 bg-black/50 rounded-full p-2"
-            aria-label="Close"
-          >
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-
-          {/* Previous button */}
-          {currentIndex > 0 && (
-            <button
-              data-testid="modal-prev-button"
-              onClick={(e) => {
-                e.stopPropagation();
-                goToPrevious();
-              }}
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:text-stone-300 transition-colors z-10 bg-black/50 rounded-full p-3"
-              aria-label="Previous image"
+          {selectedProjectSlug && (
+            <Link
+              data-testid="modal-project-link"
+              href={`/projects/${selectedProjectSlug}`}
+              onClick={(e) => e.stopPropagation()}
+              className="mt-1 text-white underline underline-offset-4 hover:text-stone-300 transition-colors"
             >
-              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
+              View project details →
+            </Link>
           )}
-
-          {/* Next button */}
-          {currentIndex < images.length - 1 && (
-            <button
-              data-testid="modal-next-button"
-              onClick={(e) => {
-                e.stopPropagation();
-                goToNext();
-              }}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:text-stone-300 transition-colors z-10 bg-black/50 rounded-full p-3"
-              aria-label="Next image"
-            >
-              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          )}
-
-          {/* Loading spinner */}
-          {isLoading && (
-            <div data-testid="modal-loading-spinner" className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="animate-spin rounded-full h-16 w-16 border-4 border-stone-300 border-t-white"></div>
-            </div>
-          )}
-
-          {/* Image - now directly in the modal container */}
-          <div className="relative w-[90vw] h-[90vh] max-w-7xl pointer-events-none">
-            <Image
-              data-testid="modal-image"
-              src={`/images/gallery/${folder}/${selectedImage}`}
-              alt={`Woodworking project - ${selectedImage.replace(/\.[^/.]+$/, '').replace(/-/g, ' ')}`}
-              fill
-              sizes="90vw"
-              className="object-contain"
-              quality={95}
-              onLoad={() => setIsLoading(false)}
-            />
-          </div>
-
-          {/* Image counter and name */}
-          <div data-testid="modal-image-counter" className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white text-sm bg-black/50 px-4 py-2 rounded flex flex-col items-center gap-1">
-            <div className="font-semibold pointer-events-none">
-              {currentIndex + 1} / {images.length}
-            </div>
-            <div data-testid="modal-image-name" className="text-stone-300 pointer-events-none">
-              {selectedImage.replace(/\.[^/.]+$/, '').replace(/-/g, ' ')}
-            </div>
-            {selectedProjectSlug && (
-              <Link
-                data-testid="modal-project-link"
-                href={`/projects/${selectedProjectSlug}`}
-                onClick={(e) => e.stopPropagation()}
-                className="mt-1 text-white underline underline-offset-4 hover:text-stone-300 transition-colors"
-              >
-                View project details →
-              </Link>
-            )}
-          </div>
-        </div>
+        </Lightbox>
       )}
     </>
   );
