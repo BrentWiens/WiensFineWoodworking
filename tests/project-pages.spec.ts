@@ -165,6 +165,30 @@ test.describe('Project page photos', () => {
   });
 });
 
+test.describe('Homepage featured projects', () => {
+  test('each tile opens its own project page', async ({ page }) => {
+    await page.goto('/');
+
+    const tiles = page.locator('#featured a[data-testid^="featured-"]');
+    await expect(tiles).toHaveCount(6);
+
+    // Every tile must point at a real project, named on the tile itself.
+    for (const tile of await tiles.all()) {
+      const slug = (await tile.getAttribute('data-testid'))!.replace('featured-', '');
+      const project = getProject(slug);
+      expect(project, `featured tile for unknown project "${slug}"`).toBeTruthy();
+      await expect(tile).toHaveAttribute('href', `/projects/${slug}`);
+      await expect(tile).toContainText(project!.title);
+    }
+
+    const first = tiles.first();
+    const slug = (await first.getAttribute('data-testid'))!.replace('featured-', '');
+    await first.click();
+    await expect(page).toHaveURL(new RegExp(`/projects/${slug}$`));
+    await expect(page.locator('h1')).toHaveText(getProject(slug)!.title);
+  });
+});
+
 test.describe('Gallery lightbox project link', () => {
   test('lightbox offers a link through to the project page', async ({ page }) => {
     await page.goto('/gallery', { waitUntil: 'networkidle' });

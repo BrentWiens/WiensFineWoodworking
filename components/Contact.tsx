@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import SocialLinks from './SocialLinks';
 
@@ -15,6 +15,38 @@ const ContactForm = dynamic(() => import('./ContactForm'), {
 
 export default function Contact() {
   const [showForm, setShowForm] = useState(false);
+
+  // Every "Contact" / "Get in Touch" / "Start a Commission" button points at #contact,
+  // and someone who clicked one has already said they want to write — so open the
+  // form for them rather than making them click "Send Me a Message" as well.
+  useEffect(() => {
+    const isContactLink = (url: URL) =>
+      url.hash === '#contact' && url.pathname === window.location.pathname;
+
+    // Arriving from another page (e.g. a project page's "Start a Commission"), or a
+    // click that landed before hydration and fell through to a native jump.
+    const openIfAtContact = () => {
+      if (isContactLink(new URL(window.location.href))) setShowForm(true);
+    };
+    openIfAtContact();
+    window.addEventListener('hashchange', openIfAtContact);
+
+    // Same-page clicks. Next's <Link> updates the URL with pushState, which fires no
+    // hashchange, and a click while the URL is already at #contact changes nothing —
+    // so neither of those can be caught from the URL. Watch the clicks instead.
+    const onClick = (e: MouseEvent) => {
+      const link = (e.target as Element | null)?.closest?.('a[href]');
+      if (link instanceof HTMLAnchorElement && isContactLink(new URL(link.href))) {
+        setShowForm(true);
+      }
+    };
+    document.addEventListener('click', onClick);
+
+    return () => {
+      window.removeEventListener('hashchange', openIfAtContact);
+      document.removeEventListener('click', onClick);
+    };
+  }, []);
 
   return (
     <section id="contact" className="py-20 px-6 bg-white">

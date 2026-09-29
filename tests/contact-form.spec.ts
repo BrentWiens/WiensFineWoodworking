@@ -32,6 +32,56 @@ test.describe('Contact Form', () => {
     await expect(form).toBeVisible();
   });
 
+  test.describe('contact buttons open the form directly', () => {
+    const form = (page: import('@playwright/test').Page) => page.getByTestId('contact-form');
+
+    test('hero "Get in Touch"', async ({ page }) => {
+      await page.goto('/', { waitUntil: 'networkidle' });
+      await page.getByRole('link', { name: 'Get in Touch' }).click();
+      await expect(form(page)).toBeVisible();
+    });
+
+    test('nav "Contact" on the homepage', async ({ page }) => {
+      await page.goto('/', { waitUntil: 'networkidle' });
+      await page
+        .getByRole('navigation', { name: 'Main navigation' })
+        .getByRole('link', { name: 'Contact' })
+        .click();
+      await expect(form(page)).toBeVisible();
+    });
+
+    test('nav "Contact" again after going back to the contact options', async ({ page }) => {
+      // The URL is already /#contact here, so the second click changes nothing about
+      // it — the form has to reopen from the click itself.
+      // No networkidle: the form opens straight away here and loads the Turnstile
+      // widget, which keeps the network busy. The form appearing at all means React
+      // has hydrated, which is what the clicks below need.
+      await page.goto('/#contact');
+      await expect(form(page)).toBeVisible();
+
+      await page.getByRole('button', { name: /Back to contact options/ }).click();
+      await expect(page.getByTestId('contact-show-form')).toBeVisible();
+
+      await page
+        .getByRole('navigation', { name: 'Main navigation' })
+        .getByRole('link', { name: 'Contact' })
+        .click();
+      await expect(form(page)).toBeVisible();
+    });
+
+    test('"Start a Commission" from a project page', async ({ page }) => {
+      await page.goto('/projects/walnut-end-table', { waitUntil: 'networkidle' });
+      await page.getByRole('link', { name: 'Start a Commission' }).click();
+      await expect(page).toHaveURL(/\/#contact$/);
+      await expect(form(page)).toBeVisible();
+    });
+
+    test('a shared /#contact link', async ({ page }) => {
+      await page.goto('/#contact');
+      await expect(form(page)).toBeVisible();
+    });
+  });
+
   test('form has all required fields', async ({ page }) => {
     await page.goto('/', { waitUntil: 'networkidle' });
 

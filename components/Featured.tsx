@@ -1,14 +1,24 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { getProject, imagePath, type Project } from '@/lib/projects';
 
-const FEATURED_PROJECTS = [
-  'end-table-walnut-brass.jpg',
-  'drawers-walnut.jpg',
-  'cherry-desk.jpg',
-  'coffee-table-walnut.jpg',
-  'end-tables-walnut-maple.jpg',
-  'end-table-walnut.jpg',
+/** Slugs from lib/projects, in display order. Each tile shows the project's lead photo. */
+const FEATURED_SLUGS = [
+  'walnut-end-table-brass',
+  'walnut-drawers',
+  'cherry-desk',
+  'walnut-coffee-table',
+  'walnut-maple-end-tables',
+  'walnut-end-table',
 ];
+
+// Resolved once at module load. A slug that no longer exists fails the build here
+// instead of rendering a broken tile.
+const FEATURED: Project[] = FEATURED_SLUGS.map(slug => {
+  const project = getProject(slug);
+  if (!project) throw new Error(`Featured project "${slug}" is not in lib/projects`);
+  return project;
+});
 
 export default function FeaturedProjects() {
   return (
@@ -20,23 +30,27 @@ export default function FeaturedProjects() {
 
         {/* Featured project grid - 2 columns on mobile, 3 on desktop */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-          {FEATURED_PROJECTS.map((filename) => (
+          {FEATURED.map(project => (
             <Link
-              key={filename}
-              href="/gallery"
+              key={project.slug}
+              href={`/projects/${project.slug}`}
+              data-testid={`featured-${project.slug}`}
               className="group relative aspect-square overflow-hidden rounded-lg bg-stone-100 shadow-md hover:shadow-xl transition-shadow"
             >
               <Image
-                src={`/images/gallery/tables/${filename}`}
-                alt={`Featured woodworking project - ${filename.replace(/\.[^/.]+$/, '').replace(/-/g, ' ')}`}
+                src={imagePath(project)}
+                alt={`${project.title} — ${project.kind}`}
                 fill
                 className="object-cover group-hover:scale-105 transition-transform duration-300"
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                 quality={75}
               />
 
-              {/* Hover overlay */}
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors"></div>
+              {/* Name and kind, so the tile says what you'll get before you click. */}
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/40 to-transparent p-4 pt-12">
+                <span className="block text-lg font-semibold text-white">{project.title}</span>
+                <span className="block text-sm text-white/80">{project.kind}</span>
+              </div>
             </Link>
           ))}
         </div>

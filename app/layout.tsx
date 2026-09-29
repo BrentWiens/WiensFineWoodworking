@@ -112,7 +112,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   };
 
   return (
-    <html lang="en">
+    // data-scroll-behavior: Next 16 no longer suspends smooth scrolling during route
+    // changes by default, so without it every page navigation would glide to the top.
+    <html lang="en" data-scroll-behavior="smooth">
       <head>
         <script
           type="application/ld+json"

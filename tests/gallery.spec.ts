@@ -131,6 +131,113 @@ test.describe('Gallery', () => {
   });
 });
 
+test.describe('Gallery tile captions', () => {
+  test('every tile is labelled with its project name and kind', async ({ page }) => {
+    await page.goto('/gallery');
+
+    const tiles = page.locator('button[data-testid^="gallery-image-"]');
+    const count = await tiles.count();
+    expect(count).toBeGreaterThan(0);
+
+    // One caption per tile: a photo with no caption means it's missing from lib/projects.
+    await expect(page.getByTestId('gallery-image-caption')).toHaveCount(count);
+    for (const caption of await page.getByTestId('gallery-image-caption').all()) {
+      await expect(caption.locator('span')).toHaveCount(2);
+      await expect(caption.locator('span').first()).not.toBeEmpty();
+    }
+  });
+
+  test('the lightbox caption names the same piece as the tile', async ({ page }) => {
+    await page.goto('/gallery');
+
+    const tile = page.getByTestId('gallery-section').getByTestId('gallery-tile-0');
+    const name = await tile.getByTestId('gallery-image-caption').locator('span').first().textContent();
+
+    await expect(async () => {
+      if (!(await page.getByTestId('gallery-modal').isVisible())) {
+        await tile.getByTestId('gallery-image-0').click();
+      }
+      await expect(page.getByTestId('gallery-modal')).toBeVisible({ timeout: 2_000 });
+    }).toPass({ timeout: 30_000 });
+
+    await expect(page.getByTestId('modal-image-name')).toContainText(name!);
+  });
+
+  test('clicking the caption text goes to the project page', async ({ page }) => {
+    await page.goto('/gallery');
+
+    const caption = page
+      .getByTestId('gallery-section')
+      .getByTestId('gallery-tile-0')
+      .getByTestId('gallery-image-caption');
+    const href = await caption.getAttribute('href');
+    expect(href).toMatch(/^\/projects\/[a-z0-9-]+$/);
+
+    const name = await caption.locator('span').first().textContent();
+    await caption.click();
+
+    await expect(page).toHaveURL(new RegExp(`${href}$`));
+    await expect(page.locator('h1')).toHaveText(name!.trim());
+    await expect(page.getByTestId('gallery-modal')).toHaveCount(0);
+  });
+
+  test('clicking the photo above the caption still opens the lightbox', async ({ page }) => {
+    await page.goto('/gallery');
+
+    const tile = page.getByTestId('gallery-section').getByTestId('gallery-tile-0');
+    await tile.scrollIntoViewIfNeeded();
+    const box = (await tile.boundingBox())!;
+
+    // Bottom-right corner, beside the caption text but inside the dark fade: the fade
+    // must let clicks through rather than swallowing them or going to the project page.
+    await expect(async () => {
+      if (!(await page.getByTestId('gallery-modal').isVisible())) {
+        await page.mouse.click(box.x + box.width - 20, box.y + box.height - 20);
+      }
+      await expect(page.getByTestId('gallery-modal')).toBeVisible({ timeout: 2_000 });
+    }).toPass({ timeout: 30_000 });
+
+    await expect(page).toHaveURL(/\/gallery$/);
+  });
+});
+
+test.describe('Gallery section jump links', () => {
+  const SECTIONS = [
+    { id: 'gallery', heading: 'Tables & Desks' },
+    { id: 'gallery-finish-carpentry', heading: 'Finish Carpentry' },
+    { id: 'gallery-other', heading: 'Other Work' },
+  ];
+
+  for (const viewport of [
+    { name: 'desktop', width: 1280, height: 800 },
+    { name: 'phone', width: 390, height: 844 },
+  ]) {
+    test(`each link brings its section heading into view below the nav (${viewport.name})`, async ({ page }) => {
+      await page.setViewportSize({ width: viewport.width, height: viewport.height });
+      await page.goto('/gallery');
+
+      for (const { id, heading } of SECTIONS) {
+        await page.getByTestId(`jump-${id}`).click();
+        await expect(page).toHaveURL(new RegExp(`#${id}$`));
+
+        const title = page.getByTestId(`${id}-section`).getByRole('heading', { name: heading });
+        const nav = page.getByRole('navigation', { name: 'Main navigation' });
+
+        // Smooth scrolling takes a moment to settle, so poll rather than read once.
+        await expect
+          .poll(async () => {
+            const [titleBox, navBox] = await Promise.all([title.boundingBox(), nav.boundingBox()]);
+            if (!titleBox || !navBox) return false;
+            const belowNav = titleBox.y >= navBox.y + navBox.height;
+            const onScreen = titleBox.y + titleBox.height <= viewport.height;
+            return belowNav && onScreen;
+          })
+          .toBe(true);
+      }
+    });
+  }
+});
+
 test.describe('Gallery Sections', () => {
   test('finish carpentry section exists', async ({ page }) => {
     await page.goto('/gallery', { waitUntil: 'networkidle' });
