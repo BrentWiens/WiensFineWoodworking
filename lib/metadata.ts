@@ -30,3 +30,18 @@ export const TOOLS_TWITTER_IMAGE = ['/og/tools.jpg'];
  * (`0x882bf5a54aa47f5f:0x78544eeed2a492de` — the half after the colon).
  */
 export const GOOGLE_BUSINESS_URL = 'https://www.google.com/maps?cid=8670641970238231262';
+
+/**
+ * The business phone number, in the three forms it's needed.
+ *
+ * `schema` must stay identical to the number on the Google Business Profile: local
+ * ranking leans on name/address/phone matching across listings.
+ */
+export const PHONE = {
+  /** What people see. */
+  display: '226-338-4441',
+  /** LocalBusiness structured data. */
+  schema: '+1-226-338-4441',
+  /** Tap-to-call link. */
+  href: 'tel:+12263384441',
+} as const;

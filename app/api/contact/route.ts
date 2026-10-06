@@ -4,8 +4,9 @@ import nodemailer from 'nodemailer';
 interface ContactFormData {
   name: string;
   email: string;
-  phone: string;
-  city: string;
+  /** Optional: not everyone wants to hand a phone number to someone they haven't met. */
+  phone?: string;
+  city?: string;
   message: string;
   turnstileToken: string;
 }
@@ -78,9 +79,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true });
     }
 
-    if (!name || !email || !phone || !city || !message || !turnstileToken) {
+    if (!name || !email || !message || !turnstileToken) {
       return NextResponse.json(
-        { error: 'All fields are required' },
+        { error: 'Name, email and message are required' },
         { status: 400 }
       );
     }
@@ -109,8 +110,9 @@ export async function POST(request: NextRequest) {
 
     const safeName = escapeHtml(name);
     const safeEmail = escapeHtml(email);
-    const safePhone = escapeHtml(phone);
-    const safeCity = escapeHtml(city);
+    const safePhone = escapeHtml(phone?.trim() ?? '');
+    const safeCity = escapeHtml(city?.trim() ?? '');
+    const notProvided = '<span style="color: #78716C;">Not provided</span>';
     const safeMessage = escapeHtml(message).replace(/\n/g, '<br>');
 
     const transporter = nodemailer.createTransport({
@@ -145,12 +147,12 @@ export async function POST(request: NextRequest) {
 
             <p style="margin: 10px 0;">
               <strong style="color: #44403c;">Phone:</strong><br>
-              <a href="tel:${safePhone}" style="color: #2563eb;">${safePhone}</a>
+              ${safePhone ? `<a href="tel:${safePhone}" style="color: #2563eb;">${safePhone}</a>` : notProvided}
             </p>
 
             <p style="margin: 10px 0;">
               <strong style="color: #44403c;">City:</strong><br>
-              ${safeCity}
+              ${safeCity || notProvided}
             </p>
 
             <p style="margin: 10px 0;">

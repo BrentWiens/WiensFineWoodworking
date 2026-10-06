@@ -129,12 +129,12 @@ export default function ContactForm() {
 
       <div>
         <label htmlFor="phone" className="block text-stone-700 font-medium mb-2">
-          Phone *
+          Phone <span className="font-normal text-stone-500">(optional)</span>
         </label>
         <input
           type="tel"
           id="phone"
-          required
+          autoComplete="tel"
           value={formData.phone}
           onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
           className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-800 focus:border-transparent outline-none text-stone-900 placeholder:text-stone-500"
@@ -144,12 +144,12 @@ export default function ContactForm() {
 
       <div>
         <label htmlFor="city" className="block text-stone-700 font-medium mb-2">
-          City *
+          City <span className="font-normal text-stone-500">(optional)</span>
         </label>
         <input
           type="text"
           id="city"
-          required
+          autoComplete="address-level2"
           value={formData.city}
           onChange={(e) => setFormData({ ...formData, city: e.target.value })}
           className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-800 focus:border-transparent outline-none text-stone-900 placeholder:text-stone-500"

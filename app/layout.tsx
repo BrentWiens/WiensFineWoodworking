@@ -4,7 +4,7 @@ import "./globals.css";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { ServiceWorkerRegistration } from "@/components";
-import { GOOGLE_BUSINESS_URL } from "@/lib/metadata";
+import { GOOGLE_BUSINESS_URL, PHONE } from "@/lib/metadata";
 
 const geist = Geist({
   variable: "--font-geist-sans",
@@ -51,9 +51,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   // Deliberately omitted: geo coordinates and priceRange. Google will use them if
   // present, but only add them once they are real — inventing them is worse than
   // leaving them out.
-  //
-  // telephone must stay byte-identical to the number on the Google Business Profile;
-  // local ranking leans on name/address/phone matching across listings.
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'LocalBusiness',
@@ -68,7 +65,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       '@type': 'Person',
       name: 'Brent Wiens',
     },
-    telephone: '+1-226-338-4441',
+    telephone: PHONE.schema,
     address: {
       '@type': 'PostalAddress',
       addressLocality: 'Kitchener',

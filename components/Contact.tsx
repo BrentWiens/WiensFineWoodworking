@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import SocialLinks from './SocialLinks';
+import PhoneIcon from './PhoneIcon';
+import { PHONE } from '@/lib/metadata';
 
 // The form pulls in the Cloudflare Turnstile widget, which nobody needs until they
 // actually click through to it. Splitting it out keeps that weight off first load.
@@ -54,15 +56,13 @@ export default function Contact() {
         <h2 className="text-4xl font-bold text-stone-800 mb-4 text-center">
           Let&apos;s Work Together
         </h2>
-        <p className="text-stone-600 mb-12 text-lg text-center">
-          Have a custom project in mind? Get in touch to discuss your woodworking needs.
-        </p>
 
         {!showForm ? (
           /* Initial view - button and social links */
           <div className="space-y-8">
-            {/* Contact button */}
-            <div className="flex justify-center">
+            {/* Contact button, with the phone number as a quieter second option
+                beneath it: a written message is the preferred way in. */}
+            <div className="flex flex-col items-center gap-4">
               <button
                 data-testid="contact-show-form"
                 onClick={() => setShowForm(true)}
@@ -70,6 +70,23 @@ export default function Contact() {
               >
                 Send Me a Message
               </button>
+
+              {/* A flex row rather than inline text: the link starts with an icon,
+                  which has no text baseline, so inline layout lifts the number above
+                  the label beside it. */}
+              <p className="text-stone-600 flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
+                <span>Call or text</span>
+                {/* Only the number is the link: tapping it dials, and the same number
+                    is what someone would type to send a text. */}
+                <a
+                  href={PHONE.href}
+                  data-testid="contact-phone"
+                  className="inline-flex items-center gap-1.5 font-medium text-stone-700 underline underline-offset-4 hover:text-stone-900"
+                >
+                  <PhoneIcon className="h-4 w-4" />
+                  {PHONE.display}
+                </a>
+              </p>
             </div>
 
             {/* Social Links */}

@@ -1,5 +1,72 @@
 import { test, expect } from '@playwright/test';
 
+test.describe('Contact API validation', () => {
+  const REQUIRED_ERROR = 'Name, email and message are required';
+
+  // The route rate-limits by client IP, and every test request comes from the same
+  // machine. A distinct forwarded IP per request keeps retries from tripping the limit.
+  let ipCounter = 0;
+  const post = (request: import('@playwright/test').APIRequestContext, data: object) =>
+    request.post('/api/contact', {
+      data,
+      headers: { 'x-forwarded-for': `203.0.113.${(Date.now() + ipCounter++) % 250}` },
+    });
+
+  test('accepts a message without phone or city', async ({ request }) => {
+    const response = await post(request, {
+      name: 'Test Person',
+      email: 'test@example.com',
+      message: 'Interested in a desk.',
+      turnstileToken: 'not-a-real-token',
+    });
+
+    // The dummy token fails verification further on, so this never sends an email.
+    // What matters is that it got past the required-field check.
+    const body = await response.json();
+    expect(body.error).not.toBe(REQUIRED_ERROR);
+  });
+
+  test('still rejects a message with no message text', async ({ request }) => {
+    const response = await post(request, {
+      name: 'Test Person',
+      email: 'test@example.com',
+      turnstileToken: 'not-a-real-token',
+    });
+
+    expect(response.status()).toBe(400);
+    expect((await response.json()).error).toBe(REQUIRED_ERROR);
+  });
+});
+
+test.describe('Phone number', () => {
+  test('nav and contact section both link to the same number', async ({ page }) => {
+    await page.goto('/');
+
+    for (const id of ['nav-phone', 'contact-phone']) {
+      await expect(page.getByTestId(id)).toHaveAttribute('href', 'tel:+12263384441');
+    }
+    await expect(page.getByTestId('contact-phone')).toHaveText('226-338-4441');
+    await expect(page.locator('#contact')).toContainText('Call or text');
+  });
+
+  test('is in the nav on other pages too, including on a phone', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/projects/walnut-end-table');
+
+    const navPhone = page.getByTestId('nav-phone');
+    await expect(navPhone).toBeVisible();
+    await expect(navPhone).toHaveAccessibleName('Call 226-338-4441');
+  });
+
+  test('matches the number in the LocalBusiness structured data', async ({ page }) => {
+    await page.goto('/');
+
+    const blocks = await page.locator('script[type="application/ld+json"]').allTextContents();
+    const business = blocks.map(b => JSON.parse(b)).find(b => b['@type'] === 'LocalBusiness');
+    expect(business.telephone).toBe('+1-226-338-4441');
+  });
+});
+
 test.describe('Contact Form', () => {
   test('contact section is visible on homepage', async ({ page }) => {
     await page.goto('/', { waitUntil: 'networkidle' });
@@ -96,19 +163,21 @@ test.describe('Contact Form', () => {
     await expect(page.locator('#message')).toBeVisible();
   });
 
-  test('all fields are required', async ({ page }) => {
+  test('name, email and message are required; phone and city are optional', async ({ page }) => {
     await page.goto('/', { waitUntil: 'networkidle' });
 
     const contactSection = page.locator('#contact');
     await contactSection.scrollIntoViewIfNeeded();
     await page.getByTestId('contact-show-form').click();
 
-    // All inputs should have required attribute
     await expect(page.locator('#name')).toHaveAttribute('required', '');
     await expect(page.locator('#email')).toHaveAttribute('required', '');
-    await expect(page.locator('#phone')).toHaveAttribute('required', '');
-    await expect(page.locator('#city')).toHaveAttribute('required', '');
     await expect(page.locator('#message')).toHaveAttribute('required', '');
+
+    await expect(page.locator('#phone')).not.toHaveAttribute('required');
+    await expect(page.locator('#city')).not.toHaveAttribute('required');
+    await expect(page.locator('label[for="phone"]')).toContainText('optional');
+    await expect(page.locator('label[for="city"]')).toContainText('optional');
   });
 
   test('email field validates email format', async ({ page }) => {
@@ -191,8 +260,8 @@ test.describe('Contact Form', () => {
 
     await expect(page.getByText('Name *')).toBeVisible();
     await expect(page.getByText('Email *')).toBeVisible();
-    await expect(page.getByText('Phone *')).toBeVisible();
-    await expect(page.getByText('City *')).toBeVisible();
+    await expect(page.locator('label[for="phone"]')).toHaveText('Phone (optional)');
+    await expect(page.locator('label[for="city"]')).toHaveText('City (optional)');
     await expect(page.getByText('Message *')).toBeVisible();
   });
 

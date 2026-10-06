@@ -2,6 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { PHONE } from '@/lib/metadata';
+import PhoneIcon from './PhoneIcon';
 
 const NAV_LINKS = [
   { href: '/gallery', label: 'Gallery' },
@@ -58,6 +60,18 @@ export default function Navigation() {
                 </Link>
               );
             })}
+            {/* Icon only until there's room for the number beside the logo; on a phone
+                the icon is the useful part anyway, since it dials. */}
+            <a
+              href={PHONE.href}
+              data-testid="nav-phone"
+              aria-label={`Call ${PHONE.display}`}
+              className="flex items-center gap-1.5 text-sm sm:text-base font-medium text-stone-600 hover:text-stone-900 transition-colors"
+            >
+              <PhoneIcon className="h-5 w-5" />
+              {/* xl, not lg: at 1024px the number squeezes the logo onto two lines. */}
+              <span className="hidden xl:inline">{PHONE.display}</span>
+            </a>
             <Link
               href="/#contact"
               className="text-sm sm:text-base bg-stone-800 text-white px-5 py-1.5 sm:px-6 sm:py-2 rounded-lg hover:bg-stone-700 transition-colors font-semibold"
