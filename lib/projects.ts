@@ -372,6 +372,22 @@ export const PROJECTS: Project[] = [
     ],
   },
   {
+    slug: 'walnut-shot-glass-display',
+    title: 'Top Shelf',
+    kind: 'Walnut Shot Glass Display Cabinet',
+    category: 'other',
+    images: ['shot-glass-shelf-walnut.jpg'],
+    woods: ['Walnut'],
+    description:
+      'A commissioned walnut wall case for 60 single and 24 double shot glasses plus novelty pieces, each in a fitted recess, built to grow with the collection.',
+    story: [
+      'The client had more than 50 single and 20 double shot glasses, plus a handful of oversized novelty pieces, and nowhere to show them. They wanted a clean, open display where every glass could be seen, with room to keep collecting.',
+      'The answer is a slim case in solid walnut, open at the front and back, finished in Rubio Monocoat Pure for a natural, low-sheen look that lets the grain speak for itself. Each glass sits in its own shallow recess, sized to the client’s actual glasses so nothing slides or tips, and spaced so any glass can be lifted out without bumping its neighbours.',
+      'Six rows hold singles, two hold doubles, and an open row along the bottom takes the taller and odd-shaped glasses that don’t fit a standard spot. Every row height was set to the collection itself, so the case stays compact with no wasted space: 25¾″ wide, 32″ tall and just 3¾″ deep.',
+      'It’s also built to expand. The case hangs on concealed rails screwed into the wall studs, and matching units can be added above or below later. The top and bottom caps move to the new ends, so the whole wall reads as one continuous piece.',
+    ],
+  },
+  {
     slug: 'walnut-stool',
     title: 'Wedged',
     kind: 'Walnut Step Stool',
