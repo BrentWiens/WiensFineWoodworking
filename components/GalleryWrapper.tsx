@@ -1,5 +1,3 @@
-import fs from 'fs';
-import path from 'path';
 import Gallery, { type GalleryProject } from './Gallery';
 import GallerySectionNav from './GallerySectionNav';
 import { CATEGORY_LABELS, PROJECTS, type ProjectCategory } from '@/lib/projects';
@@ -26,28 +24,25 @@ const SECTIONS: {
 ];
 
 /**
- * Resolve filename -> project here, on the server, so the client receives only the
- * few short strings each tile shows rather than the whole registry.
+ * A section's tiles, in registry order: projects as they appear in PROJECTS, and each
+ * project's photos in the order it lists them, so one project's photos sit together.
+ * Reorder the gallery by reordering lib/projects.ts. The registry tests guarantee
+ * every photo on disk belongs to a project, so none are left out.
+ *
+ * The filename -> project map is resolved here, on the server, so the client receives
+ * only the few short strings each tile shows rather than the whole registry.
  */
-function projectsForFolder(folder: string): Record<string, GalleryProject> {
-  const map: Record<string, GalleryProject> = {};
+function sectionContents(folder: ProjectCategory) {
+  const images: string[] = [];
+  const projects: Record<string, GalleryProject> = {};
   for (const project of PROJECTS) {
     if (project.category !== folder) continue;
     for (const filename of project.images) {
-      map[filename] = { slug: project.slug, title: project.title, kind: project.kind };
+      images.push(filename);
+      projects[filename] = { slug: project.slug, title: project.title, kind: project.kind };
     }
   }
-  return map;
-}
-
-function GetImagesFromDir(folder: string) {
-  const dir = path.join(process.cwd(), `public/images/gallery/${folder}`);
-  if (!fs.existsSync(dir)) return [];
-  const filenames = fs.readdirSync(dir);
-
-  return filenames.filter(file =>
-    /\.(jpg|jpeg|png|webp)$/i.test(file)
-  );
+  return { images, projects };
 }
 
 export default function GalleryWrapper() {
@@ -61,17 +56,20 @@ export default function GalleryWrapper() {
           cover: `/images/gallery/${folder}/${cover}`,
         }))}
       />
-      {SECTIONS.map(({ folder, id, background }) => (
-        <Gallery
-          key={folder}
-          images={GetImagesFromDir(folder)}
-          folder={folder}
-          title={CATEGORY_LABELS[folder]}
-          sectionId={id}
-          background={background}
-          projects={projectsForFolder(folder)}
-        />
-      ))}
+      {SECTIONS.map(({ folder, id, background }) => {
+        const { images, projects } = sectionContents(folder);
+        return (
+          <Gallery
+            key={folder}
+            images={images}
+            folder={folder}
+            title={CATEGORY_LABELS[folder]}
+            sectionId={id}
+            background={background}
+            projects={projects}
+          />
+        );
+      })}
     </>
   );
 }

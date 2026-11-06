@@ -284,7 +284,7 @@ export const PROJECTS: Project[] = [
       'Painted cabinet doors with applied panel mouldings and cove-notched corners, made to replace the factory doors on existing cabinets.',
     story: [
       'New doors are one of the most effective ways to change a room without tearing out the cabinets. These keep the existing boxes and replace only what you see.',
-      'Each door has a moulding framing its centre panel, with every corner cut in a concave notch — the same classic detail used on the Rise & Panel staircase wainscotting.',
+      'Each door has a moulding framing its centre panel, with every corner cut in a concave notch — the same classic detail used on the staircase wainscotting in Trimmed Out.',
     ],
   },
   {
@@ -316,17 +316,18 @@ export const PROJECTS: Project[] = [
     ],
   },
   {
-    slug: 'wainscotting',
-    title: 'Rise & Panel',
-    kind: 'Staircase Wainscotting',
+    slug: 'interior-trim-and-doors',
+    title: 'Trimmed Out',
+    kind: 'Wainscotting, Baseboards, Trim and Door Installation',
     category: 'finish-carpentry',
-    images: ['wainscotting-1.jpg'],
+    images: ['wainscotting-1.jpg', 'door-trim-baseboard.jpg'],
     woods: ['Maple'],
     description:
-      'Applied-moulding wainscotting that follows the rake of a staircase, with cove-notched panel corners and a detailed chair rail.',
+      'Interior trim work, from staircase wainscotting with cove-notched panels to baseboards, door casings and hung interior doors.',
     story: [
-      'Wainscotting on a stair is harder than on a flat wall: every panel has to follow the angle of the stairs, and the mouldings have to turn cleanly where the slope meets the landing.',
-      'Each panel is framed in an applied moulding with concave notched corners, laid out so the panels step up with the stairs. A decorative chair rail runs above them, climbing the stair and levelling off at the top.',
+      'Trim is what makes a room look finished. It covers the gaps where walls meet floors, doors and stairs, and it’s judged on how cleanly every joint closes.',
+      'Wainscotting on a stair is harder than on a flat wall: every panel has to follow the angle of the stairs, and the mouldings have to turn cleanly where the slope meets the landing. Each panel here is framed in an applied moulding with concave notched corners, laid out so the panels step up with the stairs, under a decorative chair rail that climbs the stair and levels off at the top.',
+      'The second photo shows the everyday side of the work: an interior door hung square in its opening, wrapped in wide, flat casing, with tall baseboard running along the walls and meeting the casing with a tight joint. Painted white, it gives the room crisp lines that read from across the space.',
     ],
   },
 
