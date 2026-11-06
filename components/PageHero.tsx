@@ -32,7 +32,8 @@ export default function PageHero({
   overlay = 'medium',
 }: PageHeroProps) {
   return (
-    <div className="relative pt-30 pb-16 px-6">
+    // Top padding clears the fixed nav, which is two rows tall below lg.
+    <div className="relative pt-30 sm:pt-38 lg:pt-30 pb-16 px-6">
       <div className="absolute inset-0 z-0">
         <Image
           src={imageSrc}

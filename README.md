@@ -26,7 +26,7 @@ Two majors are available but deliberately held back — both are blocked on
 
 ## Features
 
-- 📸 **Photo Gallery** - 43 project images across 3 sections (Tables, Finish Carpentry, Other Work) with lightbox modal, keyboard navigation, and smooth transitions
+- 📸 **Photo Gallery** - Project photos in 4 sections (Tables & Desks; Finish Carpentry; Beds & Shelves; Boxes & Small Work) with jump links, lightbox modal, keyboard navigation, and smooth transitions
 - 📄 **Project Pages** - Every piece has its own indexable page at `/projects/[slug]` with materials, breadcrumbs, Schema.org `CreativeWork` markup, and prev/next navigation
 - 🛠️ **Woodworking Tools** - 5 interactive calculators: dovetail & box joint visualizer, fractional calculator, board feet calculator, cut list optimizer (9 packing algorithms), and trigonometry calculator. Features imperial/metric unit toggle, localStorage persistence, and print-friendly layouts
 - 🖼️ **Image Optimization** - Automatic WebP/AVIF conversion, responsive sizing, lazy loading
@@ -42,7 +42,7 @@ Two majors are available but deliberately held back — both are blocked on
 git clone https://github.com/BrentWiens/WiensFineWoodworking.git
 
 # Navigate to directory
-cd wiens-woodworking
+cd WiensFineWoodworking
 
 # Install dependencies
 npm install
@@ -91,7 +91,7 @@ npm run lint
 
 ## Project Structure
 ```
-wiens-woodworking/
+WiensFineWoodworking/
 ├── .github/workflows/
 │   └── ci.yml                # Lint, type-check, unit & E2E tests
 ├── app/                      # Next.js App Router
@@ -123,8 +123,12 @@ wiens-woodworking/
 │   ├── Testimonials.tsx
 │   ├── Contact.tsx
 │   ├── ContactForm.tsx
-│   ├── Gallery.tsx
-│   ├── GalleryWrapper.tsx
+│   ├── Gallery.tsx           # One gallery section's tiles
+│   ├── GalleryWrapper.tsx    # Gallery sections, built from lib/projects.ts
+│   ├── GallerySectionNav.tsx # Jump links to each gallery section
+│   ├── Lightbox.tsx          # Full-size photo viewer
+│   ├── ProjectPhotos.tsx     # Photos on a project page
+│   ├── PhoneIcon.tsx
 │   ├── ToolCard.tsx
 │   ├── DovetailVisualizer/   # Dovetail & box joint calculator
 │   ├── FractionalCalculator/ # Fractional calculator component
@@ -132,7 +136,6 @@ wiens-woodworking/
 │   ├── CutListOptimizer/     # Cut list optimizer (9 algorithms)
 │   ├── TrigCalculator/       # Right triangle solver
 │   ├── UnitToggle.tsx        # Imperial/metric unit toggle
-│   ├── ProjectIndex.tsx      # Crawlable list of all project pages
 │   ├── CommissionCta.tsx     # Soft CTA shown on the tool pages
 │   ├── SocialLinks.tsx       # Shared Facebook/Instagram links
 │   ├── PageHero.tsx          # Shared full-bleed page header
@@ -141,11 +144,12 @@ wiens-woodworking/
 │   ├── Footer.tsx
 │   └── index.ts              # Barrel exports
 ├── lib/
-│   ├── projects.ts           # Project registry backing /projects/[slug]
+│   ├── projects.ts           # Project registry: pages, gallery, sitemap
+│   ├── imageDimensions.ts    # Reads photo sizes at build time
 │   └── metadata.ts           # Shared OG image for the /tools section
 ├── tests/                    # Playwright E2E tests
 ├── public/
-│   ├── images/gallery/       # Project photos (43 images)
+│   ├── images/gallery/       # Project photos, one folder per category
 │   ├── og/tools.jpg          # Shared social image for /tools pages
 │   ├── icons/                # 192/512 PWA icons (512 doubles as maskable)
 │   ├── sw.js                 # Service worker
@@ -157,14 +161,28 @@ wiens-woodworking/
 
 Project pages are driven entirely by [`lib/projects.ts`](lib/projects.ts). Add the
 photo under `public/images/gallery/<category>/`, add an entry to `PROJECTS`, and the
-detail page, gallery index link, and sitemap entry all follow automatically.
+detail page, gallery tile, and sitemap entry all follow
+automatically.
 
 Each project has a `title` (the piece's name), a plain-words `kind` (what it is, which
 carries the search terms), a one-line `description` (page lead and meta description,
-kept under 160 characters) and a `story` of one or more paragraphs. The current copy
-was drafted from the photos alone, so it describes only what's visible — adding who a
-piece was for, the design problem it solved and how it was finished is what makes
-these pages worth indexing.
+kept under 160 characters) and a `story` of one or more paragraphs. Who a piece was
+for, the design problem it solved and how it was finished is what makes these pages
+worth indexing.
+
+- **Order:** the gallery shows projects in the order they appear in `PROJECTS`, and
+  each project's photos in the order of its `images` list, so a project's photos
+  always sit together. The first image is the lead photo.
+- **Linking projects:** in a `story` paragraph, `[Anchor](walnut-drawers)` links to
+  another project's page. Unit tests fail on a link to a slug that doesn't exist.
+- **Categories:** listed in `CATEGORIES`, each with a label in `CATEGORY_LABELS`, a
+  folder under `public/images/gallery/`, and a section in
+  [`GalleryWrapper.tsx`](components/GalleryWrapper.tsx).
+- **Homepage:** the featured tiles are chosen in
+  [`Featured.tsx`](components/Featured.tsx), optionally naming which photo to show.
+
+The unit tests check the registry against the disk: every photo belongs to exactly one
+project, every referenced photo exists, and every category has a folder.
 
 ## Deployment
 
@@ -226,8 +244,8 @@ Components use barrel exports (`components/index.ts`) for cleaner imports throug
 - **Performance:** Vercel Speed Insights tracking Core Web Vitals
 
 ### Quality Assurance
-- **E2E Testing:** 120 Playwright tests covering the gallery, project pages, contact form, page metadata, and all 5 calculator tools
-- **Unit Testing:** Vitest tests for calculator utilities (172 tests: dovetail: 22, fractional: 53, board feet: 22, cut list: 41, trig: 34)
+- **E2E Testing:** Playwright tests covering the gallery, project pages, contact form, page metadata, and all 5 calculator tools
+- **Unit Testing:** Vitest tests for the calculator utilities, the project registry (photos on disk, story links, description length), and image sizing
 - **Metadata regression tests:** [`tests/metadata.spec.ts`](tests/metadata.spec.ts) asserts that every page's `og:image` and `twitter:image` resolve to a real 200 response, not just that the tag exists — a previous bug pointed them at a path that 404'd, so every social share preview rendered blank
 - **CI:** GitHub Actions runs lint, type-check, unit tests, and E2E tests on every push and PR. E2E runs against the production build (`npm run start`) rather than the dev server, so it exercises static generation and real response headers
 - **Type Safety:** Strict TypeScript configuration with `tsc --noEmit` checks

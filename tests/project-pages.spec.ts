@@ -1,14 +1,10 @@
 import { test, expect } from '@playwright/test';
-import { PROJECTS, getProject, storyText } from '../lib/projects';
+import { CATEGORIES, PROJECTS, getProject, storyText } from '../lib/projects';
 
 test.describe('Project detail pages', () => {
   test('every project slug resolves to a page with its title as the h1', async ({ page }) => {
-    // Spot-check across all three categories rather than all 39, to keep runtime sane.
-    const sample = [
-      PROJECTS.find(p => p.category === 'tables')!,
-      PROJECTS.find(p => p.category === 'finish-carpentry')!,
-      PROJECTS.find(p => p.category === 'other')!,
-    ];
+    // Spot-check one project per category rather than every project, to keep runtime sane.
+    const sample = CATEGORIES.map(category => PROJECTS.find(p => p.category === category)!);
 
     for (const project of sample) {
       const response = await page.goto(`/projects/${project.slug}`);
@@ -100,29 +96,15 @@ test.describe('Project detail pages', () => {
   });
 });
 
-test.describe('Project index on the gallery page', () => {
-  test('lists every project as a crawlable link', async ({ page }) => {
-    await page.goto('/gallery');
-
-    const index = page.locator('#all-projects');
-    await index.scrollIntoViewIfNeeded();
-    await expect(index).toBeVisible();
-
-    const links = index.getByRole('link');
-    await expect(links).toHaveCount(PROJECTS.length);
-  });
-
-  test('a project link navigates to its detail page', async ({ page }) => {
-    await page.goto('/gallery');
-
-    const index = page.locator('#all-projects');
-    await index.scrollIntoViewIfNeeded();
-    // Looked up rather than hardcoded, so renaming the piece doesn't break the test.
-    const project = getProject('zebrawood-shadow-box')!;
-    await index.getByRole('link', { name: project.title }).click();
-
-    await expect(page).toHaveURL(/\/projects\/zebrawood-shadow-box$/);
-    await expect(page.locator('h1')).toHaveText(project.title);
+test.describe('Project links on the gallery page', () => {
+  // Pages with no internal links pointing at them tend not to be crawled or ranked.
+  // The gallery tile captions are the only links to most project pages, so check the
+  // server-rendered HTML (what a crawler sees, before any JavaScript) links to all.
+  test('links to every project page in the server-rendered HTML', async ({ request }) => {
+    const html = await (await request.get('/gallery')).text();
+    for (const project of PROJECTS) {
+      expect(html, `no link to ${project.slug}`).toContain(`href="/projects/${project.slug}"`);
+    }
   });
 });
 

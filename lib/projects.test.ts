@@ -2,6 +2,8 @@ import fs from 'fs';
 import path from 'path';
 import { describe, it, expect } from 'vitest';
 import {
+  CATEGORIES,
+  CATEGORY_LABELS,
   PROJECTS,
   getProject,
   getProjectByImage,
@@ -12,7 +14,6 @@ import {
 } from './projects';
 
 const GALLERY_ROOT = path.join(process.cwd(), 'public/images/gallery');
-const CATEGORIES = ['tables', 'finish-carpentry', 'other'] as const;
 
 function filesOnDisk(category: string): string[] {
   return fs
@@ -98,6 +99,24 @@ describe('project registry', () => {
       for (const paragraph of project.story) {
         expect(storyText(paragraph), `${project.slug} has stray link markup`).not.toMatch(/\]\(/);
       }
+    }
+  });
+
+  it('gives every category a label, a folder on disk and at least one project', () => {
+    expect(Object.keys(CATEGORY_LABELS).sort()).toEqual([...CATEGORIES].sort());
+    for (const category of CATEGORIES) {
+      expect(fs.existsSync(path.join(GALLERY_ROOT, category)), `no folder for ${category}`).toBe(true);
+      expect(PROJECTS.some(p => p.category === category), `${category} has no projects`).toBe(true);
+    }
+  });
+
+  it('keeps no gallery folders that are not a category', () => {
+    const folders = fs
+      .readdirSync(GALLERY_ROOT, { withFileTypes: true })
+      .filter(d => d.isDirectory())
+      .map(d => d.name);
+    for (const folder of folders) {
+      expect(CATEGORIES as readonly string[], `${folder} is not a category`).toContain(folder);
     }
   });
 

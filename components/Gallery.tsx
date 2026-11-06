@@ -8,7 +8,8 @@ import Lightbox from './Lightbox';
 const FOLDER_LABELS: Record<string, string> = {
   tables: 'Custom table',
   'finish-carpentry': 'Finish carpentry',
-  other: 'Handcrafted',
+  home: 'Handcrafted home piece',
+  'small-work': 'Handcrafted',
 };
 
 function formatAltText(filename: string, folder: string): string {
@@ -68,9 +69,11 @@ export default function Gallery({ images, folder, title, sectionId = 'gallery', 
 
   return (
     <>
-      {/* scroll-mt: the fixed nav is taller on phones (it wraps to two rows), so a
-          jump link would otherwise land with the heading tucked under it. */}
-      <section id={sectionId} data-testid={`${sectionId}-section`} className={`py-20 px-6 scroll-mt-8 sm:scroll-mt-0 ${background === 'stone' ? 'bg-stone-50' : 'bg-white'}`}>
+      {/* scroll-mt: a jump lands with the fixed nav and the pinned jump bar
+          (GalleryJumpBar) both over the top of the section. The nav is two rows tall
+          below lg, tallest between sm and lg where the logo is full size, so the
+          offset follows it. */}
+      <section id={sectionId} data-testid={`${sectionId}-section`} className={`py-20 px-6 scroll-mt-16 sm:scroll-mt-24 lg:scroll-mt-12 ${background === 'stone' ? 'bg-stone-50' : 'bg-white'}`}>
         <div className="max-w-7xl mx-auto">
           {title && (
             <h2 className="text-3xl font-bold text-stone-800 mb-10 text-center">{title}</h2>

@@ -1,4 +1,7 @@
-export type ProjectCategory = 'tables' | 'finish-carpentry' | 'other';
+/** Every category, in the order the gallery and the project index show them. */
+export const CATEGORIES = ['tables', 'finish-carpentry', 'home', 'small-work'] as const;
+
+export type ProjectCategory = (typeof CATEGORIES)[number];
 
 export interface Project {
   slug: string;
@@ -26,12 +29,10 @@ export interface Project {
 export const CATEGORY_LABELS: Record<ProjectCategory, string> = {
   tables: 'Tables & Desks',
   'finish-carpentry': 'Finish Carpentry',
-  other: 'Other Work',
+  home: 'Beds & Shelves',
+  'small-work': 'Boxes & Small Work',
 };
 
-// Names, descriptions and stories are draft copy written from the photos alone, so
-// they describe only what can be seen. Anything about who a piece was for, its
-// dimensions or its finish has been left out rather than guessed.
 export const PROJECTS: Project[] = [
   // ---------------------------------------------------------------- tables
   {
@@ -308,12 +309,12 @@ export const PROJECTS: Project[] = [
     ],
   },
 
-  // ----------------------------------------------------------------- other
+  // ---------------------------------------------------------- beds & shelves
   {
     slug: 'walnut-bed',
     title: 'Nightfall',
     kind: 'Walnut Bed Frame',
-    category: 'other',
+    category: 'home',
     images: ['bed-walnut.jpg'],
     woods: ['Walnut'],
     description:
@@ -327,7 +328,7 @@ export const PROJECTS: Project[] = [
     slug: 'maple-bed',
     title: 'Wildwood',
     kind: 'Spalted Maple Bed Frame',
-    category: 'other',
+    category: 'home',
     images: ['bed-maple.jpg'],
     woods: ['Manitoba Maple'],
     description:
@@ -337,24 +338,55 @@ export const PROJECTS: Project[] = [
     ],
   },
   {
-    slug: 'walnut-storage-tray-brass',
-    title: 'Drop Zone',
-    kind: 'Walnut Valet Tray with Brass Key Rack',
-    category: 'other',
-    images: ['storage-tray-walnut-brass.jpg'],
-    woods: ['Walnut', 'Brass'],
+    slug: 'walnut-shot-glass-display',
+    title: 'Top Shelf',
+    kind: 'Walnut Shot Glass Display Cabinet',
+    category: 'home',
+    images: ['shot-glass-shelf-walnut.jpg'],
+    woods: ['Walnut'],
     description:
-      'An entryway valet: a figured walnut tray for coins and wallets, with a walnut key bar held up on brass rods and pegs.',
+      'A commissioned walnut wall case for 60 single and 24 double shot glasses plus novelty pieces, each in a fitted recess, built to grow with the collection.',
     story: [
-      'The tray is hollowed from walnut with swirling figure, its natural cracks filled black and left as dark lines through the grain. It’s a place for everything that comes out of your pockets.',
-      'Two brass rods rise from the back to carry a walnut bar with four brass pegs for keys. It’s shown on top of the [Bowtie](maple-cabinet-bowtie-inlays) cabinet.',
+      'The client had more than 50 single and 20 double shot glasses, plus a handful of oversized novelty pieces, and nowhere to show them. They wanted a clean, open display where every glass could be seen, with room to keep collecting.',
+      'The answer is a slim case in solid walnut, open at the front and back, finished in Rubio Monocoat Pure for a natural, low-sheen look that lets the grain speak for itself. Each glass sits in its own shallow recess, sized to the client’s actual glasses so nothing slides or tips, and spaced so any glass can be lifted out without bumping its neighbours.',
+      'Six rows hold singles, two hold doubles, and an open row along the bottom takes the taller and odd-shaped glasses that don’t fit a standard spot. Every row height was set to the collection itself, so the case stays compact with no wasted space: 25¾″ wide, 32″ tall and just 3¾″ deep.',
+      'It’s also built to expand. The case hangs on concealed rails screwed into the wall studs, and matching units can be added above or below later. The top and bottom caps move to the new ends, so the whole wall reads as one continuous piece.',
     ],
   },
+  {
+    slug: 'walnut-shelf',
+    title: 'Stepback',
+    kind: 'Walnut Wall Shelf',
+    category: 'home',
+    images: ['shelf-walnut.jpg'],
+    woods: ['Walnut'],
+    description:
+      'A two-tier walnut wall shelf with a stepped profile, rounded side tops and a low front lip to keep things from sliding off.',
+    story: [
+      'Each side is a single board with its top corners rounded over, and the back panels show off walnut’s cathedral grain. A low rail across the bottom shelf keeps spices, small books or keepsakes in place.',
+    ],
+  },
+  {
+    slug: 'walnut-cube-storage',
+    title: 'Six Squares',
+    kind: 'Walnut Cube Shelf',
+    category: 'home',
+    images: ['cube-storage-walnut.jpg'],
+    woods: ['Walnut'],
+    description:
+      'A six-cube walnut storage unit with rounded inside edges and an overhanging top, sized for baskets or books.',
+    story: [
+      'Flat-pack cube shelves are everywhere; this is the solid-wood version. Every opening has softly rounded edges, and the top overhangs the sides with a rounded lip.',
+      'A few natural knots were kept for character.',
+    ],
+  },
+
+  // ------------------------------------------------------ boxes & small work
   {
     slug: 'walnut-box',
     title: 'The Keepsake',
     kind: 'Walnut Box with Splined Corners',
-    category: 'other',
+    category: 'small-work',
     images: ['box-walnut.jpg'],
     woods: ['Walnut', 'Maple'],
     description:
@@ -368,7 +400,7 @@ export const PROJECTS: Project[] = [
     slug: 'dovetailed-box-cherry-maple-walnut',
     title: 'Ripple',
     kind: 'Dovetailed Box in Cherry, Maple and Walnut',
-    category: 'other',
+    category: 'small-work',
     images: ['box-dovetails-cherry-maple-walnut-open.jpg'],
     woods: ['Cherry', 'Maple', 'Walnut'],
     description:
@@ -382,7 +414,7 @@ export const PROJECTS: Project[] = [
     slug: 'dovetailed-manitoba-maple-box',
     title: 'Ember',
     kind: 'Dovetailed Manitoba Maple Box',
-    category: 'other',
+    category: 'small-work',
     images: ['box-dovetails-manitoba-maple.jpg', 'box-dovetails-manitoba-maple-open.jpg'],
     woods: ['Manitoba Maple', 'Walnut', 'Maple'],
     description:
@@ -396,7 +428,7 @@ export const PROJECTS: Project[] = [
     slug: 'walnut-olive-tea-box-brass',
     title: 'Steep',
     kind: 'Walnut Tea Chest with Olive and Brass',
-    category: 'other',
+    category: 'small-work',
     images: [
       'tea-box-walnut-brass-olive-maple.jpg',
       'tea-box-walnut-brass-olive-maple-inside.jpg',
@@ -413,7 +445,7 @@ export const PROJECTS: Project[] = [
     slug: 'olive-tea-box-brass',
     title: 'Brass Band',
     kind: 'Olive Wood Tea Caddy with Brass Rim',
-    category: 'other',
+    category: 'small-work',
     images: ['tea-box-olive-brass.jpg'],
     woods: ['Olive', 'Brass'],
     description:
@@ -427,7 +459,7 @@ export const PROJECTS: Project[] = [
     slug: 'piano-pattern-cutting-board',
     title: 'Middle C',
     kind: 'Piano-Key End-Grain Cutting Board',
-    category: 'other',
+    category: 'small-work',
     images: ['cuttingboard-piano-walnut-maple-cherry.jpg'],
     woods: ['Walnut', 'Maple', 'Cherry'],
     description:
@@ -441,7 +473,7 @@ export const PROJECTS: Project[] = [
     slug: 'walnut-cherry-maple-chessboard',
     title: 'Endgame',
     kind: 'Walnut, Maple and Cherry Chessboard',
-    category: 'other',
+    category: 'small-work',
     images: ['chessboard-walnut-cherry-maple.jpg'],
     woods: ['Walnut', 'Maple', 'Cherry'],
     description:
@@ -452,10 +484,24 @@ export const PROJECTS: Project[] = [
     ],
   },
   {
+    slug: 'walnut-storage-tray-brass',
+    title: 'Drop Zone',
+    kind: 'Walnut Valet Tray with Brass Key Rack',
+    category: 'small-work',
+    images: ['storage-tray-walnut-brass.jpg'],
+    woods: ['Walnut', 'Brass'],
+    description:
+      'An entryway valet: a figured walnut tray for coins and wallets, with a walnut key bar held up on brass rods and pegs.',
+    story: [
+      'The tray is hollowed from walnut with swirling figure, its natural cracks filled black and left as dark lines through the grain. It’s a place for everything that comes out of your pockets.',
+      'Two brass rods rise from the back to carry a walnut bar with four brass pegs for keys. It’s shown on top of the [Bowtie](maple-cabinet-bowtie-inlays) cabinet.',
+    ],
+  },
+  {
     slug: 'walnut-cherry-flute-stand',
     title: 'Resting Note',
     kind: 'Walnut and Cherry Flute Stand',
-    category: 'other',
+    category: 'small-work',
     images: ['flute-stand-walnut-cherry.jpg'],
     woods: ['Walnut', 'Cherry'],
     description:
@@ -466,53 +512,10 @@ export const PROJECTS: Project[] = [
     ],
   },
   {
-    slug: 'walnut-shot-glass-display',
-    title: 'Top Shelf',
-    kind: 'Walnut Shot Glass Display Cabinet',
-    category: 'other',
-    images: ['shot-glass-shelf-walnut.jpg'],
-    woods: ['Walnut'],
-    description:
-      'A commissioned walnut wall case for 60 single and 24 double shot glasses plus novelty pieces, each in a fitted recess, built to grow with the collection.',
-    story: [
-      'The client had more than 50 single and 20 double shot glasses, plus a handful of oversized novelty pieces, and nowhere to show them. They wanted a clean, open display where every glass could be seen, with room to keep collecting.',
-      'The answer is a slim case in solid walnut, open at the front and back, finished in Rubio Monocoat Pure for a natural, low-sheen look that lets the grain speak for itself. Each glass sits in its own shallow recess, sized to the client’s actual glasses so nothing slides or tips, and spaced so any glass can be lifted out without bumping its neighbours.',
-      'Six rows hold singles, two hold doubles, and an open row along the bottom takes the taller and odd-shaped glasses that don’t fit a standard spot. Every row height was set to the collection itself, so the case stays compact with no wasted space: 25¾″ wide, 32″ tall and just 3¾″ deep.',
-      'It’s also built to expand. The case hangs on concealed rails screwed into the wall studs, and matching units can be added above or below later. The top and bottom caps move to the new ends, so the whole wall reads as one continuous piece.',
-    ],
-  },
-  {
-    slug: 'walnut-shelf',
-    title: 'Stepback',
-    kind: 'Walnut Wall Shelf',
-    category: 'other',
-    images: ['shelf-walnut.jpg'],
-    woods: ['Walnut'],
-    description:
-      'A two-tier walnut wall shelf with a stepped profile, rounded side tops and a low front lip to keep things from sliding off.',
-    story: [
-      'Each side is a single board with its top corners rounded over, and the back panels show off walnut’s cathedral grain. A low rail across the bottom shelf keeps spices, small books or keepsakes in place.',
-    ],
-  },
-  {
-    slug: 'walnut-cube-storage',
-    title: 'Six Squares',
-    kind: 'Walnut Cube Shelf',
-    category: 'other',
-    images: ['cube-storage-walnut.jpg'],
-    woods: ['Walnut'],
-    description:
-      'A six-cube walnut storage unit with rounded inside edges and an overhanging top, sized for baskets or books.',
-    story: [
-      'Flat-pack cube shelves are everywhere; this is the solid-wood version. Every opening has softly rounded edges, and the top overhangs the sides with a rounded lip.',
-      'A few natural knots were kept for character.',
-    ],
-  },
-  {
     slug: 'zebrawood-shadow-box',
     title: 'Service Record',
     kind: 'Zebrawood Military Shadow Box',
-    category: 'other',
+    category: 'small-work',
     images: ['shadowbox-zebrawood.jpg'],
     woods: ['Zebrawood'],
     description:
@@ -526,7 +529,7 @@ export const PROJECTS: Project[] = [
     slug: 'walnut-frame-joinery',
     title: 'Pinned Corner',
     kind: 'Walnut Picture Frame',
-    category: 'other',
+    category: 'small-work',
     images: ['frame-walnut-joint.jpg'],
     woods: ['Walnut', 'Ipe'],
     description:
@@ -540,7 +543,7 @@ export const PROJECTS: Project[] = [
     slug: 'tissue-box-cover',
     title: 'Hidden in Plain Sight',
     kind: 'Walnut and White Oak Tissue Box Covers',
-    category: 'other',
+    category: 'small-work',
     images: ['kleenex-1.jpg', 'kleenex-2.jpg'],
     woods: ['Walnut', 'White Oak'],
     description:
@@ -551,10 +554,24 @@ export const PROJECTS: Project[] = [
     ],
   },
   {
+    slug: 'walnut-stool',
+    title: 'Wedged',
+    kind: 'Walnut Step Stool',
+    category: 'small-work',
+    images: ['stool-walnut.jpg'],
+    woods: ['Walnut', 'Maple'],
+    description:
+      'A low walnut step stool with a thick figured top, its legs joined with wedged through-tenons left visible on top.',
+    story: [
+      'The legs pass right through the seat, and each tenon is wedged from above so it can’t work loose. On top, the tenon ends and their contrasting wedges make a small pattern at each corner.',
+      'The seat is cut from walnut with rippling figure and rounded over at every edge, so it’s comfortable underfoot and pleasant to pick up.',
+    ],
+  },
+  {
     slug: 'ipe-maple-mallet',
     title: 'Heavy Hitter',
     kind: 'Ipe and Maple Joiner’s Mallets',
-    category: 'other',
+    category: 'small-work',
     images: ['mallet-ipe-maple.jpg'],
     woods: ['Ipe', 'Maple'],
     description:
@@ -568,7 +585,7 @@ export const PROJECTS: Project[] = [
     slug: 'trivets',
     title: 'Full Circle',
     kind: 'Oak and Ash Trivets',
-    category: 'other',
+    category: 'small-work',
     images: ['trivets.jpg'],
     woods: ['Red Oak', 'Ash'],
     description:
@@ -576,20 +593,6 @@ export const PROJECTS: Project[] = [
     story: [
       'Made as a batch, so no two came out the same: some are pale, straight-grained ash, others red oak with bold open grain, a knot or a dark streak of figure.',
       'Each is routed with a shallow recess inside a rounded rim. They make easy gifts, and the variation means every one feels like its own piece.',
-    ],
-  },
-  {
-    slug: 'walnut-stool',
-    title: 'Wedged',
-    kind: 'Walnut Step Stool',
-    category: 'other',
-    images: ['stool-walnut.jpg'],
-    woods: ['Walnut', 'Maple'],
-    description:
-      'A low walnut step stool with a thick figured top, its legs joined with wedged through-tenons left visible on top.',
-    story: [
-      'The legs pass right through the seat, and each tenon is wedged from above so it can’t work loose. On top, the tenon ends and their contrasting wedges make a small pattern at each corner.',
-      'The seat is cut from walnut with rippling figure and rounded over at every edge, so it’s comfortable underfoot and pleasant to pick up.',
     ],
   },
 ];

@@ -205,11 +205,13 @@ test.describe('Gallery section jump links', () => {
   const SECTIONS = [
     { id: 'gallery', heading: 'Tables & Desks' },
     { id: 'gallery-finish-carpentry', heading: 'Finish Carpentry' },
-    { id: 'gallery-other', heading: 'Other Work' },
+    { id: 'gallery-home', heading: 'Beds & Shelves' },
+    { id: 'gallery-small-work', heading: 'Boxes & Small Work' },
   ];
 
   for (const viewport of [
     { name: 'desktop', width: 1280, height: 800 },
+    { name: 'tablet', width: 768, height: 1024 },
     { name: 'phone', width: 390, height: 844 },
   ]) {
     test(`each link brings its section heading into view below the nav (${viewport.name})`, async ({ page }) => {
@@ -221,18 +223,100 @@ test.describe('Gallery section jump links', () => {
         await expect(page).toHaveURL(new RegExp(`#${id}$`));
 
         const title = page.getByTestId(`${id}-section`).getByRole('heading', { name: heading });
-        const nav = page.getByRole('navigation', { name: 'Main navigation' });
+        await expect.poll(() => headingClearsPinnedBars(page, title, viewport.height)).toBe(true);
+      }
+    });
+  }
+});
 
-        // Smooth scrolling takes a moment to settle, so poll rather than read once.
-        await expect
-          .poll(async () => {
-            const [titleBox, navBox] = await Promise.all([title.boundingBox(), nav.boundingBox()]);
-            if (!titleBox || !navBox) return false;
-            const belowNav = titleBox.y >= navBox.y + navBox.height;
-            const onScreen = titleBox.y + titleBox.height <= viewport.height;
-            return belowNav && onScreen;
-          })
-          .toBe(true);
+/**
+ * Whether a section heading sits below both the fixed main nav and the pinned jump
+ * bar (when it's showing), and still on screen. Smooth scrolling takes a moment to
+ * settle, so callers poll this rather than read it once.
+ */
+async function headingClearsPinnedBars(
+  page: import('@playwright/test').Page,
+  title: import('@playwright/test').Locator,
+  viewportHeight: number
+): Promise<boolean> {
+  const nav = page.getByRole('navigation', { name: 'Main navigation' });
+  const bar = page.getByTestId('gallery-jump-bar');
+  const [titleBox, navBox, barVisible] = await Promise.all([
+    title.boundingBox(),
+    nav.boundingBox(),
+    bar.isVisible(),
+  ]);
+  if (!titleBox || !navBox) return false;
+  let coveredTo = navBox.y + navBox.height;
+  if (barVisible) {
+    const barBox = await bar.boundingBox();
+    if (barBox) coveredTo = Math.max(coveredTo, barBox.y + barBox.height);
+  }
+  return titleBox.y >= coveredTo && titleBox.y + titleBox.height <= viewportHeight;
+}
+
+test.describe('Pinned gallery jump bar', () => {
+  const SECTIONS = [
+    { id: 'gallery', label: 'Tables', heading: 'Tables & Desks' },
+    { id: 'gallery-finish-carpentry', label: 'Carpentry', heading: 'Finish Carpentry' },
+    { id: 'gallery-home', label: 'Beds & Shelves', heading: 'Beds & Shelves' },
+    { id: 'gallery-small-work', label: 'Small Work', heading: 'Boxes & Small Work' },
+  ];
+
+  for (const viewport of [
+    { name: 'desktop', width: 1280, height: 800 },
+    { name: 'tablet', width: 768, height: 1024 },
+    { name: 'phone', width: 390, height: 844 },
+  ]) {
+    test(`stays hidden at the top, then pins compactly under the nav (${viewport.name})`, async ({ page }) => {
+      await page.setViewportSize({ width: viewport.width, height: viewport.height });
+      await page.goto('/gallery');
+
+      const bar = page.getByTestId('gallery-jump-bar');
+      await expect(bar).toBeHidden();
+
+      // Scroll the full-size jump links away.
+      await page.getByTestId('gallery-section').getByRole('heading').scrollIntoViewIfNeeded();
+      await page.mouse.wheel(0, 600);
+      await expect(bar).toBeVisible();
+
+      // Compact: one short row, sitting directly under the main nav. It slides in, so
+      // poll until it has settled rather than measuring mid-animation.
+      const nav = page.getByRole('navigation', { name: 'Main navigation' });
+      await expect
+        .poll(async () => {
+          const [barBox, navBox] = await Promise.all([bar.boundingBox(), nav.boundingBox()]);
+          return Math.abs(barBox!.y - (navBox!.y + navBox!.height));
+        })
+        .toBeLessThanOrEqual(1);
+      expect((await bar.boundingBox())!.height).toBeLessThanOrEqual(56);
+
+      // All four links fit across the screen, centred: equal space either side.
+      const first = (await page.getByTestId(`jumpbar-${SECTIONS[0].id}`).boundingBox())!;
+      const last = (await page.getByTestId(`jumpbar-${SECTIONS.at(-1)!.id}`).boundingBox())!;
+      const leftGap = first.x;
+      const rightGap = viewport.width - (last.x + last.width);
+      expect(leftGap).toBeGreaterThan(0);
+      expect(rightGap).toBeGreaterThan(0);
+      expect(Math.abs(leftGap - rightGap)).toBeLessThanOrEqual(2);
+    });
+
+    test(`each pinned link jumps to its section and marks it current (${viewport.name})`, async ({ page }) => {
+      await page.setViewportSize({ width: viewport.width, height: viewport.height });
+      await page.goto('/gallery');
+      await page.getByTestId('gallery-section').getByRole('heading').scrollIntoViewIfNeeded();
+      await page.mouse.wheel(0, 600);
+      await expect(page.getByTestId('gallery-jump-bar')).toBeVisible();
+
+      for (const { id, label, heading } of [...SECTIONS].reverse()) {
+        const link = page.getByTestId(`jumpbar-${id}`);
+        await expect(link).toHaveText(label);
+        await link.click();
+        await expect(page).toHaveURL(new RegExp(`#${id}$`));
+
+        const title = page.getByTestId(`${id}-section`).getByRole('heading', { name: heading });
+        await expect.poll(() => headingClearsPinnedBars(page, title, viewport.height)).toBe(true);
+        await expect(link).toHaveAttribute('aria-current', 'location');
       }
     });
   }
@@ -249,34 +333,39 @@ test.describe('Gallery Sections', () => {
     await expect(section.getByText('Finish Carpentry')).toBeVisible();
   });
 
-  test('other work section exists', async ({ page }) => {
+  test('beds & shelves section exists', async ({ page }) => {
     await page.goto('/gallery', { waitUntil: 'networkidle' });
 
-    const section = page.getByTestId('gallery-other-section');
+    const section = page.getByTestId('gallery-home-section');
     await expect(section).toBeVisible();
 
-    await expect(section.getByText('Other Work')).toBeVisible();
+    await expect(section.getByRole('heading', { name: 'Beds & Shelves' })).toBeVisible();
+  });
+
+  test('boxes & small work section exists', async ({ page }) => {
+    await page.goto('/gallery', { waitUntil: 'networkidle' });
+
+    const section = page.getByTestId('gallery-small-work-section');
+    await expect(section).toBeVisible();
+
+    await expect(section.getByRole('heading', { name: 'Boxes & Small Work' })).toBeVisible();
   });
 
   test('gallery sections appear in correct order', async ({ page }) => {
     await page.goto('/gallery', { waitUntil: 'networkidle' });
 
-    const tables = page.getByTestId('gallery-section');
-    const finishCarpentry = page.getByTestId('gallery-finish-carpentry-section');
-    const other = page.getByTestId('gallery-other-section');
+    const ids = ['gallery', 'gallery-finish-carpentry', 'gallery-home', 'gallery-small-work'];
+    const sections = ids.map(id => page.getByTestId(`${id}-section`));
 
-    // All three should exist
-    await expect(tables).toBeVisible();
-    await expect(finishCarpentry).toBeVisible();
-    await expect(other).toBeVisible();
+    for (const section of sections) {
+      await expect(section).toBeVisible();
+    }
 
-    // Tables should come before finish carpentry, which comes before other
-    const tablesBox = await tables.boundingBox();
-    const finishBox = await finishCarpentry.boundingBox();
-    const otherBox = await other.boundingBox();
-
-    expect(tablesBox!.y).toBeLessThan(finishBox!.y);
-    expect(finishBox!.y).toBeLessThan(otherBox!.y);
+    // Each section should sit below the one before it.
+    const boxes = await Promise.all(sections.map(s => s.boundingBox()));
+    for (let i = 1; i < boxes.length; i++) {
+      expect(boxes[i - 1]!.y).toBeLessThan(boxes[i]!.y);
+    }
   });
 });
 

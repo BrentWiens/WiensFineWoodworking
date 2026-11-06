@@ -115,7 +115,8 @@ export default async function ProjectPage({
 
       <Navigation />
 
-      <main id="main-content" className="min-h-screen bg-stone-50 pt-28 pb-20">
+      {/* Top padding clears the fixed nav, which is two rows tall below lg. */}
+      <main id="main-content" className="min-h-screen bg-stone-50 pt-28 sm:pt-36 lg:pt-28 pb-20">
         <div className="max-w-5xl mx-auto px-6">
           {/* Breadcrumb */}
           <nav aria-label="Breadcrumb" className="mb-6 text-sm text-stone-500">

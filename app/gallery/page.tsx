@@ -1,10 +1,9 @@
 import { Metadata } from 'next';
 import { Navigation, Footer } from '@/components';
 import PageHero from '@/components/PageHero';
-// Not via the barrel: both reach into the project registry, and routing them
-// through it would put that data in every other page's bundle.
+// Not via the barrel: it reaches into the project registry, and routing it
+// through there would put that data in every other page's bundle.
 import GalleryWrapper from '@/components/GalleryWrapper';
-import ProjectIndex from '@/components/ProjectIndex';
 
 export const metadata: Metadata = {
     title: 'Gallery | Wiens Fine Woodworking',
@@ -39,7 +38,6 @@ export default function GalleryPage() {
                 />
 
                 <GalleryWrapper />
-                <ProjectIndex />
             </main>
 
             <Footer />

@@ -23,26 +23,35 @@ export default function Navigation() {
   return (
     <nav aria-label="Main navigation" className="fixed top-0 left-0 right-0 bg-white border-b border-stone-200 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="flex flex-col sm:flex-row items-center sm:justify-between py-2 sm:py-3 gap-2 sm:gap-0">
+        {/* Three layouts, widest first:
+            - lg and up: logo on one line, links beside it (needs about 975px).
+            - 880px to lg: links still beside it, with FINE / WOODWORKING on two lines.
+            - below 880px: links stacked under the logo. Any earlier switch to a row
+              squeezes the logo and pushes Contact off the right edge. */}
+        <div className="flex flex-col nav:flex-row items-center nav:justify-between py-2 sm:py-3 gap-2 nav:gap-0">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 sm:gap-4 hover:opacity-80 transition-opacity">
             <span
-              className="text-xl sm:text-3xl font-bold tracking-wider"
+              className="text-lg min-[375px]:text-xl sm:text-3xl font-bold tracking-wider"
               style={{ fontFamily: 'Georgia, serif', color: '#2C1810' }}
             >
               WIENS
             </span>
             <div className="w-[2px] h-6 sm:w-[3px] sm:h-10 bg-stone-400" />
             <span
-              className="text-xl sm:text-3xl font-normal tracking-wider sm:tracking-widest"
+              className="text-lg min-[375px]:text-xl sm:text-3xl font-normal tracking-wider sm:tracking-widest"
               style={{ fontFamily: 'Georgia, serif', color: '#78716C' }}
             >
-              FINE WOODWORKING
+              {/* Breaks onto two lines in the mid range, so the links can stay on the
+                  logo's row instead of dropping underneath it. */}
+              <span className="nav:max-lg:block">FINE</span>{' '}
+              <span className="nav:max-lg:block">WOODWORKING</span>
             </span>
           </Link>
 
           {/* Navigation Links */}
-          <div className="flex items-center gap-4 sm:gap-8">
+          {/* Slightly tighter in the two-line-logo range, so the logo isn't crowded. */}
+          <div className="flex items-center gap-4 sm:gap-8 nav:gap-6 lg:gap-8">
             {NAV_LINKS.map(({ href, label }) => {
               const active = isActive(href);
               return (

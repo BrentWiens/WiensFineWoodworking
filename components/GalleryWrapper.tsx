@@ -1,5 +1,6 @@
 import Gallery, { type GalleryProject } from './Gallery';
-import GallerySectionNav from './GallerySectionNav';
+import GalleryJumpBar from './GalleryJumpBar';
+import GallerySectionNav, { GALLERY_SECTION_NAV_ID } from './GallerySectionNav';
 import { CATEGORY_LABELS, PROJECTS, type ProjectCategory } from '@/lib/projects';
 
 /**
@@ -12,15 +13,37 @@ const SECTIONS: {
   background: 'white' | 'stone';
   /** Filename within the folder, shown behind the jump link. */
   cover: string;
+  /** Label in the compact pinned bar, short enough for all four to fit on a phone. */
+  shortLabel: string;
 }[] = [
-  { folder: 'tables', id: 'gallery', background: 'white', cover: 'end-table-walnut-brass.jpg' },
+  {
+    folder: 'tables',
+    id: 'gallery',
+    background: 'white',
+    cover: 'end-table-walnut-brass.jpg',
+    shortLabel: 'Tables',
+  },
   {
     folder: 'finish-carpentry',
     id: 'gallery-finish-carpentry',
     background: 'white',
     cover: 'cabinet-builtin-walnut.jpg',
+    shortLabel: 'Carpentry',
   },
-  { folder: 'other', id: 'gallery-other', background: 'stone', cover: 'box-dovetails-manitoba-maple.jpg' },
+  {
+    folder: 'home',
+    id: 'gallery-home',
+    background: 'stone',
+    cover: 'bed-walnut.jpg',
+    shortLabel: 'Beds & Shelves',
+  },
+  {
+    folder: 'small-work',
+    id: 'gallery-small-work',
+    background: 'white',
+    cover: 'box-dovetails-manitoba-maple.jpg',
+    shortLabel: 'Small Work',
+  },
 ];
 
 /**
@@ -52,9 +75,12 @@ export default function GalleryWrapper() {
         sections={SECTIONS.map(({ folder, id, cover }) => ({
           id,
           label: CATEGORY_LABELS[folder],
-          projectCount: PROJECTS.filter(p => p.category === folder).length,
           cover: `/images/gallery/${folder}/${cover}`,
         }))}
+      />
+      <GalleryJumpBar
+        watchId={GALLERY_SECTION_NAV_ID}
+        links={SECTIONS.map(({ id, shortLabel }) => ({ id, label: shortLabel }))}
       />
       {SECTIONS.map(({ folder, id, background }) => {
         const { images, projects } = sectionContents(folder);

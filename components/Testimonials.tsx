@@ -16,7 +16,7 @@ export default function Testimonials() {
     },
     {
       id: 3,
-      quote: "We had Brent build us a couple of  frame and panel doors to replace the default crappy Ikea doors for our closet build and they were perfect, he even assisted with the install! Great attention to detail and very responsive commmunication.",
+      quote: "We had Brent build us a couple of  frame and panel doors to replace the default crappy Ikea doors for our closet build and they were perfect, he even assisted with the install! Great attention to detail and very responsive communication.",
       author: "Robert Haskett",
       location: "Kitchener",
     },

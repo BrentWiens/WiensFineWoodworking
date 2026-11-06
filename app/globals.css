@@ -12,6 +12,13 @@
   --font-mono: var(--font-geist-mono);
 }
 
+@theme {
+  /* 880px: where the main nav's links first fit beside the logo, with FINE /
+     WOODWORKING on two lines (see Navigation.tsx). A named breakpoint, unlike
+     min-[880px], sorts between sm/md and lg so its utilities override sm's. */
+  --breakpoint-nav: 55rem;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
