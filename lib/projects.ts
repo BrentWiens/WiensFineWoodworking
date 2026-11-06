@@ -16,7 +16,10 @@ export interface Project {
   woods: string[];
   /** One sentence, kept under ~160 characters: the page lead and the meta description. */
   description: string;
-  /** The longer write-up, one string per paragraph. */
+  /**
+   * The longer write-up, one string per paragraph. Link to another project with
+   * `[link text](project-slug)`, e.g. `the [Anchor](walnut-drawers) pedestal`.
+   */
   story: string[];
 }
 
@@ -46,20 +49,6 @@ export const PROJECTS: Project[] = [
     ],
   },
   {
-    slug: 'walnut-end-table',
-    title: 'Eddy',
-    kind: 'Walnut End Table',
-    category: 'tables',
-    images: ['end-table-walnut.jpg'],
-    woods: ['Walnut'],
-    description:
-      'A three-tier walnut end table whose top swirls with dramatic figure, with two lower shelves for books and baskets.',
-    story: [
-      'Some boards are too good to cut small. The top of this one came from walnut with grain that folds and ripples across its whole width, and a natural check running through it was left visible as part of its character.',
-      'Below, two shelves are notched around square legs, their boards showing the streaks of pale sapwood and dark heartwood that make walnut so varied. It’s a simple, sturdy form that lets the wood do the talking.',
-    ],
-  },
-  {
     slug: 'walnut-end-table-brass',
     title: 'Eclipse',
     kind: 'Walnut Nightstands with Brass Pulls',
@@ -70,7 +59,7 @@ export const PROJECTS: Project[] = [
       'A pair of mid-century-style walnut nightstands with sculpted legs, a single drawer, and a brass pull set across a round cut-out.',
     story: [
       'The detail that gives these their name is the pull: a round finger hole cut through the drawer front, crossed by a slim brass bar like a horizon line across the sun.',
-      'The case wraps around the drawer with the grain running over the top and down the sides, held between tapered legs that rise past the case and finish in rounded tops. A lower shelf ties the legs together. The same pair appears beside the Nightfall bed.',
+      'The case wraps around the drawer with the grain running over the top and down the sides, held between tapered legs that rise past the case and finish in rounded tops. A lower shelf ties the legs together. The same pair appears beside the [Nightfall](walnut-bed) bed.',
     ],
   },
   {
@@ -92,13 +81,14 @@ export const PROJECTS: Project[] = [
     title: 'Homestead',
     kind: 'Walnut Occasional Table Set',
     category: 'tables',
-    images: ['walnut-tables.jpg'],
+    images: ['walnut-tables.jpg', 'end-table-walnut.jpg'],
     woods: ['Walnut'],
     description:
       'A matched set of four walnut tables — a long console with a lower shelf, and three side tables with two shelves each.',
     story: [
       'Built as a set so a whole room matches: one long console and three side tables, all in solid walnut with the same square legs and shelf details.',
-      'Walnut from different boards shifts in tone, from dark and dramatic to warm and light, and the set shows that range. The table on the left has swirling figure across its top, while the smaller tables have straighter, calmer grain.',
+      'Walnut from different boards shifts in tone, from dark and dramatic to warm and light, and the set shows that range. The smaller tables have straighter, calmer grain, while the end table on the left got the most figured board of the lot.',
+      'Some boards are too good to cut small. That table’s top came from walnut with grain that folds and ripples across its whole width, and a natural check running through it was left visible as part of its character. Below, two shelves are notched around square legs, their boards showing the streaks of pale sapwood and dark heartwood that make walnut so varied.',
     ],
   },
   {
@@ -116,59 +106,19 @@ export const PROJECTS: Project[] = [
     ],
   },
   {
-    slug: 'cherry-desk',
-    title: 'Inkwell',
-    kind: 'Cherry L-Shaped Desk',
+    slug: 'walnut-drawers',
+    title: 'Anchor',
+    kind: 'Walnut Drawer Pedestal',
     category: 'tables',
-    images: ['cherry-desk.jpg'],
-    woods: ['Cherry'],
+    images: ['drawers-walnut.jpg', 'dovetail-drawer-cherry.jpg'],
+    woods: ['Walnut', 'Cherry'],
     description:
-      'An L-shaped desk in solid cherry, with its natural knots and voids filled clear so they read like drops of ink across the grain.',
+      'A three-drawer walnut pedestal with frame-and-panel drawer fronts and long brushed-steel pulls, built to sit under a desk.',
     story: [
-      'Two tops meet at a right angle to make a corner workstation, with the grain of each running along its length. Where the cherry had knots and voids, they were filled rather than cut out — small dark marks that give the long top some punctuation.',
-      'Straight cherry legs carry the main run, and the far end rests on a cabinet, keeping the space underneath clear for a chair to roll freely.',
-    ],
-  },
-  {
-    slug: 'ash-desk',
-    title: 'Mission Control',
-    kind: 'Ash Standing Desk with Walnut Pedestal',
-    category: 'tables',
-    images: ['ash-desk.jpg'],
-    woods: ['Ash', 'Walnut'],
-    description:
-      'A sit-stand desk with a solid ash top, a walnut drawer pedestal, a walnut computer stand with walnut front for the computer.',
-    story: [
-      'An electric frame does the work of raising and lowering; the woodwork makes it look like furniture. A thick ash top with a rounded front edge gives plenty of room for monitors and speakers.',
-      'On the right, a three-drawer walnut pedestal holds gear on top and paperwork below. On the left, walnut stand hides a garbage can while raising the computer off the ground.',
-    ],
-  },
-  {
-    slug: 'oak-desk',
-    title: 'Craftsman’s Corner',
-    kind: 'Red Oak L-Shaped Craft Desk',
-    category: 'tables',
-    images: ['oak-desk.jpg'],
-    woods: ['Red Oak'],
-    description:
-      'A long L-shaped red oak worktop over rows of drawer units, turning a spare room into a craft studio.',
-    story: [
-      'The brief for a workroom is simple: as much surface and storage as the walls allow. This one runs the length of one wall and turns the corner, with drawer units underneath keeping supplies within reach.',
-      'The red oak top shows the species’ bold, open grain and a scattering of knots, finished to bring out its warm colour.',
-    ],
-  },
-  {
-    slug: 'refinished-desk',
-    title: 'Second Wind',
-    kind: 'Refinished Desk',
-    category: 'tables',
-    images: ['desk-refinished.jpg'],
-    woods: ['Pine', 'Oak'],
-    description:
-      'A well-built older desk stripped back and refinished in a warm amber tone, given a second life rather than replaced.',
-    story: [
-      'Not every project starts with rough lumber. This desk had good bones — a bank of solid drawers, a shaped base and a drawer over the knee space — but a tired finish.',
-      'It was stripped back and refinished in a warm amber tone that brings the figure in the top back to life, then finished with dark metal pulls. Restoring a piece like this keeps well-made furniture in use, often for less than buying new.',
+      'Each drawer front is a small frame-and-panel — the same construction used for cabinet doors — which gives the fronts a subtle recessed centre and helps keep them flat over time.',
+      'The case sides are solid walnut, with a streak of pale sapwood left along the bottom edge. It’s the pedestal that sits under the [Mission Control](ash-desk) standing desk.',
+      'The drawer boxes are solid cherry, with a natural finish that shows the wood’s warm colour and figure, and they run on full-extension ball-bearing slides, so they open smoothly and fully.',
+      'The second photo is a close look at one of those drawers. Dovetails are the traditional way to build a drawer that survives decades of being pulled open: the angled tails on the cherry side lock into pins on the front, so every pull draws the joint tighter instead of working it apart. Inside a drawer is exactly where good work usually goes unnoticed; the contrast between cherry and walnut makes it easy to see.',
     ],
   },
   {
@@ -187,50 +137,63 @@ export const PROJECTS: Project[] = [
     ],
   },
   {
-    slug: 'walnut-drawers',
-    title: 'Anchor',
-    kind: 'Walnut Drawer Pedestal',
+    slug: 'ash-desk',
+    title: 'Mission Control',
+    kind: 'Ash Standing Desk with Walnut Pedestal',
     category: 'tables',
-    images: ['drawers-walnut.jpg'],
-    woods: ['Walnut',  'cherry'],
+    images: ['ash-desk.jpg'],
+    woods: ['Ash', 'Walnut'],
     description:
-      'A three-drawer walnut pedestal with frame-and-panel drawer fronts and long brushed-steel pulls, built to sit under a desk.',
+      'A sit-stand desk with a solid ash top, a walnut drawer pedestal, a walnut computer stand with walnut front for the computer.',
     story: [
-      'Each drawer front is a small frame-and-panel — the same construction used for cabinet doors — which gives the fronts a subtle recessed centre and helps keep them flat over time.',
-      'The case sides are solid walnut, with a streak of pale sapwood left along the bottom edge. It’s the pedestal that sits under the Mission Control standing desk.',
-      'The drawer boxes are solid cherry, with dovetail joinery and a natural finish that shows the wood’s warm colour and figure. The drawers run on full-extension ball-bearing slides, so they open smoothly and fully.',
+      'An electric frame does the work of raising and lowering; the woodwork makes it look like furniture. A thick ash top with a rounded front edge gives plenty of room for monitors and speakers.',
+      'On the right, the three-drawer [Anchor](walnut-drawers) walnut pedestal holds gear on top and paperwork below. On the left, a walnut stand hides a garbage can while raising the computer off the floor. Its side is decorated with a row of trees, wood-burned into the walnut by hand (a technique called pyrography). The computer on top wears a custom walnut front plate, so even the tech matches the rest of the desk.',
     ],
   },
   {
-    slug: 'cherry-dovetail-drawer',
-    title: 'Tails & Pins',
-    kind: 'Dovetailed Drawer in Walnut and Cherry',
+    slug: 'oak-desk',
+    title: 'Craftsman’s Corner',
+    kind: 'Red Oak L-Shaped Craft Desk',
     category: 'tables',
-    images: ['dovetail-drawer-cherry.jpg'],
-    woods: ['Walnut', 'Cherry'],
+    images: ['oak-desk.jpg'],
+    woods: ['Red Oak'],
     description:
-      'A close look at a drawer: cherry sides joined to the front with dovetails, behind a walnut drawer face.',
+      'A long L-shaped red oak worktop over rows of drawer units, turning a spare room into a craft studio.',
     story: [
-      'Dovetails are the traditional way to build a drawer that survives decades of being pulled open. The angled tails on the cherry side lock into pins on the front, so every pull draws the joint tighter instead of working it apart.',
-      'The walnut face sits over the front, with a rounded edge that’s comfortable to grab. Inside a drawer is exactly where good work usually goes unnoticed; contrasting woods make it easy to see.',
+      'The brief for a workroom is simple: as much surface and storage as the walls allow. This one runs the length of one wall and turns the corner, with drawer units underneath keeping supplies within reach.',
+      'The red oak top shows the species’ bold, open grain and a scattering of knots, finished to bring out its warm colour.',
+    ],
+  },
+  {
+    slug: 'cherry-desk',
+    title: 'Inkwell',
+    kind: 'Cherry L-Shaped Desk',
+    category: 'tables',
+    images: ['cherry-desk.jpg'],
+    woods: ['Cherry'],
+    description:
+      'An L-shaped desk in solid cherry, with its natural knots and voids filled clear so they read like drops of ink across the grain.',
+    story: [
+      'Two tops meet at a right angle to make a corner workstation, with the grain of each running along its length. Where the cherry had knots and voids, they were filled rather than cut out — small dark marks that give the long top some punctuation.',
+      'Straight cherry legs carry the main run, and the far end rests on a cabinet, keeping the space underneath clear for a chair to roll freely.',
+    ],
+  },
+  {
+    slug: 'refinished-desk',
+    title: 'Second Wind',
+    kind: 'Refinished Desk',
+    category: 'tables',
+    images: ['desk-refinished.jpg'],
+    woods: ['Pine', 'Oak'],
+    description:
+      'A well-built older desk stripped back and refinished in a warm amber tone, given a second life rather than replaced.',
+    story: [
+      'Not every project starts with rough lumber. This desk had good bones — a bank of solid drawers, a shaped base and a drawer over the knee space — but a tired finish.',
+      'It was stripped back and refinished in a warm amber tone that brings the figure in the top back to life, then finished with dark metal pulls. Restoring a piece like this keeps well-made furniture in use, often for less than buying new.',
     ],
   },
 
   // ------------------------------------------------------- finish carpentry
-  {
-    slug: 'custom-kitchen-cabinetry',
-    title: 'Clean Slate',
-    kind: 'Custom Kitchen Cabinetry',
-    category: 'finish-carpentry',
-    images: ['kitchen.jpg', 'kitchen-2.jpg'],
-    woods: [],
-    description:
-      'White kitchen cabinetry built and installed to fit the room, with matte black hardware throughout.',
-    story: [
-      'Kitchen cabinets have to fit the room exactly and work around windows, appliances and walls that are rarely square.',
-      'The first photo shows a long galley run with shaker-style doors, crown moulding carried along the uppers and deep drawer banks beside the sink. The second shows a smaller layout with flat slab doors and dark countertops, planned around a window and a doorway. Both are shown mid-install, before the backsplash and final trim.',
-    ],
-  },
   {
     slug: 'walnut-builtin-cabinet',
     title: 'Bookmatch',
@@ -243,6 +206,20 @@ export const PROJECTS: Project[] = [
     story: [
       'Bookmatching means slicing a board and opening it like a book, so the two halves mirror each other. On the tall doors, the grain meets in the middle in a pattern like an hourglass.',
       'Beside them, five drawers sit under a pair of small doors, all in frame-and-panel construction with slim brass pulls. The unit fills the closet opening wall to wall, turning an ordinary closet into a piece of furniture. A natural void in one door frame was left in place as a reminder that it’s solid wood.',
+    ],
+  },
+  {
+    slug: 'ladder-and-railing',
+    title: 'Loft Line',
+    kind: 'Maple Loft Ladder and Railing',
+    category: 'finish-carpentry',
+    images: ['ladder-and-railing.jpg'],
+    woods: ['Maple'],
+    description:
+      'A steep maple ship’s ladder up to a loft, paired with a matching maple railing of turned balusters.',
+    story: [
+      'In a small building with a loft, a full staircase eats too much floor. A ship’s ladder — steeper than a stair, with flat treads rather than rungs — gets you up while leaving the room below open.',
+      'The ladder’s stringers and treads are solid maple, and so is the loft railing above: turned balusters between square newels with round caps, all in a light natural finish that suits the bright, vaulted space.',
     ],
   },
   {
@@ -274,20 +251,6 @@ export const PROJECTS: Project[] = [
     ],
   },
   {
-    slug: 'custom-cabinet-doors',
-    title: 'Cove Corners',
-    kind: 'Custom Cabinet Doors',
-    category: 'finish-carpentry',
-    images: ['cabinet-doors-custom.jpg'],
-    woods: [],
-    description:
-      'Painted cabinet doors with applied panel mouldings and cove-notched corners, made to replace the factory doors on existing cabinets.',
-    story: [
-      'New doors are one of the most effective ways to change a room without tearing out the cabinets. These keep the existing boxes and replace only what you see.',
-      'Each door has a moulding framing its centre panel, with every corner cut in a concave notch — the same classic detail used on the staircase wainscotting in Trimmed Out.',
-    ],
-  },
-  {
     slug: 'custom-entryway',
     title: 'Homecoming',
     kind: 'Entryway Nook with Peg Rail and Bench',
@@ -302,17 +265,31 @@ export const PROJECTS: Project[] = [
     ],
   },
   {
-    slug: 'ladder-and-railing',
-    title: 'Loft Line',
-    kind: 'Maple Loft Ladder and Railing',
+    slug: 'custom-kitchen-cabinetry',
+    title: 'Clean Slate',
+    kind: 'Custom Kitchen Cabinetry',
     category: 'finish-carpentry',
-    images: ['ladder-and-railing.jpg'],
-    woods: ['Maple'],
+    images: ['kitchen-2.jpg', 'kitchen.jpg'],
+    woods: [],
     description:
-      'A steep maple ship’s ladder up to a loft, paired with a matching maple railing of turned balusters.',
+      'White kitchen cabinetry built and installed to fit the room, with matte black hardware throughout.',
     story: [
-      'In a small building with a loft, a full staircase eats too much floor. A ship’s ladder — steeper than a stair, with flat treads rather than rungs — gets you up while leaving the room below open.',
-      'The ladder’s stringers and treads are solid maple, and so is the loft railing above: turned balusters between square newels with round caps, all in a light natural finish that suits the bright, vaulted space.',
+      'Kitchen cabinets have to fit the room exactly and work around windows, appliances and walls that are rarely square.',
+      'The first photo shows a long galley run with shaker-style doors, crown moulding carried along the uppers and deep drawer banks beside the sink. The second shows a smaller layout with flat slab doors and dark countertops, planned around a window and a doorway. Both are shown mid-install, before the backsplash and final trim.',
+    ],
+  },
+  {
+    slug: 'custom-cabinet-doors',
+    title: 'Cove Corners',
+    kind: 'Custom Cabinet Doors',
+    category: 'finish-carpentry',
+    images: ['cabinet-doors-custom.jpg'],
+    woods: [],
+    description:
+      'Painted cabinet doors with applied panel mouldings and cove-notched corners, made to replace the factory doors on existing cabinets.',
+    story: [
+      'New doors are one of the most effective ways to change a room without tearing out the cabinets. These keep the existing boxes and replace only what you see.',
+      'Each door has a moulding framing its centre panel, with every corner cut in a concave notch — the same classic detail used on the staircase wainscotting in [Trimmed Out](interior-trim-and-doors).',
     ],
   },
   {
@@ -343,7 +320,7 @@ export const PROJECTS: Project[] = [
       'A solid walnut bed with a wide single-board headboard between square posts, shown with the matching Eclipse nightstands.',
     story: [
       'The headboard is a single wide panel of walnut set between square posts, simple enough to let the grain carry it. At the foot, the posts are shaped where the rail meets them, a small detail that softens the frame.',
-      'It’s shown with the Eclipse nightstands on either side, in the same dark walnut.',
+      'It’s shown with the [Eclipse](walnut-end-table-brass) nightstands on either side, in the same dark walnut.',
     ],
   },
   {
@@ -360,63 +337,6 @@ export const PROJECTS: Project[] = [
     ],
   },
   {
-    slug: 'walnut-shelf',
-    title: 'Stepback',
-    kind: 'Walnut Wall Shelf',
-    category: 'other',
-    images: ['shelf-walnut.jpg'],
-    woods: ['Walnut'],
-    description:
-      'A two-tier walnut wall shelf with a stepped profile, rounded side tops and a low front lip to keep things from sliding off.',
-    story: [
-      'Each side is a single board with its top corners rounded over, and the back panels show off walnut’s cathedral grain. A low rail across the bottom shelf keeps spices, small books or keepsakes in place.',
-    ],
-  },
-  {
-    slug: 'walnut-shot-glass-display',
-    title: 'Top Shelf',
-    kind: 'Walnut Shot Glass Display Cabinet',
-    category: 'other',
-    images: ['shot-glass-shelf-walnut.jpg'],
-    woods: ['Walnut'],
-    description:
-      'A commissioned walnut wall case for 60 single and 24 double shot glasses plus novelty pieces, each in a fitted recess, built to grow with the collection.',
-    story: [
-      'The client had more than 50 single and 20 double shot glasses, plus a handful of oversized novelty pieces, and nowhere to show them. They wanted a clean, open display where every glass could be seen, with room to keep collecting.',
-      'The answer is a slim case in solid walnut, open at the front and back, finished in Rubio Monocoat Pure for a natural, low-sheen look that lets the grain speak for itself. Each glass sits in its own shallow recess, sized to the client’s actual glasses so nothing slides or tips, and spaced so any glass can be lifted out without bumping its neighbours.',
-      'Six rows hold singles, two hold doubles, and an open row along the bottom takes the taller and odd-shaped glasses that don’t fit a standard spot. Every row height was set to the collection itself, so the case stays compact with no wasted space: 25¾″ wide, 32″ tall and just 3¾″ deep.',
-      'It’s also built to expand. The case hangs on concealed rails screwed into the wall studs, and matching units can be added above or below later. The top and bottom caps move to the new ends, so the whole wall reads as one continuous piece.',
-    ],
-  },
-  {
-    slug: 'walnut-stool',
-    title: 'Wedged',
-    kind: 'Walnut Step Stool',
-    category: 'other',
-    images: ['stool-walnut.jpg'],
-    woods: ['Walnut', 'Maple'],
-    description:
-      'A low walnut step stool with a thick figured top, its legs joined with wedged through-tenons left visible on top.',
-    story: [
-      'The legs pass right through the seat, and each tenon is wedged from above so it can’t work loose. On top, the tenon ends and their contrasting wedges make a small pattern at each corner.',
-      'The seat is cut from walnut with rippling figure and rounded over at every edge, so it’s comfortable underfoot and pleasant to pick up.',
-    ],
-  },
-  {
-    slug: 'walnut-cube-storage',
-    title: 'Six Squares',
-    kind: 'Walnut Cube Shelf',
-    category: 'other',
-    images: ['cube-storage-walnut.jpg'],
-    woods: ['Walnut'],
-    description:
-      'A six-cube walnut storage unit with rounded inside edges and an overhanging top, sized for baskets or books.',
-    story: [
-      'Flat-pack cube shelves are everywhere; this is the solid-wood version. Every opening has softly rounded edges, and the top overhangs the sides with a rounded lip.',
-      'A few natural knots were kept for character.',
-    ],
-  },
-  {
     slug: 'walnut-storage-tray-brass',
     title: 'Drop Zone',
     kind: 'Walnut Valet Tray with Brass Key Rack',
@@ -427,7 +347,7 @@ export const PROJECTS: Project[] = [
       'An entryway valet: a figured walnut tray for coins and wallets, with a walnut key bar held up on brass rods and pegs.',
     story: [
       'The tray is hollowed from walnut with swirling figure, its natural cracks filled black and left as dark lines through the grain. It’s a place for everything that comes out of your pockets.',
-      'Two brass rods rise from the back to carry a walnut bar with four brass pegs for keys. It’s shown on top of the Bowtie cabinet.',
+      'Two brass rods rise from the back to carry a walnut bar with four brass pegs for keys. It’s shown on top of the [Bowtie](maple-cabinet-bowtie-inlays) cabinet.',
     ],
   },
   {
@@ -504,20 +424,6 @@ export const PROJECTS: Project[] = [
     ],
   },
   {
-    slug: 'walnut-cherry-maple-chessboard',
-    title: 'Endgame',
-    kind: 'Walnut, Maple and Cherry Chessboard',
-    category: 'other',
-    images: ['chessboard-walnut-cherry-maple.jpg'],
-    woods: ['Walnut', 'Maple', 'Cherry'],
-    description:
-      'A chessboard of walnut and maple squares, framed by a wide cherry border with mitred corners and a bevelled edge.',
-    story: [
-      'Sixty-four squares have to line up perfectly, or the eye catches it immediately. Dark walnut and pale maple give strong contrast for play, and a few of the maple squares carry a hint of curl.',
-      'The wide cherry border is mitred at each corner and bevelled toward the outside edge. Cherry darkens with age, so the frame will deepen around the board over the years.',
-    ],
-  },
-  {
     slug: 'piano-pattern-cutting-board',
     title: 'Middle C',
     kind: 'Piano-Key End-Grain Cutting Board',
@@ -532,6 +438,20 @@ export const PROJECTS: Project[] = [
     ],
   },
   {
+    slug: 'walnut-cherry-maple-chessboard',
+    title: 'Endgame',
+    kind: 'Walnut, Maple and Cherry Chessboard',
+    category: 'other',
+    images: ['chessboard-walnut-cherry-maple.jpg'],
+    woods: ['Walnut', 'Maple', 'Cherry'],
+    description:
+      'A chessboard of walnut and maple squares, framed by a wide cherry border with mitred corners and a bevelled edge.',
+    story: [
+      'Sixty-four squares have to line up perfectly, or the eye catches it immediately. Dark walnut and pale maple give strong contrast for play, and a few of the maple squares carry a hint of curl.',
+      'The wide cherry border is mitred at each corner and bevelled toward the outside edge. Cherry darkens with age, so the frame will deepen around the board over the years.',
+    ],
+  },
+  {
     slug: 'walnut-cherry-flute-stand',
     title: 'Resting Note',
     kind: 'Walnut and Cherry Flute Stand',
@@ -543,6 +463,49 @@ export const PROJECTS: Project[] = [
     story: [
       'Each cradle is cut into a stepped chevron from a laminated blank, so every edge shows alternating stripes of walnut and cherry.',
       'Set side by side, the notches line up to hold the instrument safely off the surface, and angled feet keep each cradle upright.',
+    ],
+  },
+  {
+    slug: 'walnut-shot-glass-display',
+    title: 'Top Shelf',
+    kind: 'Walnut Shot Glass Display Cabinet',
+    category: 'other',
+    images: ['shot-glass-shelf-walnut.jpg'],
+    woods: ['Walnut'],
+    description:
+      'A commissioned walnut wall case for 60 single and 24 double shot glasses plus novelty pieces, each in a fitted recess, built to grow with the collection.',
+    story: [
+      'The client had more than 50 single and 20 double shot glasses, plus a handful of oversized novelty pieces, and nowhere to show them. They wanted a clean, open display where every glass could be seen, with room to keep collecting.',
+      'The answer is a slim case in solid walnut, open at the front and back, finished in Rubio Monocoat Pure for a natural, low-sheen look that lets the grain speak for itself. Each glass sits in its own shallow recess, sized to the client’s actual glasses so nothing slides or tips, and spaced so any glass can be lifted out without bumping its neighbours.',
+      'Six rows hold singles, two hold doubles, and an open row along the bottom takes the taller and odd-shaped glasses that don’t fit a standard spot. Every row height was set to the collection itself, so the case stays compact with no wasted space: 25¾″ wide, 32″ tall and just 3¾″ deep.',
+      'It’s also built to expand. The case hangs on concealed rails screwed into the wall studs, and matching units can be added above or below later. The top and bottom caps move to the new ends, so the whole wall reads as one continuous piece.',
+    ],
+  },
+  {
+    slug: 'walnut-shelf',
+    title: 'Stepback',
+    kind: 'Walnut Wall Shelf',
+    category: 'other',
+    images: ['shelf-walnut.jpg'],
+    woods: ['Walnut'],
+    description:
+      'A two-tier walnut wall shelf with a stepped profile, rounded side tops and a low front lip to keep things from sliding off.',
+    story: [
+      'Each side is a single board with its top corners rounded over, and the back panels show off walnut’s cathedral grain. A low rail across the bottom shelf keeps spices, small books or keepsakes in place.',
+    ],
+  },
+  {
+    slug: 'walnut-cube-storage',
+    title: 'Six Squares',
+    kind: 'Walnut Cube Shelf',
+    category: 'other',
+    images: ['cube-storage-walnut.jpg'],
+    woods: ['Walnut'],
+    description:
+      'A six-cube walnut storage unit with rounded inside edges and an overhanging top, sized for baskets or books.',
+    story: [
+      'Flat-pack cube shelves are everywhere; this is the solid-wood version. Every opening has softly rounded edges, and the top overhangs the sides with a rounded lip.',
+      'A few natural knots were kept for character.',
     ],
   },
   {
@@ -574,20 +537,6 @@ export const PROJECTS: Project[] = [
     ],
   },
   {
-    slug: 'ipe-maple-mallet',
-    title: 'Heavy Hitter',
-    kind: 'Ipe and Maple Joiner’s Mallets',
-    category: 'other',
-    images: ['mallet-ipe-maple.jpg'],
-    woods: ['Ipe', 'Maple'],
-    description:
-      'A pair of shop-made joiner’s mallets with heavy, dense heads and faceted maple handles wedged through the top.',
-    story: [
-      'A good mallet needs weight in the head and a handle that won’t come loose. These have dense, dark heads, with the maple handle passing all the way through and locked with wedges visible on top.',
-      'These are tools rather than commissions — made for use in the shop.',
-    ],
-  },
-  {
     slug: 'tissue-box-cover',
     title: 'Hidden in Plain Sight',
     kind: 'Walnut and White Oak Tissue Box Covers',
@@ -599,6 +548,20 @@ export const PROJECTS: Project[] = [
     story: [
       'A tissue box sits out in nearly every room and never looks good. These covers slip over it and turn it into something worth leaving on the counter.',
       'The walnut cover is joined with through dovetails at each corner. The white oak covers are pinned with walnut dowels, shown in both a natural finish and a weathered grey. Rounded top edges and a smooth oval opening finish them off.',
+    ],
+  },
+  {
+    slug: 'ipe-maple-mallet',
+    title: 'Heavy Hitter',
+    kind: 'Ipe and Maple Joiner’s Mallets',
+    category: 'other',
+    images: ['mallet-ipe-maple.jpg'],
+    woods: ['Ipe', 'Maple'],
+    description:
+      'A pair of shop-made joiner’s mallets with heavy, dense heads and faceted maple handles wedged through the top.',
+    story: [
+      'A good mallet needs weight in the head and a handle that won’t come loose. These have dense, dark heads, with the maple handle passing all the way through and locked with wedges visible on top.',
+      'These are tools rather than commissions — made for use in the shop.',
     ],
   },
   {
@@ -615,6 +578,20 @@ export const PROJECTS: Project[] = [
       'Each is routed with a shallow recess inside a rounded rim. They make easy gifts, and the variation means every one feels like its own piece.',
     ],
   },
+  {
+    slug: 'walnut-stool',
+    title: 'Wedged',
+    kind: 'Walnut Step Stool',
+    category: 'other',
+    images: ['stool-walnut.jpg'],
+    woods: ['Walnut', 'Maple'],
+    description:
+      'A low walnut step stool with a thick figured top, its legs joined with wedged through-tenons left visible on top.',
+    story: [
+      'The legs pass right through the seat, and each tenon is wedged from above so it can’t work loose. On top, the tenon ends and their contrasting wedges make a small pattern at each corner.',
+      'The seat is cut from walnut with rippling figure and rounded over at every edge, so it’s comfortable underfoot and pleasant to pick up.',
+    ],
+  },
 ];
 
 export function getProject(slug: string): Project | undefined {
@@ -624,6 +601,29 @@ export function getProject(slug: string): Project | undefined {
 /** Maps a gallery photo back to its project, so the lightbox can link through. */
 export function getProjectByImage(category: string, filename: string): Project | undefined {
   return PROJECTS.find(p => p.category === category && p.images.includes(filename));
+}
+
+export type StorySegment = string | { text: string; slug: string };
+
+/** Splits a story paragraph into plain text and `[text](slug)` project links. */
+export function parseStory(paragraph: string): StorySegment[] {
+  const segments: StorySegment[] = [];
+  const pattern = /\[([^\]]+)\]\(([a-z0-9-]+)\)/g;
+  let last = 0;
+  for (const match of paragraph.matchAll(pattern)) {
+    if (match.index > last) segments.push(paragraph.slice(last, match.index));
+    segments.push({ text: match[1], slug: match[2] });
+    last = match.index + match[0].length;
+  }
+  if (last < paragraph.length) segments.push(paragraph.slice(last));
+  return segments;
+}
+
+/** A story paragraph as it reads on the page, with link markup removed. */
+export function storyText(paragraph: string): string {
+  return parseStory(paragraph)
+    .map(s => (typeof s === 'string' ? s : s.text))
+    .join('');
 }
 
 export function imagePath(project: Project, index = 0): string {

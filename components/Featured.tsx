@@ -2,22 +2,28 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { getProject, imagePath, type Project } from '@/lib/projects';
 
-/** Slugs from lib/projects, in display order. Each tile shows the project's lead photo. */
-const FEATURED_SLUGS = [
-  'walnut-end-table-brass',
-  'walnut-drawers',
-  'cherry-desk',
-  'walnut-coffee-table',
-  'walnut-maple-end-tables',
-  'walnut-end-table',
+/**
+ * Projects from lib/projects, in display order. Each tile shows the project's lead
+ * photo unless `image` names another of its photos.
+ */
+const FEATURED_ENTRIES: { slug: string; image?: string }[] = [
+  { slug: 'walnut-end-table-brass' },
+  { slug: 'walnut-drawers' },
+  { slug: 'walnut-coffee-table' },
+  { slug: 'walnut-maple-end-tables' },
+  // The end-table close-up, rather than the photo of the whole set.
+  { slug: 'walnut-table-set', image: 'end-table-walnut.jpg' },
+  { slug: 'cherry-desk' },
 ];
 
-// Resolved once at module load. A slug that no longer exists fails the build here
-// instead of rendering a broken tile.
-const FEATURED: Project[] = FEATURED_SLUGS.map(slug => {
+// Resolved once at module load. A slug or photo that no longer exists fails the
+// build here instead of rendering a broken tile.
+const FEATURED: { project: Project; src: string }[] = FEATURED_ENTRIES.map(({ slug, image }) => {
   const project = getProject(slug);
   if (!project) throw new Error(`Featured project "${slug}" is not in lib/projects`);
-  return project;
+  const index = image ? project.images.indexOf(image) : 0;
+  if (index < 0) throw new Error(`Featured photo "${image}" is not one of ${slug}'s images`);
+  return { project, src: imagePath(project, index) };
 });
 
 export default function FeaturedProjects() {
@@ -30,7 +36,7 @@ export default function FeaturedProjects() {
 
         {/* Featured project grid - 2 columns on mobile, 3 on desktop */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-          {FEATURED.map(project => (
+          {FEATURED.map(({ project, src }) => (
             <Link
               key={project.slug}
               href={`/projects/${project.slug}`}
@@ -38,7 +44,7 @@ export default function FeaturedProjects() {
               className="group relative aspect-square overflow-hidden rounded-lg bg-stone-100 shadow-md hover:shadow-xl transition-shadow"
             >
               <Image
-                src={imagePath(project)}
+                src={src}
                 alt={`${project.title} — ${project.kind}`}
                 fill
                 className="object-cover group-hover:scale-105 transition-transform duration-300"

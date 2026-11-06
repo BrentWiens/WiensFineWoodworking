@@ -1,7 +1,15 @@
 import fs from 'fs';
 import path from 'path';
 import { describe, it, expect } from 'vitest';
-import { PROJECTS, getProject, getProjectByImage, getSiblings, imagePath } from './projects';
+import {
+  PROJECTS,
+  getProject,
+  getProjectByImage,
+  getSiblings,
+  imagePath,
+  parseStory,
+  storyText,
+} from './projects';
 
 const GALLERY_ROOT = path.join(process.cwd(), 'public/images/gallery');
 const CATEGORIES = ['tables', 'finish-carpentry', 'other'] as const;
@@ -73,6 +81,26 @@ describe('project registry', () => {
     }
   });
 
+  it('links story text only to projects that exist', () => {
+    for (const project of PROJECTS) {
+      for (const paragraph of project.story) {
+        for (const segment of parseStory(paragraph)) {
+          if (typeof segment === 'string') continue;
+          expect(getProject(segment.slug), `${project.slug} links to unknown ${segment.slug}`).toBeDefined();
+          expect(segment.slug, `${project.slug} links to itself`).not.toBe(project.slug);
+        }
+      }
+    }
+  });
+
+  it('leaves no half-written link markup in story text', () => {
+    for (const project of PROJECTS) {
+      for (const paragraph of project.story) {
+        expect(storyText(paragraph), `${project.slug} has stray link markup`).not.toMatch(/\]\(/);
+      }
+    }
+  });
+
   it('covers every gallery photo, so nothing is missing a project page', () => {
     const referenced = new Set(
       PROJECTS.flatMap(p => p.images.map(f => `${p.category}/${f}`))
@@ -83,6 +111,30 @@ describe('project registry', () => {
         expect(referenced.has(key), `${key} is on disk but in no project`).toBe(true);
       }
     }
+  });
+});
+
+describe('story links', () => {
+  it('splits a paragraph into text and project links', () => {
+    expect(parseStory('the [Anchor](walnut-drawers) pedestal')).toEqual([
+      'the ',
+      { text: 'Anchor', slug: 'walnut-drawers' },
+      ' pedestal',
+    ]);
+    expect(parseStory('[A](a) and [B](b)')).toEqual([
+      { text: 'A', slug: 'a' },
+      ' and ',
+      { text: 'B', slug: 'b' },
+    ]);
+  });
+
+  it('leaves plain paragraphs untouched', () => {
+    expect(parseStory('No links here.')).toEqual(['No links here.']);
+    expect(storyText('No links here.')).toBe('No links here.');
+  });
+
+  it('reads as plain text with the markup removed', () => {
+    expect(storyText('the [Anchor](walnut-drawers) pedestal')).toBe('the Anchor pedestal');
   });
 });
 

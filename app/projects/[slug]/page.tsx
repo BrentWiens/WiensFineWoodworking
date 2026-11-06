@@ -10,6 +10,7 @@ import {
   getProject,
   getSiblings,
   imagePath,
+  parseStory,
 } from '@/lib/projects';
 
 const BASE_URL = 'https://wfinew.com';
@@ -147,7 +148,19 @@ export default async function ProjectPage({
           <div className="space-y-4 mb-6 max-w-3xl">
             {project.story.map(paragraph => (
               <p key={paragraph} className="text-stone-600 leading-relaxed">
-                {paragraph}
+                {parseStory(paragraph).map((segment, i) =>
+                  typeof segment === 'string' ? (
+                    segment
+                  ) : (
+                    <Link
+                      key={i}
+                      href={`/projects/${segment.slug}`}
+                      className="text-stone-800 underline underline-offset-2 hover:text-stone-950"
+                    >
+                      {segment.text}
+                    </Link>
+                  )
+                )}
               </p>
             ))}
           </div>

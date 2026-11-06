@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { PROJECTS, getProject } from '../lib/projects';
+import { PROJECTS, getProject, storyText } from '../lib/projects';
 
 test.describe('Project detail pages', () => {
   test('every project slug resolves to a page with its title as the h1', async ({ page }) => {
@@ -31,8 +31,20 @@ test.describe('Project detail pages', () => {
 
     await expect(page.getByText(project.kind, { exact: true })).toBeVisible();
     for (const paragraph of project.story) {
-      await expect(page.getByText(paragraph)).toBeVisible();
+      await expect(page.getByText(storyText(paragraph))).toBeVisible();
     }
+  });
+
+  test('links a project named in the story through to its page', async ({ page }) => {
+    await page.goto('/projects/ash-desk');
+
+    const story = page.locator('main p', { hasText: 'walnut pedestal' });
+    const link = story.getByRole('link', { name: 'Anchor' });
+    await expect(link).toHaveAttribute('href', '/projects/walnut-drawers');
+
+    await link.click();
+    await expect(page).toHaveURL(/\/projects\/walnut-drawers$/);
+    await expect(page.locator('h1')).toHaveText(getProject('walnut-drawers')!.title);
   });
 
   test('shows a breadcrumb back to the gallery', async ({ page }) => {
@@ -72,11 +84,11 @@ test.describe('Project detail pages', () => {
   });
 
   test('links to the previous and next project in the same category', async ({ page }) => {
-    // walnut-end-table sits between walnut-coffee-table and walnut-end-table-brass.
-    await page.goto('/projects/walnut-end-table');
+    // walnut-end-table-brass sits between walnut-coffee-table and walnut-maple-end-tables.
+    await page.goto('/projects/walnut-end-table-brass');
 
     const prev = getProject('walnut-coffee-table')!;
-    const next = getProject('walnut-end-table-brass')!;
+    const next = getProject('walnut-maple-end-tables')!;
     const nav = page.getByRole('navigation', { name: 'More projects' });
     await expect(nav.getByRole('link', { name: prev.title })).toBeVisible();
     await expect(nav.getByRole('link', { name: next.title })).toBeVisible();

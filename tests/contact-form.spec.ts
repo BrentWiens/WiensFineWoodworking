@@ -51,7 +51,7 @@ test.describe('Phone number', () => {
 
   test('is in the nav on other pages too, including on a phone', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto('/projects/walnut-end-table');
+    await page.goto('/projects/walnut-table-set');
 
     const navPhone = page.getByTestId('nav-phone');
     await expect(navPhone).toBeVisible();
@@ -137,7 +137,7 @@ test.describe('Contact Form', () => {
     });
 
     test('"Start a Commission" from a project page', async ({ page }) => {
-      await page.goto('/projects/walnut-end-table', { waitUntil: 'networkidle' });
+      await page.goto('/projects/walnut-table-set', { waitUntil: 'networkidle' });
       await page.getByRole('link', { name: 'Start a Commission' }).click();
       await expect(page).toHaveURL(/\/#contact$/);
       await expect(form(page)).toBeVisible();
