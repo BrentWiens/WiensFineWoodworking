@@ -48,6 +48,12 @@ self.addEventListener('fetch', (event) => {
   // Skip API routes and monitoring endpoints
   if (event.request.url.includes('/api/') || event.request.url.includes('/monitoring')) return;
 
+  // Never cache the private business tools or sign-in. Cached copies would hold
+  // financial records on the device after signing out, and could be served offline
+  // to whoever picks up the phone. Covers both page loads and in-app (RSC) fetches.
+  const { pathname } = new URL(event.request.url);
+  if (pathname.startsWith('/tools/business') || pathname === '/login') return;
+
   // For HTML pages - network first, fallback to cache
   if (event.request.headers.get('accept')?.includes('text/html')) {
     event.respondWith(
