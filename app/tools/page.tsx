@@ -81,6 +81,17 @@ const BUSINESS_TOOLS = [
             </svg>
         ),
     },
+    {
+        href: '/tools/business/expenses',
+        title: 'Expenses',
+        description: 'Enter receipts as they come in, sorted into the categories on the CRA business-income form, with HST tracked for input tax credits.',
+        icon: (
+            <svg viewBox="0 0 24 24" className="w-16 h-16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M6 3h12v18l-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5L6 21z" />
+                <path d="M9 8h6M9 11.5h6M9 15h3" />
+            </svg>
+        ),
+    },
 ];
 
 export default function ToolsPage() {

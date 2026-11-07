@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { OdometerForm } from '@/components/business/SettingsForms';
+import YearPicker from '@/components/business/YearPicker';
 import { currentYear, monthName, parseYearParam } from '@/lib/dates';
 import { getOdometerYear, getVehicle, listTrips, suggestedStartKm, tripYears } from '@/lib/mileage/data';
 import { formatKm, summarizeYear } from '@/lib/mileage/summary';
@@ -32,22 +33,7 @@ export default async function MileageSummaryPage({
 
   return (
     <div className="space-y-6">
-      {years.length > 1 && (
-        <nav aria-label="Year" className="flex flex-wrap gap-2">
-          {years.map(y => (
-            <Link
-              key={y}
-              href={`${BASE}/summary?year=${y}`}
-              aria-current={y === year ? 'page' : undefined}
-              className={`px-3 py-1 rounded-full text-sm border ${
-                y === year ? 'bg-stone-800 text-white border-stone-800' : 'bg-white text-stone-700 border-stone-300 hover:bg-stone-100'
-              }`}
-            >
-              {y}
-            </Link>
-          ))}
-        </nav>
-      )}
+      <YearPicker years={years} selected={year} path={`${BASE}/summary`} />
 
       <section className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5">
         <h2 className="text-lg font-semibold text-stone-800 mb-1">

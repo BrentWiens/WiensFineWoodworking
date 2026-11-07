@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import TripForm from '@/components/business/TripForm';
+import YearPicker from '@/components/business/YearPicker';
 import { VehicleForm } from '@/components/business/SettingsForms';
 import { currentYear, formatShortDate, monthName, parseYearParam, todayIso } from '@/lib/dates';
 import { getOdometerYear, getVehicle, listPlaces, listTrips, recentDestinations, tripYears } from '@/lib/mileage/data';
@@ -38,7 +39,7 @@ export default async function MileagePage({
 
   return (
     <div className="space-y-6">
-      <YearPicker years={years} selected={year} />
+      <YearPicker years={years} selected={year} path={BASE} />
 
       <dl className="grid grid-cols-3 gap-3">
         <Stat label="Business km" value={formatKm(summary.businessKm)} />
@@ -72,26 +73,6 @@ export default async function MileagePage({
 
       <TripList trips={trips} year={year} summary={summary} />
     </div>
-  );
-}
-
-function YearPicker({ years, selected }: { years: number[]; selected: number }) {
-  if (years.length < 2) return null;
-  return (
-    <nav aria-label="Year" className="flex flex-wrap gap-2">
-      {years.map(y => (
-        <Link
-          key={y}
-          href={`${BASE}?year=${y}`}
-          aria-current={y === selected ? 'page' : undefined}
-          className={`px-3 py-1 rounded-full text-sm border ${
-            y === selected ? 'bg-stone-800 text-white border-stone-800' : 'bg-white text-stone-700 border-stone-300 hover:bg-stone-100'
-          }`}
-        >
-          {y}
-        </Link>
-      ))}
-    </nav>
   );
 }
 

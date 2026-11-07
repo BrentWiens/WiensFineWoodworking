@@ -1,4 +1,4 @@
-import type { FieldErrors } from './mileage/validation';
+import type { FieldErrors } from './validation';
 
 /** What a form's Server Action hands back to the client form. */
 export type ActionResult =

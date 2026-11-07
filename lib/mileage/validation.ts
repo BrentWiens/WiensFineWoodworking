@@ -1,20 +1,11 @@
 import { z } from 'zod';
 import { addDays, isIsoDate, todayIso } from '../dates';
+import { blankToUndefined, optionalText, parse, text, type ParseResult } from '../validation';
 
 /** Rounds to one decimal, the precision distances are stored at. */
 export function roundKm(km: number): number {
   return Math.round(km * 10) / 10;
 }
-
-/** Blank form fields arrive as '' — treat them as absent rather than as 0. */
-const blankToUndefined = (value: unknown) =>
-  typeof value === 'string' && value.trim() === '' ? undefined : value;
-
-const text = (label: string, max: number) =>
-  z.string({ error: `${label} is required` }).trim().min(1, `${label} is required`).max(max, `${label} is too long`);
-
-const optionalText = (max: number) =>
-  z.preprocess(blankToUndefined, z.string().trim().max(max, 'Too long').optional());
 
 const km = (label: string) =>
   z.coerce
@@ -32,25 +23,6 @@ const odometer = z.preprocess(
     .max(9_999_999, 'Too large')
     .optional(),
 );
-
-export type FieldErrors = Record<string, string[] | undefined>;
-
-export type ParseResult<T> = { ok: true; data: T } | { ok: false; errors: FieldErrors };
-
-function parse<T>(schema: z.ZodType<T>, input: unknown): ParseResult<T> {
-  const result = schema.safeParse(input);
-  if (result.success) return { ok: true, data: result.data };
-  return { ok: false, errors: z.flattenError(result.error).fieldErrors as FieldErrors };
-}
-
-/** FormData → plain object. Checkboxes are absent when unticked, 'on' when ticked. */
-export function formToObject(formData: FormData): Record<string, string> {
-  const out: Record<string, string> = {};
-  for (const [key, value] of formData.entries()) {
-    if (typeof value === 'string') out[key] = value;
-  }
-  return out;
-}
 
 // ---------------------------------------------------------------------------
 

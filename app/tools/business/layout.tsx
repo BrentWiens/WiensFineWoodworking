@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 /**
- * Shell for the private business tools (mileage now; expenses, quotes and invoices
+ * Shell for the private business tools (mileage and expenses now; quotes and invoices
  * later). Everything under /tools/business requires Google sign-in — see proxy.ts
  * and lib/auth/dal.ts.
  */

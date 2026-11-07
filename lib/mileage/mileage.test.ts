@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { formToObject, oneWayKmFor, parseOdometer, parsePlace, parseTrip } from './validation';
+import { oneWayKmFor, parseOdometer, parsePlace, parseTrip } from './validation';
+import { formToObject } from '../validation';
 import { formatKm, summarizeYear } from './summary';
 import { mileageCsv } from './csv';
 import { toCsv } from '../csv';

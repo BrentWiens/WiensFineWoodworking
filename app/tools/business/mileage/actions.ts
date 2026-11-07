@@ -13,7 +13,8 @@ import {
   saveVehicle,
   updateTrip,
 } from '@/lib/mileage/data';
-import { formToObject, parseOdometer, parsePlace, parseTrip, parseVehicle } from '@/lib/mileage/validation';
+import { parseOdometer, parsePlace, parseTrip, parseVehicle } from '@/lib/mileage/validation';
+import { formToObject } from '@/lib/validation';
 
 /**
  * Server Actions for the mileage log. Authorization happens inside lib/mileage/data

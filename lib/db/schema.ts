@@ -1,11 +1,11 @@
 /**
- * Database schema for the private /admin tools.
+ * Database schema for the private business tools (/tools/business).
  *
- * Conventions every table follows, so the expense tools added later fit alongside:
+ * Conventions every table follows, so the tools added later fit alongside:
  * - Calendar dates are Postgres `date` columns read as 'YYYY-MM-DD' strings. A trip
  *   or receipt happens on a day, not an instant, and strings can't drift a day when
  *   a timezone is applied to them.
- * - Distances are km with one decimal. Money (when it arrives) is integer cents.
+ * - Distances are km with one decimal. Money is integer cents.
  * - Every row records when it was created and last changed — this is evidence for
  *   the CRA, so "when did this get entered" is worth having.
  *
@@ -105,7 +105,37 @@ export const trips = pgTable(
   ],
 );
 
+/**
+ * One receipt (or one line of a receipt, when it covers more than one category).
+ * Categories are ids from lib/expenses/categories.ts, kept as text so adding one
+ * doesn't need a migration.
+ */
+export const expenses = pgTable(
+  'expenses',
+  {
+    id: serial('id').primaryKey(),
+    expenseDate: date('expense_date', { mode: 'string' }).notNull(),
+    vendor: text('vendor').notNull(),
+    description: text('description').notNull(),
+    category: text('category').notNull(),
+    /** What was paid, tax included. */
+    totalCents: integer('total_cents').notNull(),
+    /** The HST within the total, for input tax credits. */
+    hstCents: integer('hst_cents').notNull().default(0),
+    /** Set for vehicle categories, so the claim can apply that vehicle's business-use %. */
+    vehicleId: integer('vehicle_id').references(() => vehicles.id, { onDelete: 'restrict' }),
+    notes: text('notes'),
+    ...timestamps,
+  },
+  t => [
+    index('expenses_expense_date').on(t.expenseDate),
+    check('expenses_total_positive', sql`${t.totalCents} > 0`),
+    check('expenses_hst_within_total', sql`${t.hstCents} >= 0 AND ${t.hstCents} <= ${t.totalCents}`),
+  ],
+);
+
 export type Trip = typeof trips.$inferSelect;
+export type Expense = typeof expenses.$inferSelect;
 export type Place = typeof places.$inferSelect;
 export type Vehicle = typeof vehicles.$inferSelect;
 export type OdometerYear = typeof odometerYears.$inferSelect;

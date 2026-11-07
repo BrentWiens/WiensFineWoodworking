@@ -35,6 +35,7 @@ Two majors are available but deliberately held back — both are blocked on
 - 🎨 **Modern UI** - Clean design with smooth animations and hover effects
 - 🔍 **SEO Optimized** - Meta tags, canonical URLs, OpenGraph, Twitter Cards, and Schema.org structured data (`LocalBusiness` with service area and offer catalog, plus `CreativeWork` and `BreadcrumbList` on each project page)
 - 🔒 **Secure Contact Form** - Cloudflare Turnstile bot protection, rate limiting, input sanitization, email notifications, and a social-media fallback shown whenever the form becomes unusable so an enquiry is never silently lost
+- 🧾 **Private Business Tools** - A mileage log and an expense log under `/tools/business`, behind Google sign-in and backed by Neon Postgres. Setup, architecture and the roadmap are in [docs/business-tools.md](docs/business-tools.md)
 
 ## Local Development
 ```bash
@@ -66,6 +67,8 @@ TURNSTILE_SECRET_KEY=your_turnstile_secret_key
 GMAIL_USER=your_gmail_address
 GMAIL_APP_PASSWORD=your_gmail_app_password
 ```
+
+The private business tools need more (a database, a Google OAuth client and a session secret). See [docs/business-tools.md](docs/business-tools.md#setup).
 
 ### Running Tests
 
