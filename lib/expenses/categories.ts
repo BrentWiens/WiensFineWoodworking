@@ -66,7 +66,7 @@ export const CATEGORIES: ExpenseCategory[] = [
   {
     id: 'insurance',
     label: 'Business insurance',
-    hint: 'Shop and liability insurance (vehicle insurance has its own category)',
+    hint: 'Shop and liability insurance (vehicle insurance goes under Vehicle: other)',
     section: 'operating',
     line: '8690',
   },
@@ -78,21 +78,13 @@ export const CATEGORIES: ExpenseCategory[] = [
     line: '8810',
   },
   {
-    id: 'professional_fees',
-    label: 'Accounting and legal',
-    hint: 'Accountant, bookkeeping, legal fees',
-    section: 'operating',
-    line: '8860',
-  },
-  {
     id: 'other',
     label: 'Other',
-    hint: 'Bank and card fees, licences and memberships, delivery and anything else; say what it was in the description',
+    hint: 'Accounting and legal, bank fees, memberships, delivery and anything else; say what it was in the description',
     section: 'operating',
     line: '9270',
   },
   { id: 'vehicle_fuel', label: 'Vehicle: fuel', hint: 'Gas and oil', section: 'vehicle', line: '9281' },
-  { id: 'vehicle_insurance', label: 'Vehicle: insurance', hint: 'Auto insurance premiums', section: 'vehicle', line: '9281' },
   {
     id: 'vehicle_repairs',
     label: 'Vehicle: maintenance and repairs',
@@ -103,7 +95,7 @@ export const CATEGORIES: ExpenseCategory[] = [
   {
     id: 'vehicle_other',
     label: 'Vehicle: other',
-    hint: 'Licence and registration, car washes and other running costs',
+    hint: 'Insurance, licence and registration, car washes and other running costs',
     section: 'vehicle',
     line: '9281',
   },
