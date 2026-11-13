@@ -14,7 +14,6 @@ export interface ExpenseFormValues {
   description: string;
   total: string;
   hst: string;
-  notes: string;
 }
 
 interface ExpenseFormProps {
@@ -52,7 +51,6 @@ export default function ExpenseForm({ action, initial, vendors, mode, cancelHref
   const categoryField = errorProps(result, 'category', 'expense-category');
   const description = errorProps(result, 'description', 'expense-description');
   const hst = errorProps(result, 'hst', 'expense-hst');
-  const notes = errorProps(result, 'notes', 'expense-notes');
 
   return (
     <form onSubmit={onSubmit} className="space-y-4" noValidate>
@@ -171,21 +169,6 @@ export default function ExpenseForm({ action, initial, vendors, mode, cancelHref
           </button>
         </div>
       </Field>
-
-      <details className="group" open={mode === 'edit' && initial.notes !== ''}>
-        <summary className="cursor-pointer text-sm text-stone-600 hover:text-stone-900">Notes (optional)</summary>
-        <Field label="Notes" htmlFor="expense-notes" error={notes.error} className="mt-2">
-          <textarea
-            id="expense-notes"
-            name="notes"
-            rows={2}
-            value={values.notes}
-            onChange={e => set('notes', e.target.value)}
-            className={inputClass}
-            {...notes.inputProps}
-          />
-        </Field>
-      </details>
 
       <FormMessage result={result} />
 

@@ -13,7 +13,6 @@ const validExpense = {
   description: 'Walnut for dining table',
   total: '565.00',
   hst: '65.00',
-  notes: '',
 };
 
 describe('categories', () => {
@@ -59,7 +58,6 @@ describe('parseExpense', () => {
         description: 'Walnut for dining table',
         totalCents: 56500,
         hstCents: 6500,
-        notes: null,
       },
     });
   });
@@ -167,12 +165,11 @@ describe('expensesCsv', () => {
         category: 'materials',
         totalCents: 11300,
         hstCents: 1300,
-        notes: null,
       },
     ];
     const lines = expensesCsv(expenses, summarizeExpenses(2026, expenses)).replace(/^﻿/, '').split('\r\n');
-    expect(lines[0]).toBe('Date,Vendor,Description,Category,T2125 line,Total paid,HST,Net of HST,Notes');
-    expect(lines[1]).toBe('2026-01-15,Lumber yard,"Walnut, ""8/4""",Materials,8320,113.00,13.00,100.00,');
+    expect(lines[0]).toBe('Date,Vendor,Description,Category,T2125 line,Total paid,HST,Net of HST');
+    expect(lines[1]).toBe('2026-01-15,Lumber yard,"Walnut, ""8/4""",Materials,8320,113.00,13.00,100.00');
     expect(lines[2]).toBe('');
     expect(lines[4]).toBe('Materials,Cost of goods sold,8320,1,113.00,13.00,100.00');
     expect(lines[5]).toBe('All expenses,,,1,113.00,13.00,100.00');

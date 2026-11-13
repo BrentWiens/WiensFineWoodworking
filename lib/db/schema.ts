@@ -123,7 +123,6 @@ export const expenses = pgTable(
     hstCents: integer('hst_cents').notNull().default(0),
     /** Set for vehicle categories, so the claim can apply that vehicle's business-use %. */
     vehicleId: integer('vehicle_id').references(() => vehicles.id, { onDelete: 'restrict' }),
-    notes: text('notes'),
     ...timestamps,
   },
   t => [

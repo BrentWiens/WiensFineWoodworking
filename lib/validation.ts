@@ -12,9 +12,6 @@ export const blankToUndefined = (value: unknown) =>
 export const text = (label: string, max: number) =>
   z.string({ error: `${label} is required` }).trim().min(1, `${label} is required`).max(max, `${label} is too long`);
 
-export const optionalText = (max: number) =>
-  z.preprocess(blankToUndefined, z.string().trim().max(max, 'Too long').optional());
-
 export type FieldErrors = Record<string, string[] | undefined>;
 
 export type ParseResult<T> = { ok: true; data: T } | { ok: false; errors: FieldErrors };

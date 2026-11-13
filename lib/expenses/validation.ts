@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { addDays, isIsoDate, todayIso } from '../dates';
 import { parseMoney } from '../money';
-import { blankToUndefined, optionalText, parse, text, type ParseResult } from '../validation';
+import { blankToUndefined, parse, text, type ParseResult } from '../validation';
 import { isCategoryId } from './categories';
 
 export interface ExpenseInput {
@@ -13,7 +13,6 @@ export interface ExpenseInput {
   totalCents: number;
   /** The HST within that total, claimed back as an input tax credit. */
   hstCents: number;
-  notes: string | null;
 }
 
 /** The highest HST rate in Canada (Atlantic provinces). More than this is a typo. */
@@ -47,17 +46,15 @@ const expenseSchema = (today: string) =>
         .refine(c => c > 0, 'Total must be more than 0')
         .refine(c => c <= 100_000_000, 'Total looks too large'),
       hst: z.preprocess(blankToUndefined, money('HST').optional()),
-      notes: optionalText(2000),
     })
     .refine(v => v.hst === undefined || v.hst * (100 + MAX_HST_PERCENT) <= v.total * MAX_HST_PERCENT, {
       message: 'HST is more than the tax on this total could be. Check the amounts.',
       path: ['hst'],
     })
-    .transform(({ total, hst, notes, ...rest }): ExpenseInput => ({
+    .transform(({ total, hst, ...rest }): ExpenseInput => ({
       ...rest,
       totalCents: total,
       hstCents: hst ?? 0,
-      notes: notes ?? null,
     }));
 
 export function parseExpense(input: Record<string, unknown>, now: Date = new Date()): ParseResult<ExpenseInput> {

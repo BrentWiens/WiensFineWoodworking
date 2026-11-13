@@ -30,7 +30,6 @@ export default async function EditExpensePage({ params }: { params: Promise<{ id
             description: expense.description,
             total: centsToInput(expense.totalCents),
             hst: expense.hstCents > 0 ? centsToInput(expense.hstCents) : '',
-            notes: expense.notes ?? '',
           }}
         />
       </section>

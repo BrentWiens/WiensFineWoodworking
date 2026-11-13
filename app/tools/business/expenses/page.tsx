@@ -49,7 +49,6 @@ export default async function ExpensesPage({
             description: '',
             total: '',
             hst: '',
-            notes: '',
           }}
         />
       </section>
