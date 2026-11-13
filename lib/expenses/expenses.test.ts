@@ -114,7 +114,7 @@ const sample: SummaryExpense[] = [
   { expenseDate: '2026-01-15', category: 'materials', totalCents: 11300, hstCents: 1300 },
   { expenseDate: '2026-01-20', category: 'materials', totalCents: 5650, hstCents: 650 },
   { expenseDate: '2026-03-02', category: 'vehicle_fuel', totalCents: 8000, hstCents: 920 },
-  { expenseDate: '2026-03-09', category: 'bank_fees', totalCents: 1500, hstCents: 0 },
+  { expenseDate: '2026-03-09', category: 'office', totalCents: 1500, hstCents: 0 },
   { expenseDate: '2025-12-31', category: 'materials', totalCents: 99999, hstCents: 0 },
 ];
 
