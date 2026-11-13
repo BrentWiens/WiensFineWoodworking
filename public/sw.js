@@ -45,8 +45,8 @@ self.addEventListener('fetch', (event) => {
   // Skip cross-origin requests
   if (!event.request.url.startsWith(self.location.origin)) return;
 
-  // Skip API routes and monitoring endpoints
-  if (event.request.url.includes('/api/') || event.request.url.includes('/monitoring')) return;
+  // Skip API routes
+  if (event.request.url.includes('/api/')) return;
 
   // Never cache the private business tools or sign-in. Cached copies would hold
   // financial records on the device after signing out, and could be served offline

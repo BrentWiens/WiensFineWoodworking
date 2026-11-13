@@ -9,6 +9,8 @@ A modern, responsive website for Wiens Fine Woodworking showcasing custom furnit
 - **Framework:** Next.js 16.3 (App Router)
 - **Language:** TypeScript 6
 - **Styling:** Tailwind CSS v4
+- **Database:** Neon Postgres with Drizzle ORM (private business tools only)
+- **Auth:** Google sign-in (OpenID Connect via `jose`), limited to an email allowlist
 - **Deployment:** Vercel
 - **Testing:** Vitest (unit), Playwright (E2E)
 - **CI:** GitHub Actions (lint, type-check, unit tests, E2E tests)
@@ -113,8 +115,13 @@ WiensFineWoodworking/
 │   │   ├── fractional-calculator/page.tsx
 │   │   ├── board-feet-calculator/page.tsx
 │   │   ├── cut-list-optimizer/page.tsx
-│   │   └── trig-calculator/page.tsx
+│   │   ├── trig-calculator/page.tsx
+│   │   └── business/         # Private tools (sign-in required)
+│   │       ├── mileage/      # Mileage log: trips, year summary, CSV export
+│   │       └── expenses/     # Expense log: entries, year summary, CSV export
 │   ├── api/contact/route.ts  # Contact form API
+│   ├── api/auth/google/      # Google sign-in: start and callback routes
+│   ├── login/page.tsx        # Sign-in page for the private tools
 │   ├── sitemap.ts            # Dynamic sitemap
 │   └── robots.ts             # Robots.txt
 ├── components/               # React components
@@ -138,6 +145,7 @@ WiensFineWoodworking/
 │   ├── BoardFeetCalculator/  # Multi-entry board feet calculator
 │   ├── CutListOptimizer/     # Cut list optimizer (9 algorithms)
 │   ├── TrigCalculator/       # Right triangle solver
+│   ├── business/             # Forms and navigation for the private tools
 │   ├── UnitToggle.tsx        # Imperial/metric unit toggle
 │   ├── CommissionCta.tsx     # Soft CTA shown on the tool pages
 │   ├── SocialLinks.tsx       # Shared Facebook/Instagram links
@@ -149,7 +157,15 @@ WiensFineWoodworking/
 ├── lib/
 │   ├── projects.ts           # Project registry: pages, gallery, sitemap
 │   ├── imageDimensions.ts    # Reads photo sizes at build time
-│   └── metadata.ts           # Shared OG image for the /tools section
+│   ├── metadata.ts           # Shared OG image for the /tools section
+│   ├── auth/                 # Google sign-in, session cookie, session checks
+│   ├── db/                   # Database connection and schema
+│   ├── mileage/              # Mileage validation, data access, summary, CSV
+│   ├── expenses/             # Expense categories, validation, data access, summary, CSV
+│   └── validation.ts, money.ts, dates.ts, csv.ts  # Shared helpers
+├── drizzle/                  # Database migrations
+├── docs/business-tools.md    # Private tools: setup, architecture, roadmap
+├── proxy.ts                  # Redirects signed-out visitors of /tools/business to /login
 ├── tests/                    # Playwright E2E tests
 ├── public/
 │   ├── images/gallery/       # Project photos, one folder per category
@@ -257,6 +273,7 @@ Components use barrel exports (`components/index.ts`) for cleaner imports throug
 - **Bot Protection:** Cloudflare Turnstile on contact form, plus a honeypot field checked server-side
 - **Rate Limiting:** Contact form limited to 3 requests/minute per IP (best-effort; per-instance in-memory, so Turnstile is the real defence)
 - **Input Sanitization:** HTML escaping on all contact form fields
+- **Private tools:** `/tools/business/*` requires Google sign-in limited to an email allowlist. [`proxy.ts`](proxy.ts) redirects signed-out visitors, and every database function re-checks the session. These pages are excluded from the service worker cache, the sitemap and search indexing
 - **HTTPS:** Enforced via Vercel
 - **Security Headers:** Set in [`next.config.ts`](next.config.ts) — Content-Security-Policy, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, and HSTS. The CSP uses `'unsafe-inline'` for scripts because nonces would require middleware, which would opt every route out of static generation
 
