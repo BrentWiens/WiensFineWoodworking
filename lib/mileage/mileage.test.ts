@@ -14,7 +14,6 @@ const validTrip = {
   purpose: 'Buy walnut for dining table',
   oneWayKm: '12.3',
   roundTrip: 'on',
-  notes: '',
 };
 
 describe('parseTrip', () => {
@@ -29,7 +28,6 @@ describe('parseTrip', () => {
         purpose: 'Buy walnut for dining table',
         distanceKm: 24.6,
         roundTrip: true,
-        notes: null,
       },
     });
   });
@@ -153,11 +151,11 @@ describe('CSV', () => {
   it('exports trips followed by the year summary', () => {
     const summary = summarizeYear(2026, [{ tripDate: '2026-05-01', distanceKm: 24.6 }], { startKm: 1000, endKm: 1246 });
     const csv = mileageCsv('Truck', [
-      { tripDate: '2026-05-01', origin: 'Shop', destination: 'Client, Waterloo', purpose: 'Install', roundTrip: true, distanceKm: 24.6, notes: null },
+      { tripDate: '2026-05-01', origin: 'Shop', destination: 'Client, Waterloo', purpose: 'Install', roundTrip: true, distanceKm: 24.6 },
     ], summary);
     const lines = csv.replace('﻿', '').trim().split('\r\n');
-    expect(lines[0]).toBe('Date,From,To,Business purpose,Round trip,Distance (km),Notes');
-    expect(lines[1]).toBe('2026-05-01,Shop,"Client, Waterloo",Install,Yes,24.6,');
+    expect(lines[0]).toBe('Date,From,To,Business purpose,Round trip,Distance (km)');
+    expect(lines[1]).toBe('2026-05-01,Shop,"Client, Waterloo",Install,Yes,24.6');
     expect(lines).toContain('Business use (%),10');
   });
 });

@@ -66,7 +66,6 @@ export default async function MileagePage({
             purpose: '',
             oneWayKm: '',
             roundTrip: true,
-            notes: '',
           }}
         />
       </section>

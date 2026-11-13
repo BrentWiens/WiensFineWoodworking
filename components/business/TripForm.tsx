@@ -12,7 +12,6 @@ export interface TripFormValues {
   purpose: string;
   oneWayKm: string;
   roundTrip: boolean;
-  notes: string;
 }
 
 interface TripFormProps {
@@ -61,7 +60,6 @@ export default function TripForm({ action, initial, places, suggestions, mode, c
   const destination = errorProps(result, 'destination', 'trip-destination');
   const km = errorProps(result, 'oneWayKm', 'trip-km');
   const purpose = errorProps(result, 'purpose', 'trip-purpose');
-  const notes = errorProps(result, 'notes', 'trip-notes');
 
   return (
     <form onSubmit={onSubmit} className="space-y-4" noValidate>
@@ -175,21 +173,6 @@ export default function TripForm({ action, initial, places, suggestions, mode, c
           {...purpose.inputProps}
         />
       </Field>
-
-      <details className="group" open={mode === 'edit' && initial.notes !== ''}>
-        <summary className="cursor-pointer text-sm text-stone-600 hover:text-stone-900">Notes (optional)</summary>
-        <Field label="Notes" htmlFor="trip-notes" error={notes.error} className="mt-2">
-          <textarea
-            id="trip-notes"
-            name="notes"
-            rows={2}
-            value={values.notes}
-            onChange={e => set('notes', e.target.value)}
-            className={inputClass}
-            {...notes.inputProps}
-          />
-        </Field>
-      </details>
 
       <FormMessage result={result} />
 

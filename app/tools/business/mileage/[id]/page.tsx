@@ -31,7 +31,6 @@ export default async function EditTripPage({ params }: { params: Promise<{ id: s
             purpose: trip.purpose,
             oneWayKm: String(oneWayKmFor(trip)),
             roundTrip: trip.roundTrip,
-            notes: trip.notes ?? '',
           }}
         />
       </section>

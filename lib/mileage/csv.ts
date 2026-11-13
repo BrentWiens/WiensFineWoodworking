@@ -8,14 +8,13 @@ export interface CsvTrip {
   purpose: string;
   roundTrip: boolean;
   distanceKm: number;
-  notes: string | null;
 }
 
 /** The year's logbook for the accountant: one row per trip, then the year-end totals. */
 export function mileageCsv(vehicleName: string, trips: CsvTrip[], summary: YearSummary): string {
   const rows: CsvCell[][] = [
-    ['Date', 'From', 'To', 'Business purpose', 'Round trip', 'Distance (km)', 'Notes'],
-    ...trips.map(t => [t.tripDate, t.origin, t.destination, t.purpose, t.roundTrip, t.distanceKm, t.notes]),
+    ['Date', 'From', 'To', 'Business purpose', 'Round trip', 'Distance (km)'],
+    ...trips.map(t => [t.tripDate, t.origin, t.destination, t.purpose, t.roundTrip, t.distanceKm]),
     [],
     ['Summary', `${summary.year} — ${vehicleName}`],
     ['Trips', summary.tripCount],

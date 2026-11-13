@@ -96,7 +96,6 @@ export const trips = pgTable(
     /** Total distance driven for the trip — already doubled when it was a round trip. */
     distanceKm: numeric('distance_km', { precision: 7, scale: 1, mode: 'number' }).notNull(),
     roundTrip: boolean('round_trip').notNull().default(true),
-    notes: text('notes'),
     ...timestamps,
   },
   t => [

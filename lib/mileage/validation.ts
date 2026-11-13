@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { addDays, isIsoDate, todayIso } from '../dates';
-import { blankToUndefined, optionalText, parse, text, type ParseResult } from '../validation';
+import { blankToUndefined, parse, text, type ParseResult } from '../validation';
 
 /** Rounds to one decimal, the precision distances are stored at. */
 export function roundKm(km: number): number {
@@ -34,7 +34,6 @@ export interface TripInput {
   /** Total distance driven: one-way × 2 for a round trip. */
   distanceKm: number;
   roundTrip: boolean;
-  notes: string | null;
 }
 
 const tripSchema = (today: string) =>
@@ -51,13 +50,11 @@ const tripSchema = (today: string) =>
       purpose: text('Business purpose', 500),
       oneWayKm: km('Distance'),
       roundTrip: z.preprocess(v => v === 'on' || v === 'true' || v === true, z.boolean()),
-      notes: optionalText(2000),
     })
-    .transform(({ oneWayKm, roundTrip, notes, ...rest }): TripInput => ({
+    .transform(({ oneWayKm, roundTrip, ...rest }): TripInput => ({
       ...rest,
       roundTrip,
       distanceKm: roundKm(oneWayKm * (roundTrip ? 2 : 1)),
-      notes: notes ?? null,
     }));
 
 export function parseTrip(input: Record<string, unknown>, now: Date = new Date()): ParseResult<TripInput> {
