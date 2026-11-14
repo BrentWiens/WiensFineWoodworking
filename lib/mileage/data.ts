@@ -1,5 +1,5 @@
 import 'server-only';
-import { and, asc, desc, eq, gte, lt, max, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, lt, max, ne, sql } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { odometerYears, places, trips, vehicles, type Trip } from '@/lib/db/schema';
 import { verifySession } from '@/lib/auth/dal';
@@ -116,6 +116,53 @@ export async function createPlace(input: PlaceInput): Promise<boolean> {
     .onConflictDoNothing({ target: places.name })
     .returning({ id: places.id });
   return inserted.length > 0;
+}
+
+export type UpdatePlaceResult =
+  | { ok: true; tripsRenamed: number }
+  | { ok: false; reason: 'duplicate' | 'missing' };
+
+/**
+ * Saves a place's name and distance. Trips store where they went as text rather
+ * than a link to the place, so a rename also rewrites every logged trip that
+ * starts or ends at the old name — otherwise the log would keep showing it.
+ * A changed distance is not applied to past trips: those record what was driven.
+ */
+export async function updatePlace(id: number, input: PlaceInput): Promise<UpdatePlaceResult> {
+  await verifySession();
+  const [current] = await db().select().from(places).where(eq(places.id, id)).limit(1);
+  if (!current) return { ok: false, reason: 'missing' };
+
+  const [clash] = await db()
+    .select({ id: places.id })
+    .from(places)
+    .where(and(eq(places.name, input.name), ne(places.id, id)))
+    .limit(1);
+  if (clash) return { ok: false, reason: 'duplicate' };
+
+  const savePlace = db().update(places).set(input).where(eq(places.id, id));
+  if (current.name === input.name) {
+    await savePlace;
+    return { ok: true, tripsRenamed: 0 };
+  }
+
+  // One batch is one transaction, so the place and its trips can't end up disagreeing
+  const [, destinations, origins] = await db().batch([
+    savePlace,
+    db()
+      .update(trips)
+      .set({ destination: input.name })
+      .where(eq(trips.destination, current.name))
+      .returning({ id: trips.id }),
+    db()
+      .update(trips)
+      .set({ origin: input.name })
+      .where(eq(trips.origin, current.name))
+      .returning({ id: trips.id }),
+  ]);
+
+  const renamed = new Set([...destinations, ...origins].map(trip => trip.id));
+  return { ok: true, tripsRenamed: renamed.size };
 }
 
 export async function deletePlace(id: number): Promise<void> {

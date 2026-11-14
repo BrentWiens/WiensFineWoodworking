@@ -23,7 +23,8 @@ used against the real database, locally and in production.
 - Year summary: odometer at the start and end of the year, then business km ÷ total km gives
   the business-use %
 - CSV logbook export for the accountant
-- Vehicle and saved-places settings
+- Vehicle and saved-places settings. Renaming a saved place also renames it on the trips already
+  logged there; changing its distance only affects future trips.
 
 **The expense log** (`/tools/business/expenses`)
 - Phone-friendly receipt entry: date, total paid, vendor (autocompletes from earlier ones),

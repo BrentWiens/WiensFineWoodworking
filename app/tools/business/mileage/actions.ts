@@ -11,7 +11,9 @@ import {
   getTrip,
   saveOdometerYear,
   saveVehicle,
+  updatePlace,
   updateTrip,
+  type UpdatePlaceResult,
 } from '@/lib/mileage/data';
 import { parseOdometer, parsePlace, parseTrip, parseVehicle } from '@/lib/mileage/validation';
 import { formToObject } from '@/lib/validation';
@@ -92,6 +94,28 @@ export async function createPlaceAction(formData: FormData): Promise<ActionResul
 
   refreshMileage();
   return { ok: true, message: `Added ${parsed.data.name}` };
+}
+
+export async function updatePlaceAction(id: number, formData: FormData): Promise<ActionResult> {
+  const placeId = parseId(id);
+  if (!placeId) return { ok: false, message: 'Unknown place.' };
+
+  const parsed = parsePlace(formToObject(formData));
+  if (!parsed.ok) return { ok: false, errors: parsed.errors };
+
+  let updated: UpdatePlaceResult | undefined;
+  const failed = await attempt(async () => {
+    updated = await updatePlace(placeId, parsed.data);
+  });
+  if (failed || !updated) return failed ?? SAVE_FAILED;
+  if (!updated.ok) {
+    return updated.reason === 'duplicate'
+      ? { ok: false, errors: { name: ['You already have a place with that name'] } }
+      : { ok: false, message: 'Unknown place.' };
+  }
+
+  refreshMileage();
+  return { ok: true, message: `Saved ${parsed.data.name}` };
 }
 
 export async function deletePlaceAction(id: number): Promise<void> {
