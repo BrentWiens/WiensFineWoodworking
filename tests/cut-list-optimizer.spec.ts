@@ -240,7 +240,7 @@ test.describe('Cut List Optimizer', () => {
     await page.getByTestId('optimize-button').click();
 
     // Should show warning about unplaced pieces with dimensions
-    await expect(page.locator('text=Could not place: 48 x 96')).toBeVisible();
+    await expect(page.locator('text=Could not place: 96 x 48')).toBeVisible();
   });
 
   test('creates multiple sheets when needed', async ({ page }) => {
@@ -274,7 +274,8 @@ test.describe('Cut List Optimizer', () => {
     await page.getByTestId('optimize-button').click();
 
     // Piece label should appear in visualization
-    await expect(page.locator('text=24 x 36')).toBeVisible();
+    // Length first, the order the inputs are in
+    await expect(page.locator('svg text', { hasText: '36 x 24' })).toBeVisible();
   });
 
   test('handles decimal dimensions', async ({ page }) => {
@@ -289,7 +290,7 @@ test.describe('Cut List Optimizer', () => {
 
     // Should show results without errors
     await expect(page.locator('text=Sheets Used')).toBeVisible();
-    await expect(page.locator('text=23.5 x 35.75')).toBeVisible();
+    await expect(page.locator('svg text', { hasText: '35.75 x 23.5' })).toBeVisible();
   });
 });
 
@@ -303,5 +304,119 @@ test.describe('Cut List Optimizer - Navigation', () => {
     // Should navigate to optimizer page
     await page.waitForURL('/tools/cut-list-optimizer');
     await expect(page).toHaveTitle(/Cut List Optimizer/);
+  });
+});
+
+test.describe('Cut List Optimizer - Fractions, names and sheets', () => {
+  test('reads fractional dimensions instead of truncating them', async ({ page }) => {
+    await page.goto('/tools/cut-list-optimizer', { waitUntil: 'networkidle' });
+
+    await page.getByTestId('piece-length-0').fill('35 3/4');
+    await page.getByTestId('piece-width-0').fill('23-1/2');
+    await page.getByTestId('optimize-button').click();
+
+    await expect(page.locator('svg text', { hasText: '35.75 x 23.5' })).toBeVisible();
+  });
+
+  test('rejects a dimension it cannot read', async ({ page }) => {
+    await page.goto('/tools/cut-list-optimizer', { waitUntil: 'networkidle' });
+
+    await page.getByTestId('piece-length-0').fill('36in');
+    await page.getByTestId('piece-width-0').fill('24');
+    await page.getByTestId('optimize-button').click();
+
+    await expect(page.locator('text=Invalid length')).toBeVisible();
+  });
+
+  test('shows a piece name on the drawing and in the cut list', async ({ page }) => {
+    await page.goto('/tools/cut-list-optimizer', { waitUntil: 'networkidle' });
+
+    await page.getByTestId('piece-name-0').fill('Shelf');
+    await page.getByTestId('piece-length-0').fill('36');
+    await page.getByTestId('piece-width-0').fill('24');
+    await page.getByTestId('piece-qty-0').fill('2');
+    await page.getByTestId('optimize-button').click();
+
+    await expect(page.locator('svg text', { hasText: 'Shelf' }).first()).toBeVisible();
+    const row = page.getByTestId('cut-list-table').locator('tbody tr').first();
+    await expect(row).toContainText('Shelf');
+    await expect(row).toContainText('36 x 24');
+    await expect(page.getByTestId('print-button')).toBeVisible();
+  });
+
+  test('says how many sheets are needed and can switch to that many', async ({ page }) => {
+    await page.goto('/tools/cut-list-optimizer', { waitUntil: 'networkidle' });
+
+    await page.getByTestId('piece-length-0').fill('96');
+    await page.getByTestId('piece-width-0').fill('48');
+    await page.getByTestId('piece-qty-0').fill('3');
+    await page.getByTestId('optimize-button').click();
+
+    await expect(page.locator('text=The full list needs 3 sheets')).toBeVisible();
+
+    await page.getByTestId('use-sheets-needed').click();
+    await expect(page.getByTestId('sheets-available')).toHaveValue('3');
+    await expect(page.getByText('Sheet 3', { exact: true })).toBeVisible();
+    await expect(page.locator('text=Could not place')).toHaveCount(0);
+  });
+});
+
+test.describe('Cut List Optimizer - Units and saved state', () => {
+  test('switching to metric converts the values already entered', async ({ page }) => {
+    await page.goto('/tools/cut-list-optimizer', { waitUntil: 'networkidle' });
+
+    await page.getByTestId('piece-length-0').fill('36');
+    await page.getByTestId('piece-width-0').fill('24');
+    await page.getByTestId('units-metric').click();
+
+    await expect(page.getByTestId('sheet-length')).toHaveValue('2438.4');
+    await expect(page.getByTestId('sheet-width')).toHaveValue('1219.2');
+    await expect(page.getByTestId('sheet-kerf')).toHaveValue('3.175');
+    await expect(page.getByTestId('piece-length-0')).toHaveValue('914.4');
+    await expect(page.getByTestId('units-metric')).toHaveAttribute('aria-pressed', 'true');
+
+    // And back again without drifting
+    await page.getByTestId('units-imperial').click();
+    await expect(page.getByTestId('sheet-length')).toHaveValue('96');
+    await expect(page.getByTestId('sheet-kerf')).toHaveValue('0.125');
+  });
+
+  test('a metric sheet is drawn at a readable size', async ({ page }) => {
+    await page.goto('/tools/cut-list-optimizer', { waitUntil: 'networkidle' });
+
+    await page.getByTestId('units-metric').click();
+    await page.getByTestId('sheet-length').fill('2440');
+    await page.getByTestId('sheet-width').fill('1220');
+    await page.getByTestId('piece-length-0').fill('900');
+    await page.getByTestId('piece-width-0').fill('600');
+    await page.getByTestId('optimize-button').click();
+
+    // The drawing is the same number of SVG units wide whatever the sheet is measured in
+    const viewBox = await page.getByRole('img', { name: /Layout of sheet 1/ }).getAttribute('viewBox');
+    const width = Number(viewBox!.split(' ')[2]);
+    expect(width).toBeLessThan(1000);
+    await expect(page.locator('svg text', { hasText: '900 x 600' })).toBeVisible();
+  });
+
+  test('restores a saved cut list without a hydration error', async ({ page }) => {
+    const problems: string[] = [];
+    page.on('console', (message) => {
+      if (message.type() === 'error' && /hydrat/i.test(message.text())) problems.push(message.text());
+    });
+    page.on('pageerror', (error) => problems.push(error.message));
+
+    await page.goto('/tools/cut-list-optimizer', { waitUntil: 'networkidle' });
+    await page.getByTestId('units-metric').click();
+    await page.getByTestId('piece-name-0').fill('Door');
+    await page.getByTestId('piece-length-0').fill('700');
+    await page.getByTestId('add-piece').click();
+
+    await page.reload({ waitUntil: 'networkidle' });
+
+    await expect(page.getByTestId('piece-name-0')).toHaveValue('Door');
+    await expect(page.getByTestId('piece-length-0')).toHaveValue('700');
+    await expect(page.getByTestId('piece-row-1')).toBeVisible();
+    await expect(page.getByTestId('units-metric')).toHaveAttribute('aria-pressed', 'true');
+    expect(problems).toEqual([]);
   });
 });

@@ -106,11 +106,19 @@ export function calculateGeometry(params: DovetailParams): DovetailGeometry {
 
   let tailWidth: number, pinWidth: number, halfPinWidth: number;
 
-  if (manualTailWidth !== undefined || manualPinWidth !== undefined) {
-    tailWidth = manualTailWidth ?? 1;
-    pinWidth = manualPinWidth ?? 1;
+  if (manualTailWidth !== undefined && manualPinWidth !== undefined) {
+    tailWidth = manualTailWidth;
+    pinWidth = manualPinWidth;
     const totalTailsAndPins = (numberOfTails * tailWidth) + ((numberOfTails - 1) * pinWidth);
     halfPinWidth = (availableWidth - totalTailsAndPins) / 2;
+  } else if (manualTailWidth !== undefined || manualPinWidth !== undefined) {
+    // Only one width given: the other takes up the rest of the board, with the two
+    // half pins sharing one pin's width. Each tail-and-pin pair is then
+    // availableWidth / numberOfTails wide, whatever the unit system.
+    const pairWidth = availableWidth / numberOfTails;
+    tailWidth = manualTailWidth ?? pairWidth - (manualPinWidth as number);
+    pinWidth = manualPinWidth ?? pairWidth - tailWidth;
+    halfPinWidth = pinWidth / 2;
   } else {
     const totalDivisions = numberOfTails + (numberOfTails - 1) + 1;
     const divisionWidth = availableWidth / totalDivisions;
@@ -198,7 +206,9 @@ export function generatePinPath(g: DovetailGeometry, scale: number): string {
 // Get validation warnings
 export function getWarnings(g: DovetailGeometry): string[] {
   const warnings: string[] = [];
-  if (g.halfPinWidth < 0) warnings.push('Board too narrow for the number of tails/fingers specified');
+  // A single width override leaves the other width to fill the gap, which can go negative
+  if (g.halfPinWidth < 0 || g.tailWidth <= 0 || g.pinWidth <= 0)
+    warnings.push('Board too narrow for the number of tails/fingers specified');
   if (g.thickness > g.totalTailLength || g.thickness > g.totalPinLength)
     warnings.push('Material thickness exceeds board length');
   // Only check tail angle warning for dovetails (not box joints where ratio is 0)

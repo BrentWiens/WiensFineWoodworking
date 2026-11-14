@@ -3,10 +3,9 @@
 
 import {
   type Fraction,
-  reduceFraction,
-  fractionToDecimal,
   formatFraction,
-  parseFraction,
+  parseMeasurement,
+  toNearestFraction,
 } from '../FractionalCalculator/fractionalUtils';
 
 export interface TriangleValues {
@@ -23,71 +22,15 @@ export interface SolveResult {
 }
 
 // Parse user input: accepts decimals ("3.5") or fractions ("3-1/2", "1/4")
-export function parseInput(input: string): number | null {
-  const trimmed = input.trim();
-  if (!trimmed) return null;
+export const parseInput = parseMeasurement;
 
-  // Try as a plain number first
-  const num = parseFloat(trimmed);
-  if (!isNaN(num) && /^-?\d+(\.\d+)?$/.test(trimmed)) {
-    return num;
-  }
+// How far a given angle may sit from the one the sides imply before the input is
+// rejected as contradictory. Loose enough for an angle typed to the nearest degree.
+const ANGLE_TOLERANCE_DEGREES = 0.5;
 
-  // Try as a fraction
-  const fraction = parseFraction(trimmed);
-  if (fraction) {
-    return fractionToDecimal(fraction);
-  }
-
-  return null;
-}
-
-// Convert a decimal to a fraction approximation (max denominator 64)
-export function decimalToFraction(value: number, maxDenominator: number = 64): Fraction {
-  if (Number.isInteger(value)) {
-    return { whole: value, numerator: 0, denominator: 1 };
-  }
-
-  const sign = value < 0 ? -1 : 1;
-  const absValue = Math.abs(value);
-  const whole = Math.floor(absValue);
-  const decimal = absValue - whole;
-
-  if (decimal < 1e-10) {
-    return { whole: sign * whole, numerator: 0, denominator: 1 };
-  }
-
-  let bestNumerator = 0;
-  let bestDenominator = 1;
-  let bestError = decimal;
-
-  for (let d = 1; d <= maxDenominator; d++) {
-    const n = Math.round(decimal * d);
-    const error = Math.abs(decimal - n / d);
-    if (error < bestError) {
-      bestError = error;
-      bestNumerator = n;
-      bestDenominator = d;
-      if (error < 1e-10) break;
-    }
-  }
-
-  if (bestNumerator >= bestDenominator) {
-    return { whole: sign * (whole + 1), numerator: 0, denominator: 1 };
-  }
-
-  const reduced = reduceFraction(bestNumerator, bestDenominator);
-
-  return {
-    whole: sign * whole,
-    numerator: reduced.numerator,
-    denominator: reduced.denominator,
-  };
-}
-
-// Format a number for display: decimal with up to 4 decimal places
-export function formatDecimal(value: number): string {
-  return parseFloat(value.toFixed(4)).toString();
+// Convert a decimal to the nearest tape-measure fraction (64ths by default)
+export function decimalToFraction(value: number, denominator: number = 64): Fraction {
+  return toNearestFraction(value, denominator);
 }
 
 // Format a side value: max 3 decimal places
@@ -100,7 +43,7 @@ export function formatAngle(value: number): string {
   return parseFloat(value.toFixed(1)).toString();
 }
 
-// Format a number as a fraction string
+// Format a number as a fraction string, rounded to the nearest 1/64
 export function formatAsFraction(value: number): string {
   const fraction = decimalToFraction(value);
   return formatFraction(fraction);
@@ -201,10 +144,20 @@ export function solveTriangle(input: TriangleValues): SolveResult {
     }
   }
 
+  // A given angle has to agree with the sides. Two sides fix the triangle on their
+  // own, so an angle typed alongside them would otherwise be silently ignored.
+  if (a !== null && b !== null) {
+    const impliedA = radiansToDegrees(Math.atan2(a, b));
+    if (input.A !== null && Math.abs(input.A - impliedA) > ANGLE_TOLERANCE_DEGREES) {
+      return { values: input, error: `Angle A does not match the given sides, which make it ${formatAngle(impliedA)}°.` };
+    }
+    if (input.B !== null && Math.abs(input.B - (90 - impliedA)) > ANGLE_TOLERANCE_DEGREES) {
+      return { values: input, error: `Angle B does not match the given sides, which make it ${formatAngle(90 - impliedA)}°.` };
+    }
+  }
+
   return {
     values: { a, b, c, A, B },
     error: null,
   };
 }
-
-export { type Fraction, fractionToDecimal, formatFraction };

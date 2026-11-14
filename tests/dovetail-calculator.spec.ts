@@ -140,3 +140,45 @@ test.describe('Dovetail Calculator - Navigation', () => {
     await expect(page).toHaveTitle(/Dovetail.*Joint.*Calculator/);
   });
 });
+
+test.describe('Dovetail Calculator - Units and labels', () => {
+  test('switching to metric converts the dimensions and keeps the drawing readable', async ({ page }) => {
+    await page.goto('/tools/dovetail-calculator', { waitUntil: 'networkidle' });
+
+    const tailBoard = page.getByRole('img', { name: 'Tail board layout' });
+    const before = await tailBoard.getAttribute('viewBox');
+    await page.getByTestId('units-metric').click();
+
+    await expect(getInput(page, 'Board Width')).toHaveValue('203.2');
+    await expect(getInput(page, 'Material Thickness')).toHaveValue('12.7');
+
+    // Same joint, same drawing: the view box barely moves rather than growing 20-fold
+    const after = await tailBoard.getAttribute('viewBox');
+    const width = (viewBox: string | null) => Number(viewBox!.split(' ')[2]);
+    expect(Math.abs(width(after) - width(before))).toBeLessThan(1);
+    await expect(page.locator('svg text', { hasText: '203.2mm' }).first()).toBeVisible();
+
+    await page.getByTestId('units-imperial').click();
+    await expect(getInput(page, 'Board Width')).toHaveValue('8');
+  });
+
+  test('a single width override fills the rest of the board', async ({ page }) => {
+    await page.goto('/tools/dovetail-calculator', { waitUntil: 'networkidle' });
+
+    // 8 in board, 4 tails at 1.5: the pins take 8 / 4 - 1.5 = 0.5
+    const tails = getInput(page, 'Number of Tails');
+    await tails.fill('4');
+    await tails.blur();
+    const tailWidth = page.getByLabel('Tail Width (override)');
+    await tailWidth.fill('1.5');
+    await tailWidth.blur();
+
+    await expect(page.locator('svg text', { hasText: '0.5 (1/2)"' }).first()).toBeVisible();
+    await expect(page.getByText('Warnings', { exact: false })).toHaveCount(0);
+  });
+
+  test('the joint angle select is labelled', async ({ page }) => {
+    await page.goto('/tools/dovetail-calculator', { waitUntil: 'networkidle' });
+    await expect(page.getByLabel('Joint Angle')).toHaveValue('1:8');
+  });
+});

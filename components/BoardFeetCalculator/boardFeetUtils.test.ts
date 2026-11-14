@@ -3,6 +3,11 @@ import {
   calculateBoardFeet,
   formatBoardFeet,
   isValidNumericInput,
+  isValidDimensionInput,
+  isValidQuantityInput,
+  parseQuantity,
+  addWaste,
+  formatCost,
 } from './boardFeetUtils';
 
 describe('calculateBoardFeet', () => {
@@ -106,7 +111,7 @@ describe('calculateBoardFeet', () => {
     expect(result.isValid).toBe(false);
   });
 
-  it('handles zero quantity by treating as 1', () => {
+  it('counts a zero quantity as no boards', () => {
     const result = calculateBoardFeet({
       thickness: 1,
       width: 12,
@@ -115,7 +120,7 @@ describe('calculateBoardFeet', () => {
     });
 
     expect(result.boardFeet).toBe(1);
-    expect(result.totalBoardFeet).toBe(1);
+    expect(result.totalBoardFeet).toBe(0);
     expect(result.isValid).toBe(true);
   });
 
@@ -199,5 +204,65 @@ describe('isValidNumericInput', () => {
 
   it('rejects multiple decimal points', () => {
     expect(isValidNumericInput('1.2.3')).toBe(false);
+  });
+});
+
+describe('isValidDimensionInput', () => {
+  it('allows decimals, fractions and mixed numbers', () => {
+    expect(isValidDimensionInput('')).toBe(true);
+    expect(isValidDimensionInput('1.5')).toBe(true);
+    expect(isValidDimensionInput('3/4')).toBe(true);
+    expect(isValidDimensionInput('1-1/2')).toBe(true);
+    expect(isValidDimensionInput('1 1/2')).toBe(true);
+  });
+
+  it('allows a fraction that is only half typed', () => {
+    expect(isValidDimensionInput('1 1/')).toBe(true);
+  });
+
+  it('rejects letters and other symbols', () => {
+    expect(isValidDimensionInput('abc')).toBe(false);
+    expect(isValidDimensionInput('1,5')).toBe(false);
+    expect(isValidDimensionInput('+1')).toBe(false);
+  });
+});
+
+describe('isValidQuantityInput', () => {
+  it('allows whole numbers only', () => {
+    expect(isValidQuantityInput('')).toBe(true);
+    expect(isValidQuantityInput('12')).toBe(true);
+    expect(isValidQuantityInput('2.5')).toBe(false);
+    expect(isValidQuantityInput('-1')).toBe(false);
+  });
+});
+
+describe('parseQuantity', () => {
+  it('reads whole numbers, including zero', () => {
+    expect(parseQuantity('5')).toBe(5);
+    expect(parseQuantity('0')).toBe(0);
+  });
+
+  it('treats a blank field as one board', () => {
+    expect(parseQuantity('')).toBe(1);
+  });
+});
+
+describe('addWaste', () => {
+  it('adds the allowance as a percentage', () => {
+    expect(addWaste(100, 15)).toBeCloseTo(115);
+    expect(addWaste(8, 25)).toBeCloseTo(10);
+  });
+
+  it('leaves the total alone for zero or negative waste', () => {
+    expect(addWaste(100, 0)).toBe(100);
+    expect(addWaste(100, -10)).toBe(100);
+  });
+});
+
+describe('formatCost', () => {
+  it('formats dollars and cents', () => {
+    expect(formatCost(12.5)).toBe('$12.50');
+    expect(formatCost(1234.567)).toBe('$1,234.57');
+    expect(formatCost(0)).toBe('$0.00');
   });
 });

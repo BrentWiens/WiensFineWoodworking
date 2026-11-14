@@ -43,7 +43,9 @@ export function toImproper(fraction: Fraction): { numerator: number; denominator
   };
 }
 
-// Convert improper fraction to mixed number
+// Convert improper fraction to mixed number.
+// The sign lives on the whole part, or on the numerator when the whole part is 0
+// (so -1/4 is { whole: 0, numerator: -1, denominator: 4 }).
 export function toMixed(numerator: number, denominator: number): Fraction {
   if (denominator === 0) return { whole: 0, numerator: 0, denominator: 1 };
 
@@ -58,9 +60,10 @@ export function toMixed(numerator: number, denominator: number): Fraction {
   // Further reduce the remainder
   const finalReduced = reduceFraction(remainder, reduced.denominator);
 
+  // `|| 0` turns the -0 that sign * 0 produces back into a plain 0
   return {
-    whole: sign * whole,
-    numerator: finalReduced.numerator,
+    whole: sign * whole || 0,
+    numerator: whole === 0 ? sign * finalReduced.numerator || 0 : finalReduced.numerator,
     denominator: finalReduced.denominator,
   };
 }
@@ -100,13 +103,13 @@ export function multiplyFractions(a: Fraction, b: Fraction): Fraction {
   return toMixed(aImp.numerator * bImp.numerator, aImp.denominator * bImp.denominator);
 }
 
-// Divide two fractions
-export function divideFractions(a: Fraction, b: Fraction): Fraction {
+// Divide two fractions. Returns null when dividing by zero.
+export function divideFractions(a: Fraction, b: Fraction): Fraction | null {
   const aImp = toImproper(a);
   const bImp = toImproper(b);
 
   if (bImp.numerator === 0) {
-    return { whole: 0, numerator: 0, denominator: 1 }; // Division by zero
+    return null;
   }
 
   return toMixed(aImp.numerator * bImp.denominator, aImp.denominator * bImp.numerator);
@@ -162,6 +165,55 @@ export function parseFraction(str: string): Fraction | null {
   return null;
 }
 
+// Parse a typed measurement: a decimal ("3.5"), a fraction ("3/4") or a mixed
+// number ("3-1/2" or "3 1/2"). Returns null for anything else.
+export function parseMeasurement(input: string): number | null {
+  const trimmed = input.trim();
+  if (!trimmed) return null;
+
+  if (/^-?(\d+\.?\d*|\.\d+)$/.test(trimmed)) {
+    return parseFloat(trimmed);
+  }
+
+  const fraction = parseFraction(trimmed);
+  return fraction ? fractionToDecimal(fraction) : null;
+}
+
+// Round to the nearest 1/denominator. The default of 64 gives tape-measure fractions.
+export function toNearestFraction(value: number, denominator: number = 64): Fraction {
+  return toMixed(Math.round(value * denominator), denominator);
+}
+
+// What the calculator's three number pads currently hold. The strings are always
+// unsigned; `whole` may carry a decimal part ("2.5").
+export interface FractionEntry {
+  whole: string;
+  numerator: string;
+  denominator: string;
+  negative: boolean;
+}
+
+// Combine a keypad entry into a single reduced fraction
+export function entryToFraction(entry: FractionEntry): Fraction {
+  const [intPart, decimalPart = ''] = entry.whole.split('.');
+  const wholeInt = parseInt(intPart, 10) || 0;
+  const decimalNum = parseInt(decimalPart, 10) || 0;
+  const decimalDenom = Math.pow(10, decimalPart.length);
+  const numerator = parseInt(entry.numerator, 10) || 0;
+  // An empty or zero denominator is treated as 1
+  const denominator = parseInt(entry.denominator, 10) || 1;
+
+  // wholeInt + decimalNum/decimalDenom + numerator/denominator, over one denominator
+  const combinedDenom = decimalDenom * denominator;
+  const combinedNum = wholeInt * combinedDenom + decimalNum * denominator + numerator * decimalDenom;
+
+  return toMixed(entry.negative ? -combinedNum : combinedNum, combinedDenom);
+}
+
+export function isNegativeFraction(fraction: Fraction): boolean {
+  return fraction.whole < 0 || fraction.numerator < 0;
+}
+
 // Format a fraction as a string
 export function formatFraction(fraction: Fraction): string {
   const { whole, numerator, denominator } = fraction;
@@ -191,48 +243,10 @@ export function fractionToDecimal(fraction: Fraction): number {
   return sign * (Math.abs(whole) + numerator / denominator);
 }
 
-// Common woodworking fractions
-export const COMMON_FRACTIONS = [
-  { label: '1/2', numerator: 1, denominator: 2 },
-  { label: '1/4', numerator: 1, denominator: 4 },
-  { label: '3/4', numerator: 3, denominator: 4 },
-  { label: '1/8', numerator: 1, denominator: 8 },
-  { label: '3/8', numerator: 3, denominator: 8 },
-  { label: '5/8', numerator: 5, denominator: 8 },
-  { label: '7/8', numerator: 7, denominator: 8 },
-  { label: '1/16', numerator: 1, denominator: 16 },
-  { label: '3/16', numerator: 3, denominator: 16 },
-  { label: '5/16', numerator: 5, denominator: 16 },
-  { label: '7/16', numerator: 7, denominator: 16 },
-  { label: '9/16', numerator: 9, denominator: 16 },
-  { label: '11/16', numerator: 11, denominator: 16 },
-  { label: '13/16', numerator: 13, denominator: 16 },
-  { label: '15/16', numerator: 15, denominator: 16 },
-  { label: '1/32', numerator: 1, denominator: 32 },
-] as const;
-
 export type Operation = '+' | '-' | '×' | '÷';
 
-export interface CalculatorState {
-  display: string;
-  currentValue: Fraction | null;
-  previousValue: Fraction | null;
-  operation: Operation | null;
-  waitingForOperand: boolean;
-  history: string;
-}
-
-export const INITIAL_STATE: CalculatorState = {
-  display: '0',
-  currentValue: null,
-  previousValue: null,
-  operation: null,
-  waitingForOperand: false,
-  history: '',
-};
-
-// Perform calculation
-export function calculate(a: Fraction, b: Fraction, op: Operation): Fraction {
+// Perform calculation. Returns null when dividing by zero.
+export function calculate(a: Fraction, b: Fraction, op: Operation): Fraction | null {
   switch (op) {
     case '+':
       return addFractions(a, b);

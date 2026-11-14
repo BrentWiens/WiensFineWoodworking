@@ -118,7 +118,9 @@ describe('calculateGeometry', () => {
     const geometry = calculateGeometry(params)
 
     expect(geometry.tailWidth).toBe(1.5)
-    expect(geometry.pinWidth).toBe(1) // default when tailWidth is set but not pinWidth
+    // The pins take up what's left: 8 / 3 tails - 1.5
+    expect(geometry.pinWidth).toBeCloseTo(8 / 3 - 1.5)
+    expect(geometry.halfPinWidth).toBeCloseTo(geometry.pinWidth / 2)
   })
 
   it('respects manual pin width', () => {
@@ -131,7 +133,24 @@ describe('calculateGeometry', () => {
     const geometry = calculateGeometry(params)
 
     expect(geometry.pinWidth).toBe(0.75)
-    expect(geometry.tailWidth).toBe(1) // default when pinWidth is set but not tailWidth
+    // The tails take up what's left: 8 / 3 tails - 0.75
+    expect(geometry.tailWidth).toBeCloseTo(8 / 3 - 0.75)
+    expect(geometry.halfPinWidth).toBe(0.375)
+  })
+
+  it('fills the board exactly when only one width is given', () => {
+    for (const override of [{ tailWidth: 1.5 }, { pinWidth: 0.75 }]) {
+      const g = calculateGeometry({ ...DEFAULT_PARAMS, boardWidth: 8, numberOfTails: 3, ...override })
+      const total = g.numberOfTails * g.tailWidth + (g.numberOfTails - 1) * g.pinWidth + 2 * g.halfPinWidth
+      expect(total).toBeCloseTo(8)
+    }
+  })
+
+  it('warns when a single width override leaves no room for the other', () => {
+    const geometry = calculateGeometry({ ...DEFAULT_PARAMS, boardWidth: 8, numberOfTails: 3, tailWidth: 3 })
+
+    expect(geometry.pinWidth).toBeLessThan(0)
+    expect(getWarnings(geometry)).toContain('Board too narrow for the number of tails/fingers specified')
   })
 
   it('calculates tail extension based on angle', () => {

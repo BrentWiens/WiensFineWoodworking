@@ -1,7 +1,19 @@
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
-import UnitToggle, { UnitSystem, mmToInches } from '../UnitToggle';
+import UnitToggle from '../UnitToggle';
+import { UnitSystem, convertMeasurement, mmToInches } from '../units';
+import { parseMeasurement } from '../FractionalCalculator/fractionalUtils';
+import {
+  calculateBoardFeet,
+  formatBoardFeet,
+  isValidDimensionInput,
+  isValidNumericInput,
+  isValidQuantityInput,
+  parseQuantity,
+  addWaste,
+  formatCost,
+} from './boardFeetUtils';
 
 interface LumberEntry {
   id: string;
@@ -10,6 +22,16 @@ interface LumberEntry {
   length: string;
   quantity: string;
 }
+
+type DimensionField = 'thickness' | 'width' | 'length';
+
+const DIMENSION_FIELDS: { field: DimensionField; label: string; placeholder: Record<UnitSystem, string> }[] = [
+  { field: 'thickness', label: 'Thickness', placeholder: { imperial: '1.5', metric: '38' } },
+  { field: 'width', label: 'Width', placeholder: { imperial: '6', metric: '150' } },
+  { field: 'length', label: 'Length', placeholder: { imperial: '96', metric: '2440' } },
+];
+
+const INPUT_CLASS = 'w-full px-2 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-stone-900 font-mono placeholder:text-stone-400';
 
 function createEntry(): LumberEntry {
   return {
@@ -22,44 +44,62 @@ function createEntry(): LumberEntry {
 }
 
 function calcBoardFeet(entry: LumberEntry, units: UnitSystem) {
-  let t = parseFloat(entry.thickness) || 0;
-  let w = parseFloat(entry.width) || 0;
-  let l = parseFloat(entry.length) || 0;
-  const q = parseInt(entry.quantity, 10) || 1;
-  if (t <= 0 || w <= 0 || l <= 0) return 0;
-  if (units === 'metric') {
-    t = mmToInches(t);
-    w = mmToInches(w);
-    l = mmToInches(l);
-  }
-  return (t * w * l * q) / 144;
-}
+  // A blank or half-typed dimension counts as 0, which leaves the row out of the total
+  const inches = (value: string) => {
+    const parsed = parseMeasurement(value) ?? 0;
+    return units === 'metric' ? mmToInches(parsed) : parsed;
+  };
 
-function formatBoardFeet(value: number): string {
-  if (value === 0) return '0';
-  if (value < 0.01) return value.toFixed(4);
-  if (value < 1) return value.toFixed(3);
-  return parseFloat(value.toFixed(2)).toString();
+  return calculateBoardFeet({
+    thickness: inches(entry.thickness),
+    width: inches(entry.width),
+    length: inches(entry.length),
+    quantity: parseQuantity(entry.quantity),
+  }).totalBoardFeet;
 }
 
 export default function BoardFeetCalculator() {
   const [entries, setEntries] = useState<LumberEntry[]>([createEntry()]);
   const [units, setUnits] = useState<UnitSystem>('imperial');
+  const [wastePercent, setWastePercent] = useState('');
+  const [pricePerBoardFoot, setPricePerBoardFoot] = useState('');
 
   const totalBoardFeet = useMemo(
     () => entries.reduce((sum, e) => sum + calcBoardFeet(e, units), 0),
     [entries, units]
   );
 
+  const waste = parseFloat(wastePercent) || 0;
+  const price = parseFloat(pricePerBoardFoot) || 0;
+  const totalWithWaste = addWaste(totalBoardFeet, waste);
+
   const handleChange = useCallback(
     (id: string, field: keyof LumberEntry, value: string) => {
-      if (value === '' || /^\d*\.?\d*$/.test(value)) {
+      const valid = field === 'quantity' ? isValidQuantityInput(value) : isValidDimensionInput(value);
+      if (valid) {
         setEntries((prev) =>
           prev.map((e) => (e.id === id ? { ...e, [field]: value } : e))
         );
       }
     },
     []
+  );
+
+  // Switching units converts what's already entered, so the boards stay the same size
+  const handleUnitsChange = useCallback(
+    (next: UnitSystem) => {
+      if (next === units) return;
+      setEntries((prev) =>
+        prev.map((e) => ({
+          ...e,
+          thickness: convertMeasurement(e.thickness, units, next),
+          width: convertMeasurement(e.width, units, next),
+          length: convertMeasurement(e.length, units, next),
+        }))
+      );
+      setUnits(next);
+    },
+    [units]
   );
 
   const handleAdd = useCallback(() => {
@@ -75,6 +115,8 @@ export default function BoardFeetCalculator() {
 
   const handleClear = useCallback(() => {
     setEntries([createEntry()]);
+    setWastePercent('');
+    setPricePerBoardFoot('');
   }, []);
 
   return (
@@ -94,18 +136,38 @@ export default function BoardFeetCalculator() {
           </span>
           <span className="text-stone-400 text-lg">bf</span>
         </div>
+        {(waste > 0 || price > 0) && (
+          <dl className="mt-4 pt-4 border-t border-stone-700 space-y-1 text-sm font-mono">
+            {waste > 0 && (
+              <div className="flex justify-between gap-4">
+                <dt className="text-stone-400">With {parseFloat(waste.toFixed(1))}% waste</dt>
+                <dd className="text-white" data-testid="result-with-waste">
+                  {formatBoardFeet(totalWithWaste)} bf
+                </dd>
+              </div>
+            )}
+            {price > 0 && (
+              <div className="flex justify-between gap-4">
+                <dt className="text-stone-400">Estimated cost</dt>
+                <dd className="text-white" data-testid="result-cost">
+                  {formatCost(totalWithWaste * price)}
+                </dd>
+              </div>
+            )}
+          </dl>
+        )}
       </div>
 
       {/* Lumber Entries */}
       <div className="p-6 space-y-4">
         {/* Header */}
         <div className="flex justify-between items-center">
-          <h3 className="text-lg font-semibold text-stone-800">Lumber</h3>
-          <UnitToggle units={units} onChange={setUnits} />
+          <h2 className="text-lg font-semibold text-stone-800">Lumber</h2>
+          <UnitToggle units={units} onChange={handleUnitsChange} />
         </div>
 
-        {/* Column headers */}
-        <div className="grid grid-cols-12 gap-2 text-sm font-medium text-stone-600 px-1">
+        {/* Column headers. Each input carries its own aria-label, so these are visual only. */}
+        <div className="grid grid-cols-12 gap-2 text-sm font-medium text-stone-600 px-1" aria-hidden="true">
           <div className="col-span-2">Thickness</div>
           <div className="col-span-2">Width</div>
           <div className="col-span-2">Length</div>
@@ -123,45 +185,20 @@ export default function BoardFeetCalculator() {
               className="grid grid-cols-12 gap-2 items-center"
               data-testid={`entry-row-${index}`}
             >
-              <div className="col-span-2">
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  value={entry.thickness}
-                  onChange={(e) =>
-                    handleChange(entry.id, 'thickness', e.target.value)
-                  }
-                  placeholder={units === 'metric' ? '38' : '1.5'}
-                  className="w-full px-2 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-stone-900 font-mono placeholder:text-stone-400"
-                  data-testid={`thickness-input-${index}`}
-                />
-              </div>
-              <div className="col-span-2">
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  value={entry.width}
-                  onChange={(e) =>
-                    handleChange(entry.id, 'width', e.target.value)
-                  }
-                  placeholder={units === 'metric' ? '150' : '6'}
-                  className="w-full px-2 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-stone-900 font-mono placeholder:text-stone-400"
-                  data-testid={`width-input-${index}`}
-                />
-              </div>
-              <div className="col-span-2">
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  value={entry.length}
-                  onChange={(e) =>
-                    handleChange(entry.id, 'length', e.target.value)
-                  }
-                  placeholder={units === 'metric' ? '2440' : '96'}
-                  className="w-full px-2 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-stone-900 font-mono placeholder:text-stone-400"
-                  data-testid={`length-input-${index}`}
-                />
-              </div>
+              {DIMENSION_FIELDS.map(({ field, label, placeholder }) => (
+                <div key={field} className="col-span-2">
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={entry[field]}
+                    onChange={(e) => handleChange(entry.id, field, e.target.value)}
+                    placeholder={placeholder[units]}
+                    aria-label={`${label}, board ${index + 1}`}
+                    className={INPUT_CLASS}
+                    data-testid={`${field}-input-${index}`}
+                  />
+                </div>
+              ))}
               <div className="col-span-2">
                 <input
                   type="text"
@@ -171,12 +208,13 @@ export default function BoardFeetCalculator() {
                     handleChange(entry.id, 'quantity', e.target.value)
                   }
                   placeholder="1"
-                  className="w-full px-2 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-stone-900 font-mono placeholder:text-stone-400"
+                  aria-label={`Quantity, board ${index + 1}`}
+                  className={INPUT_CLASS}
                   data-testid={`quantity-input-${index}`}
                 />
               </div>
               <div className="col-span-3 text-stone-700 font-mono text-sm px-2">
-                {bf > 0 ? `${formatBoardFeet(bf)} bf` : '\u2014'}
+                {bf > 0 ? `${formatBoardFeet(bf)} bf` : '—'}
               </div>
               <div className="col-span-1 flex justify-center">
                 <button
@@ -184,7 +222,7 @@ export default function BoardFeetCalculator() {
                   disabled={entries.length <= 1}
                   className="p-2 text-stone-400 hover:text-red-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                   type="button"
-                  aria-label="Remove entry"
+                  aria-label={`Remove board ${index + 1}`}
                   data-testid={`remove-entry-${index}`}
                 >
                   <svg
@@ -192,6 +230,7 @@ export default function BoardFeetCalculator() {
                     className="h-5 w-5"
                     viewBox="0 0 20 20"
                     fill="currentColor"
+                    aria-hidden="true"
                   >
                     <path
                       fillRule="evenodd"
@@ -207,9 +246,47 @@ export default function BoardFeetCalculator() {
 
         <p className="text-xs text-stone-500">
           {units === 'metric'
-            ? 'Dimensions in mm (converted to inches). Board feet = (T\u00d7W\u00d7L in inches \u00d7 Qty) / 144'
-            : 'All dimensions in inches. Board feet = (Thickness \u00d7 Width \u00d7 Length \u00d7 Qty) / 144'}
+            ? 'Dimensions in mm (converted to inches). Board feet = (T×W×L in inches × Qty) / 144'
+            : 'All dimensions in inches, as decimals or fractions (3/4, 1-1/2). Board feet = (Thickness × Width × Length × Qty) / 144'}
         </p>
+
+        {/* Waste and price */}
+        <div className="grid grid-cols-2 gap-4 bg-stone-50 p-4 rounded-lg">
+          <div>
+            <label htmlFor="bf-waste" className="block text-sm font-medium text-stone-700 mb-1">
+              Waste allowance (%)
+            </label>
+            <input
+              id="bf-waste"
+              type="text"
+              inputMode="decimal"
+              value={wastePercent}
+              onChange={(e) => {
+                if (isValidNumericInput(e.target.value)) setWastePercent(e.target.value);
+              }}
+              placeholder="0"
+              className={INPUT_CLASS}
+              data-testid="waste-input"
+            />
+          </div>
+          <div>
+            <label htmlFor="bf-price" className="block text-sm font-medium text-stone-700 mb-1">
+              Price per board foot ($)
+            </label>
+            <input
+              id="bf-price"
+              type="text"
+              inputMode="decimal"
+              value={pricePerBoardFoot}
+              onChange={(e) => {
+                if (isValidNumericInput(e.target.value)) setPricePerBoardFoot(e.target.value);
+              }}
+              placeholder="0.00"
+              className={INPUT_CLASS}
+              data-testid="price-input"
+            />
+          </div>
+        </div>
 
         {/* Add Entry sits with Clear at the foot of the list rather than in the
             header, so adding a run of boards doesn't mean scrolling back up. */}

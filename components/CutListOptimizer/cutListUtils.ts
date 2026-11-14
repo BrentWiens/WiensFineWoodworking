@@ -1,9 +1,13 @@
+import { parseMeasurement } from '../FractionalCalculator/fractionalUtils';
+
 // === TYPES ===
 
 export type GrainDirection = 'along-length' | 'along-width' | 'no-preference';
 
 export interface PieceInput {
   id: string;
+  /** Optional label, e.g. "Shelf". Missing on cut lists saved before names existed. */
+  name?: string;
   width: string;
   length: string;
   quantity: string;
@@ -12,6 +16,7 @@ export interface PieceInput {
 
 export interface PieceData {
   id: string;
+  name?: string;
   width: number;
   length: number;
   quantity: number;
@@ -21,6 +26,7 @@ export interface PieceData {
 export interface PieceInstance {
   id: string;
   pieceId: string;
+  name?: string;
   width: number;
   length: number;
   grainDirection: GrainDirection;
@@ -75,7 +81,14 @@ export interface OptimizationResult {
   warnings: string[];
   algorithmUsed: string;
   algorithmsCompared: AlgorithmComparison[];
+  /** Sheets the whole list would take. Only set when some pieces were left unplaced. */
+  sheetsNeeded?: number;
 }
+
+type AlgorithmRun = {
+  result: Omit<OptimizationResult, 'algorithmUsed' | 'algorithmsCompared'>;
+  comparison: AlgorithmComparison;
+};
 
 export interface AlgorithmComparison {
   name: string;
@@ -127,6 +140,7 @@ export const PIECE_COLORS = [
 export function createEmptyPiece(): PieceInput {
   return {
     id: crypto.randomUUID(),
+    name: '',
     width: '',
     length: '',
     quantity: '1',
@@ -138,22 +152,35 @@ export function getPieceColor(pieceIndex: number): string {
   return PIECE_COLORS[pieceIndex % PIECE_COLORS.length];
 }
 
-export function getPieceLabel(piece: PieceInstance): string {
-  return `${piece.width} x ${piece.length}`;
+/** A piece's size as "length x width", the order the inputs are in. */
+export function getPieceLabel(piece: { width: number; length: number }): string {
+  return `${piece.length} x ${piece.width}`;
+}
+
+/** The size, led by the piece's name when it has one: "Shelf (36 x 24)". */
+export function describePiece(piece: { name?: string; width: number; length: number }): string {
+  const name = piece.name?.trim();
+  return name ? `${name} (${getPieceLabel(piece)})` : getPieceLabel(piece);
 }
 
 // === VALIDATION ===
 
-export function parseSheetConfig(config: SheetConfig): SheetConfigData | null {
-  const width = parseFloat(config.width);
-  const length = parseFloat(config.length);
-  const kerfWidth = parseFloat(config.kerfWidth);
-  const sheetsAvailable = parseInt(config.sheetsAvailable, 10);
+/** A whole number with nothing else around it, or null. `parseInt` alone would read "2.9" as 2. */
+function parseWholeNumber(value: string): number | null {
+  const trimmed = value.trim();
+  return /^\d+$/.test(trimmed) ? parseInt(trimmed, 10) : null;
+}
 
-  if (isNaN(width) || width <= 0) return null;
-  if (isNaN(length) || length <= 0) return null;
-  if (isNaN(kerfWidth) || kerfWidth < 0) return null;
-  if (isNaN(sheetsAvailable) || sheetsAvailable < 1) return null;
+export function parseSheetConfig(config: SheetConfig): SheetConfigData | null {
+  const width = parseMeasurement(config.width);
+  const length = parseMeasurement(config.length);
+  const kerfWidth = parseMeasurement(config.kerfWidth);
+  const sheetsAvailable = parseWholeNumber(config.sheetsAvailable);
+
+  if (width === null || width <= 0) return null;
+  if (length === null || length <= 0) return null;
+  if (kerfWidth === null || kerfWidth < 0) return null;
+  if (sheetsAvailable === null || sheetsAvailable < 1) return null;
 
   return { width, length, kerfWidth, sheetsAvailable };
 }
@@ -174,25 +201,32 @@ export function parsePieces(pieces: PieceInput[]): { pieces: PieceData[]; errors
   pieces.forEach((piece, index) => {
     if (isPieceRowEmpty(piece)) return;
 
-    const width = parseFloat(piece.width);
-    const length = parseFloat(piece.length);
-    const quantity = parseInt(piece.quantity, 10);
+    // Decimals or fractions ("23 1/2"); anything else is an error rather than a guess
+    const width = parseMeasurement(piece.width);
+    const length = parseMeasurement(piece.length);
+    // A blank quantity means one, the same as the placeholder shows
+    const quantity = piece.quantity.trim() === '' ? 1 : parseWholeNumber(piece.quantity);
 
-    if (isNaN(width) || width <= 0) {
+    if (width === null || width <= 0) {
       errors.push(`Row ${index + 1}: Invalid width`);
       return;
     }
-    if (isNaN(length) || length <= 0) {
+    if (length === null || length <= 0) {
       errors.push(`Row ${index + 1}: Invalid length`);
       return;
     }
-    if (isNaN(quantity) || quantity < 1) {
+    if (quantity === null) {
+      errors.push(`Row ${index + 1}: Quantity must be a whole number`);
+      return;
+    }
+    if (quantity < 1) {
       errors.push(`Row ${index + 1}: Quantity must be at least 1`);
       return;
     }
 
     parsedPieces.push({
       id: piece.id,
+      name: piece.name?.trim() || undefined,
       width,
       length,
       quantity,
@@ -217,21 +251,21 @@ export function validatePiecesAgainstSheet(
       // Piece length must align with sheet length (grain), so no rotation
       if (!fitsNormal) {
         errors.push(
-          `Piece ${piece.width} x ${piece.length}: Too large for sheet with "Along Length" grain`
+          `Piece ${describePiece(piece)}: Too large for sheet with "Along Length" grain`
         );
       }
     } else if (piece.grainDirection === 'along-width') {
       // Piece width must align with sheet length (grain), so must rotate
       if (!fitsRotated) {
         errors.push(
-          `Piece ${piece.width} x ${piece.length}: Too large for sheet with "Along Width" grain`
+          `Piece ${describePiece(piece)}: Too large for sheet with "Along Width" grain`
         );
       }
     } else {
       // No preference - can try both
       if (!fitsNormal && !fitsRotated) {
         errors.push(
-          `Piece ${piece.width} x ${piece.length}: Too large to fit on sheet in any orientation`
+          `Piece ${describePiece(piece)}: Too large to fit on sheet in any orientation`
         );
       }
     }
@@ -317,6 +351,7 @@ function expandPiecesToInstances(pieces: PieceData[]): PieceInstance[] {
       instances.push({
         id: `${piece.id}-${i}`,
         pieceId: piece.id,
+        name: piece.name,
         width: piece.width,
         length: piece.length,
         grainDirection: piece.grainDirection,
@@ -352,6 +387,63 @@ function getAllowedOrientations(
         { w: piece.length, h: piece.width, rotated: true },
       ];
   }
+}
+
+/** "Could not place" text listing each unplaced size once, with a count when there are several. */
+function describeUnplaced(unplacedPieces: PieceInstance[]): string {
+  const counts = new Map<string, number>();
+  for (const piece of unplacedPieces) {
+    const key = describePiece(piece);
+    counts.set(key, (counts.get(key) || 0) + 1);
+  }
+
+  const list = Array.from(counts.entries())
+    .map(([size, count]) => (count > 1 ? `${size} (${count})` : size))
+    .join(', ');
+
+  return `Could not place: ${list}.`;
+}
+
+/** Statistics and warnings for a finished layout, shared by all three algorithms. */
+function summarizeLayout(
+  sheets: SheetLayout[],
+  unplacedPieces: PieceInstance[],
+  sheet: SheetConfigData,
+  config: AlgorithmConfig
+): AlgorithmRun {
+  const sheetArea = sheet.width * sheet.length;
+
+  for (const sheetLayout of sheets) {
+    sheetLayout.wasteArea = sheetArea - sheetLayout.usedArea;
+    sheetLayout.efficiency = (sheetLayout.usedArea / sheetArea) * 100;
+  }
+
+  const totalUsedArea = sheets.reduce((sum, s) => sum + s.usedArea, 0);
+  const totalSheetArea = sheets.length * sheetArea;
+  const totalWasteArea = totalSheetArea - totalUsedArea;
+  const overallEfficiency = totalSheetArea > 0 ? (totalUsedArea / totalSheetArea) * 100 : 0;
+
+  const warnings = unplacedPieces.length > 0
+    ? [`${describeUnplaced(unplacedPieces)} You may need more sheets.`]
+    : [];
+
+  return {
+    result: {
+      sheets,
+      totalSheets: sheets.length,
+      totalUsedArea,
+      totalWasteArea,
+      overallEfficiency,
+      unplacedPieces,
+      warnings,
+    },
+    comparison: {
+      name: config.name,
+      efficiency: overallEfficiency,
+      sheetsUsed: sheets.length,
+      unplacedCount: unplacedPieces.length,
+    },
+  };
 }
 
 function createNewSheet(sheetIndex: number, sheet: SheetConfigData): SheetLayout {
@@ -513,8 +605,7 @@ function runShelfAlgorithm(
   pieces: PieceData[],
   sheet: SheetConfigData,
   config: AlgorithmConfig
-): { result: Omit<OptimizationResult, 'algorithmUsed' | 'algorithmsCompared'>; comparison: AlgorithmComparison } {
-  const warnings: string[] = [];
+): AlgorithmRun {
   const unplacedPieces: PieceInstance[] = [];
   const sheets: SheetLayout[] = [];
 
@@ -632,47 +723,7 @@ function runShelfAlgorithm(
     }
   }
 
-  // Calculate statistics
-  const sheetArea = sheet.width * sheet.length;
-  for (const sheetLayout of sheets) {
-    sheetLayout.wasteArea = sheetArea - sheetLayout.usedArea;
-    sheetLayout.efficiency = (sheetLayout.usedArea / sheetArea) * 100;
-  }
-
-  const totalUsedArea = sheets.reduce((sum, s) => sum + s.usedArea, 0);
-  const totalSheetArea = sheets.length * sheetArea;
-  const totalWasteArea = totalSheetArea - totalUsedArea;
-  const overallEfficiency = totalSheetArea > 0 ? (totalUsedArea / totalSheetArea) * 100 : 0;
-
-  if (unplacedPieces.length > 0) {
-    const unplacedBySize = new Map<string, number>();
-    for (const p of unplacedPieces) {
-      const key = `${p.width} x ${p.length}`;
-      unplacedBySize.set(key, (unplacedBySize.get(key) || 0) + 1);
-    }
-    const unplacedList = Array.from(unplacedBySize.entries())
-      .map(([size, count]) => count > 1 ? `${size} (${count})` : size)
-      .join(', ');
-    warnings.push(`Could not place: ${unplacedList}. You may need more sheets.`);
-  }
-
-  return {
-    result: {
-      sheets,
-      totalSheets: sheets.length,
-      totalUsedArea,
-      totalWasteArea,
-      overallEfficiency,
-      unplacedPieces,
-      warnings,
-    },
-    comparison: {
-      name: config.name,
-      efficiency: overallEfficiency,
-      sheetsUsed: sheets.length,
-      unplacedCount: unplacedPieces.length,
-    },
-  };
+  return summarizeLayout(sheets, unplacedPieces, sheet, config);
 }
 
 // === SKYLINE (BOTTOM-LEFT) ALGORITHM ===
@@ -688,8 +739,7 @@ function runSkylineAlgorithm(
   pieces: PieceData[],
   sheet: SheetConfigData,
   config: AlgorithmConfig
-): { result: Omit<OptimizationResult, 'algorithmUsed' | 'algorithmsCompared'>; comparison: AlgorithmComparison } {
-  const warnings: string[] = [];
+): AlgorithmRun {
   const unplacedPieces: PieceInstance[] = [];
   const sheets: SheetLayout[] = [];
 
@@ -783,47 +833,7 @@ function runSkylineAlgorithm(
     }
   }
 
-  // Calculate statistics
-  const sheetArea = sheet.width * sheet.length;
-  for (const sheetLayout of sheets) {
-    sheetLayout.wasteArea = sheetArea - sheetLayout.usedArea;
-    sheetLayout.efficiency = (sheetLayout.usedArea / sheetArea) * 100;
-  }
-
-  const totalUsedArea = sheets.reduce((sum, s) => sum + s.usedArea, 0);
-  const totalSheetArea = sheets.length * sheetArea;
-  const totalWasteArea = totalSheetArea - totalUsedArea;
-  const overallEfficiency = totalSheetArea > 0 ? (totalUsedArea / totalSheetArea) * 100 : 0;
-
-  if (unplacedPieces.length > 0) {
-    const unplacedBySize = new Map<string, number>();
-    for (const p of unplacedPieces) {
-      const key = `${p.width} x ${p.length}`;
-      unplacedBySize.set(key, (unplacedBySize.get(key) || 0) + 1);
-    }
-    const unplacedList = Array.from(unplacedBySize.entries())
-      .map(([size, count]) => count > 1 ? `${size} (${count})` : size)
-      .join(', ');
-    warnings.push(`Could not place: ${unplacedList}. You may need more sheets.`);
-  }
-
-  return {
-    result: {
-      sheets,
-      totalSheets: sheets.length,
-      totalUsedArea,
-      totalWasteArea,
-      overallEfficiency,
-      unplacedPieces,
-      warnings,
-    },
-    comparison: {
-      name: config.name,
-      efficiency: overallEfficiency,
-      sheetsUsed: sheets.length,
-      unplacedCount: unplacedPieces.length,
-    },
-  };
+  return summarizeLayout(sheets, unplacedPieces, sheet, config);
 }
 
 // Find the best position on the skyline for a piece (lowest y that fits)
@@ -943,8 +953,7 @@ function runSingleAlgorithm(
   pieces: PieceData[],
   sheet: SheetConfigData,
   config: AlgorithmConfig
-): { result: Omit<OptimizationResult, 'algorithmUsed' | 'algorithmsCompared'>; comparison: AlgorithmComparison } {
-  const warnings: string[] = [];
+): AlgorithmRun {
   const unplacedPieces: PieceInstance[] = [];
   const sheets: SheetLayout[] = [];
 
@@ -989,69 +998,17 @@ function runSingleAlgorithm(
     }
   }
 
-  // Step 4: Calculate statistics
-  const sheetArea = sheet.width * sheet.length;
-
-  for (const sheetLayout of sheets) {
-    sheetLayout.wasteArea = sheetArea - sheetLayout.usedArea;
-    sheetLayout.efficiency = (sheetLayout.usedArea / sheetArea) * 100;
-  }
-
-  const totalUsedArea = sheets.reduce((sum, s) => sum + s.usedArea, 0);
-  const totalSheetArea = sheets.length * sheetArea;
-  const totalWasteArea = totalSheetArea - totalUsedArea;
-  const overallEfficiency = totalSheetArea > 0 ? (totalUsedArea / totalSheetArea) * 100 : 0;
-
-  if (unplacedPieces.length > 0) {
-    // Group unplaced pieces by dimensions
-    const unplacedBySize = new Map<string, number>();
-    for (const piece of unplacedPieces) {
-      const key = `${piece.width} x ${piece.length}`;
-      unplacedBySize.set(key, (unplacedBySize.get(key) || 0) + 1);
-    }
-
-    const unplacedList = Array.from(unplacedBySize.entries())
-      .map(([size, count]) => count > 1 ? `${size} (${count})` : size)
-      .join(', ');
-
-    warnings.push(
-      `Could not place: ${unplacedList}. You may need more sheets.`
-    );
-  }
-
-  return {
-    result: {
-      sheets,
-      totalSheets: sheets.length,
-      totalUsedArea,
-      totalWasteArea,
-      overallEfficiency,
-      unplacedPieces,
-      warnings,
-    },
-    comparison: {
-      name: config.name,
-      efficiency: overallEfficiency,
-      sheetsUsed: sheets.length,
-      unplacedCount: unplacedPieces.length,
-    },
-  };
+  return summarizeLayout(sheets, unplacedPieces, sheet, config);
 }
 
-export function optimizeCutList(
+/** Runs every algorithm configuration and returns them ranked, best first. */
+function runAllAlgorithms(
   pieces: PieceData[],
   sheet: SheetConfigData
-): OptimizationResult {
-  // Run all algorithm configurations
-  const results: Array<{
-    result: Omit<OptimizationResult, 'algorithmUsed' | 'algorithmsCompared'>;
-    comparison: AlgorithmComparison;
-    config: AlgorithmConfig;
-  }> = [];
-
-  for (const config of ALGORITHM_CONFIGS) {
+): Array<AlgorithmRun & { config: AlgorithmConfig }> {
+  const results = ALGORITHM_CONFIGS.map((config) => {
     // Choose algorithm implementation based on type
-    let algorithmResult: { result: Omit<OptimizationResult, 'algorithmUsed' | 'algorithmsCompared'>; comparison: AlgorithmComparison };
+    let algorithmResult: AlgorithmRun;
     if (config.algorithmType === 'shelf') {
       algorithmResult = runShelfAlgorithm(pieces, sheet, config);
     } else if (config.algorithmType === 'skyline') {
@@ -1059,14 +1016,14 @@ export function optimizeCutList(
     } else {
       algorithmResult = runSingleAlgorithm(pieces, sheet, config);
     }
-    results.push({ result: algorithmResult.result, comparison: algorithmResult.comparison, config });
-  }
+    return { ...algorithmResult, config };
+  });
 
   // Find the best result:
   // 1. Fewest unplaced pieces
   // 2. Fewest sheets used
   // 3. Highest efficiency
-  results.sort((a, b) => {
+  return results.sort((a, b) => {
     // First: fewer unplaced pieces is better
     if (a.comparison.unplacedCount !== b.comparison.unplacedCount) {
       return a.comparison.unplacedCount - b.comparison.unplacedCount;
@@ -1078,13 +1035,35 @@ export function optimizeCutList(
     // Third: higher efficiency is better
     return b.comparison.efficiency - a.comparison.efficiency;
   });
+}
 
+export function optimizeCutList(
+  pieces: PieceData[],
+  sheet: SheetConfigData
+): OptimizationResult {
+  const results = runAllAlgorithms(pieces, sheet);
   const best = results[0];
-  const algorithmsCompared = results.map(r => r.comparison);
 
-  return {
+  const optimized: OptimizationResult = {
     ...best.result,
     algorithmUsed: best.config.name,
-    algorithmsCompared,
+    algorithmsCompared: results.map(r => r.comparison),
   };
+
+  // When the sheets ran out, lay the list out again with one sheet per piece on
+  // offer — more than it can ever use — to say how many the job really takes.
+  if (optimized.unplacedPieces.length > 0) {
+    const pieceCount = pieces.reduce((sum, piece) => sum + piece.quantity, 0);
+    const unlimited = runAllAlgorithms(pieces, { ...sheet, sheetsAvailable: pieceCount })[0].result;
+
+    // Still unplaced means a piece that fits no sheet at all, so there's no number to give
+    if (unlimited.unplacedPieces.length === 0) {
+      optimized.sheetsNeeded = unlimited.totalSheets;
+      optimized.warnings = [
+        `${describeUnplaced(optimized.unplacedPieces)} The full list needs ${unlimited.totalSheets} sheets.`,
+      ];
+    }
+  }
+
+  return optimized;
 }

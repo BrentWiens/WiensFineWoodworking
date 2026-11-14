@@ -8,17 +8,17 @@ test.describe('Fractional Calculator', () => {
     await expect(page).toHaveTitle(/Fractional Calculator/);
 
     // Calculator should be visible
-    const calculator = page.getByRole('application', { name: 'Fractional Calculator' });
+    const calculator = page.getByRole('group', { name: 'Fractional Calculator' });
     await expect(calculator).toBeVisible();
 
     // Should have three number pads
-    const numberPads = page.locator('text=Whole');
+    const numberPads = calculator.getByText('Whole', { exact: true });
     await expect(numberPads).toBeVisible();
 
-    const numeratorPad = page.locator('text=Numerator');
+    const numeratorPad = calculator.getByText('Numerator', { exact: true });
     await expect(numeratorPad).toBeVisible();
 
-    const denominatorPad = page.locator('text=Denominator');
+    const denominatorPad = calculator.getByText('Denominator', { exact: true });
     await expect(denominatorPad).toBeVisible();
   });
 
@@ -159,5 +159,96 @@ test.describe('Fractional Calculator - Navigation', () => {
     // Should navigate to calculator page
     await page.waitForURL('/tools/fractional-calculator');
     await expect(page).toHaveTitle(/Fractional Calculator/);
+  });
+});
+
+test.describe('Fractional Calculator - Negative results and errors', () => {
+  test('keeps the minus sign on a result between -1 and 0', async ({ page }) => {
+    await page.goto('/tools/fractional-calculator', { waitUntil: 'networkidle' });
+
+    // 1/4 - 1/2 = -1/4
+    await page.getByRole('button', { name: 'Numerator 1' }).click();
+    await page.getByRole('button', { name: 'Denominator 4' }).click();
+    await page.getByRole('button', { name: 'Subtract' }).click();
+    await page.getByRole('button', { name: 'Numerator 1' }).click();
+    await page.getByRole('button', { name: 'Denominator 2' }).click();
+    await page.getByRole('button', { name: 'Calculate result' }).click();
+
+    await expect(page.getByTestId('display-sign')).toBeVisible();
+    await expect(page.getByTestId('display-numerator')).toHaveText('1');
+    await expect(page.getByTestId('display-denominator')).toHaveText('4');
+    await expect(page.getByTestId('decimal-display')).toContainText('= -0.25');
+  });
+
+  test('carries a negative result into the next calculation', async ({ page }) => {
+    await page.goto('/tools/fractional-calculator', { waitUntil: 'networkidle' });
+
+    // 1 - 3 = -2, then + 5 = 3
+    await page.getByRole('button', { name: 'Whole 1' }).click();
+    await page.getByRole('button', { name: 'Subtract' }).click();
+    await page.getByRole('button', { name: 'Whole 3' }).click();
+    await page.getByRole('button', { name: 'Calculate result' }).click();
+    await expect(page.getByTestId('decimal-display')).toContainText('= -2');
+
+    await page.getByRole('button', { name: 'Add', exact: true }).click();
+    await page.getByRole('button', { name: 'Whole 5' }).click();
+    await page.getByRole('button', { name: 'Calculate result' }).click();
+    await expect(page.getByTestId('display-whole')).toHaveText('3');
+    await expect(page.getByTestId('display-sign')).toHaveCount(0);
+  });
+
+  test('reports division by zero instead of answering 0', async ({ page }) => {
+    await page.goto('/tools/fractional-calculator', { waitUntil: 'networkidle' });
+
+    await page.getByRole('button', { name: 'Whole 5' }).click();
+    await page.getByRole('button', { name: 'Divide' }).click();
+    await page.getByRole('button', { name: 'Whole 0' }).click();
+    await page.getByRole('button', { name: 'Calculate result' }).click();
+
+    await expect(page.getByTestId('display-error')).toContainText('divide by zero');
+
+    // Typing again clears the message
+    await page.getByRole('button', { name: 'Whole 7' }).click();
+    await expect(page.getByTestId('display-error')).toHaveCount(0);
+    await expect(page.getByTestId('display-whole')).toHaveText('7');
+  });
+});
+
+test.describe('Fractional Calculator - Keyboard', () => {
+  test('types a mixed-number sum from the keyboard', async ({ page }) => {
+    await page.goto('/tools/fractional-calculator', { waitUntil: 'networkidle' });
+
+    await page.getByTestId('calculator').focus();
+    // 2 3/4 + 1 1/2 = 4 1/4
+    await page.keyboard.type('2 3 4+1 1 2');
+    await page.keyboard.press('Enter');
+
+    await expect(page.getByTestId('display-whole')).toHaveText('4');
+    await expect(page.getByTestId('display-numerator')).toHaveText('1');
+    await expect(page.getByTestId('display-denominator')).toHaveText('4');
+  });
+
+  test('slash moves from numerator to denominator, and divides elsewhere', async ({ page }) => {
+    await page.goto('/tools/fractional-calculator', { waitUntil: 'networkidle' });
+
+    await page.getByTestId('calculator').focus();
+    // "1 1/2" then "/2" = 3/4
+    await page.keyboard.type('1 1/2/2=');
+
+    await expect(page.getByTestId('display-numerator')).toHaveText('3');
+    await expect(page.getByTestId('display-denominator')).toHaveText('4');
+    await expect(page.getByTestId('decimal-display')).toContainText('= 0.75');
+  });
+
+  test('Escape clears and Backspace deletes', async ({ page }) => {
+    await page.goto('/tools/fractional-calculator', { waitUntil: 'networkidle' });
+
+    await page.getByTestId('calculator').focus();
+    await page.keyboard.type('125');
+    await page.keyboard.press('Backspace');
+    await expect(page.getByTestId('display-whole')).toHaveText('12');
+
+    await page.keyboard.press('Escape');
+    await expect(page.getByTestId('display-whole')).toHaveText('0');
   });
 });

@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest';
 import {
   parseInput,
   decimalToFraction,
-  formatDecimal,
   formatSide,
   formatAngle,
   formatAsFraction,
@@ -67,19 +66,6 @@ describe('decimalToFraction', () => {
   });
 });
 
-describe('formatDecimal', () => {
-  it('formats with up to 4 decimal places', () => {
-    expect(formatDecimal(3.5)).toBe('3.5');
-    expect(formatDecimal(5)).toBe('5');
-    expect(formatDecimal(1.23456)).toBe('1.2346');
-  });
-
-  it('strips trailing zeros', () => {
-    expect(formatDecimal(3.0)).toBe('3');
-    expect(formatDecimal(3.10)).toBe('3.1');
-  });
-});
-
 describe('formatSide', () => {
   it('formats with up to 3 decimal places', () => {
     expect(formatSide(3.5)).toBe('3.5');
@@ -111,6 +97,12 @@ describe('formatAsFraction', () => {
     expect(formatAsFraction(0.5)).toBe('1/2');
     expect(formatAsFraction(2.5)).toBe('2-1/2');
     expect(formatAsFraction(5)).toBe('5');
+  });
+
+  it('rounds to the nearest 64th rather than an arbitrary denominator', () => {
+    // 1/3 is not on a tape measure; 21/64 is the closest mark
+    expect(formatAsFraction(1 / 3)).toBe('21/64');
+    expect(formatAsFraction(Math.sqrt(12.5))).toBe('3-17/32');
   });
 });
 
@@ -231,6 +223,20 @@ describe('solveTriangle', () => {
     it('rejects 3 sides that do not form a right triangle', () => {
       const result = solveTriangle({ ...empty, a: 3, b: 4, c: 6 });
       expect(result.error).toContain('valid right triangle');
+    });
+
+    it('accepts an angle that agrees with two given sides', () => {
+      expect(solveTriangle({ ...empty, a: 3, b: 4, A: 36.9 }).error).toBeNull();
+      expect(solveTriangle({ ...empty, a: 3, b: 4, A: 37 }).error).toBeNull();
+      expect(solveTriangle({ ...empty, a: 3, c: 5, B: 53.1 }).error).toBeNull();
+    });
+
+    it('rejects an angle that contradicts two given sides', () => {
+      const result = solveTriangle({ ...empty, a: 3, b: 4, A: 10 });
+      expect(result.error).toContain('Angle A does not match');
+      expect(result.error).toContain('36.9');
+
+      expect(solveTriangle({ ...empty, a: 3, c: 5, B: 10 }).error).toContain('Angle B does not match');
     });
   });
 });

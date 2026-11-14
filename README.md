@@ -30,7 +30,7 @@ Two majors are available but deliberately held back — both are blocked on
 
 - 📸 **Photo Gallery** - Project photos in 4 sections (Tables & Desks; Finish Carpentry; Beds & Shelves; Boxes & Small Work) with jump links, lightbox modal, keyboard navigation, and smooth transitions
 - 📄 **Project Pages** - Every piece has its own indexable page at `/projects/[slug]` with materials, breadcrumbs, Schema.org `CreativeWork` markup, and prev/next navigation
-- 🛠️ **Woodworking Tools** - 5 interactive calculators: dovetail & box joint visualizer, fractional calculator, board feet calculator, cut list optimizer (9 packing algorithms), and trigonometry calculator. Features imperial/metric unit toggle, localStorage persistence, and print-friendly layouts
+- 🛠️ **Woodworking Tools** - 5 interactive calculators: dovetail & box joint visualizer, fractional calculator, board feet calculator, cut list optimizer (9 packing algorithms), and trigonometry calculator. Dimensions accept decimals or fractions, an imperial/metric toggle converts what is already entered, the cut list is saved in localStorage and prints, and each page carries a short guide, links to the other tools and `WebApplication` structured data
 - 🖼️ **Image Optimization** - Automatic WebP/AVIF conversion, responsive sizing, lazy loading
 - 📱 **Fully Responsive** - Mobile-first design optimized for all screen sizes
 - ⚡ **Performance** - Server-side rendering, static generation, optimized images
@@ -147,6 +147,8 @@ WiensFineWoodworking/
 │   ├── TrigCalculator/       # Right triangle solver
 │   ├── business/             # Forms and navigation for the private tools
 │   ├── UnitToggle.tsx        # Imperial/metric unit toggle
+│   ├── units.ts              # Unit conversion shared by the calculators
+│   ├── ToolGuide.tsx         # "How it works", related tools and JSON-LD under each calculator
 │   ├── CommissionCta.tsx     # Soft CTA shown on the tool pages
 │   ├── SocialLinks.tsx       # Shared Facebook/Instagram links
 │   ├── PageHero.tsx          # Shared full-bleed page header
@@ -158,6 +160,7 @@ WiensFineWoodworking/
 │   ├── projects.ts           # Project registry: pages, gallery, sitemap
 │   ├── imageDimensions.ts    # Reads photo sizes at build time
 │   ├── metadata.ts           # Shared OG image for the /tools section
+│   ├── tools.ts              # The public calculators: one list for /tools, related links and the sitemap
 │   ├── auth/                 # Google sign-in, session cookie, session checks
 │   ├── db/                   # Database connection and schema
 │   ├── mileage/              # Mileage validation, data access, summary, CSV

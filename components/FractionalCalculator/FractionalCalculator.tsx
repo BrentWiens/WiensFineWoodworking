@@ -7,7 +7,8 @@ import {
   formatFraction,
   fractionToDecimal,
   calculate,
-  toMixed,
+  entryToFraction,
+  isNegativeFraction,
 } from './fractionalUtils';
 
 interface HistoryEntry {
@@ -15,14 +16,21 @@ interface HistoryEntry {
   result: string;
 }
 
+type EntryField = 'whole' | 'numerator' | 'denominator';
+
 interface CalculatorState {
   whole: string;
   numerator: string;
   denominator: string;
+  /** Sign of the value on screen. Only a result can be negative; the pads type magnitudes. */
+  negative: boolean;
+  /** The pad that keyboard digits go to. */
+  activeField: EntryField;
   previousValue: Fraction | null;
   operation: Operation | null;
   waitingForOperand: boolean;
   currentExpression: string;
+  error: string | null;
   history: HistoryEntry[];
   showHistory: boolean;
 }
@@ -31,13 +39,43 @@ const INITIAL_STATE: CalculatorState = {
   whole: '',
   numerator: '',
   denominator: '',
+  negative: false,
+  activeField: 'whole',
   previousValue: null,
   operation: null,
   waitingForOperand: false,
   currentExpression: '',
+  error: null,
   history: [],
   showHistory: false,
 };
+
+const DIVIDE_BY_ZERO = "Can't divide by zero";
+
+const FIELD_ORDER: EntryField[] = ['whole', 'numerator', 'denominator'];
+
+/** Appends a digit to one pad's value, or returns null when the pad won't take it. */
+function appendDigit(field: EntryField, current: string, digit: string): string | null {
+  if (field === 'whole') {
+    if (current.length >= 6) return null;
+    if (current === '0') return digit === '0' ? null : digit;
+    return current + digit;
+  }
+  if (current.length >= 3) return null;
+  if (current === '0') return field === 'denominator' && digit === '0' ? null : digit;
+  return current + digit;
+}
+
+/** Drops the sign once there is no value left for it to apply to. */
+function withSignCleared(state: CalculatorState): CalculatorState {
+  const empty = state.whole === '' && state.numerator === '' && state.denominator === '';
+  return empty ? { ...state, negative: false } : state;
+}
+
+/** State after a calculation fails: everything cleared except the history, with a message. */
+function failed(prev: CalculatorState, error: string): CalculatorState {
+  return { ...INITIAL_STATE, history: prev.history, showHistory: prev.showHistory, error };
+}
 
 // Button component for consistent styling
 function CalcButton({
@@ -87,6 +125,7 @@ function NumberPad({
   label,
   showDecimal = false,
   padId,
+  active,
 }: {
   onNumber: (num: string) => void;
   onBackspace: () => void;
@@ -94,10 +133,17 @@ function NumberPad({
   label: string;
   showDecimal?: boolean;
   padId: string;
+  /** Whether keyboard digits currently go to this pad. */
+  active: boolean;
 }) {
   return (
     <div className="flex flex-col flex-1" role="group" aria-label={`${label} input`} data-testid={`${padId}-pad`}>
-      <div className="text-xs text-stone-500 mb-2 font-medium uppercase tracking-wide text-center" id={`${label.toLowerCase()}-label`}>
+      <div
+        className={`text-xs mb-2 font-medium uppercase tracking-wide text-center ${
+          active ? 'text-amber-700 underline underline-offset-4 decoration-2' : 'text-stone-500'
+        }`}
+        data-active={active}
+      >
         {label}
       </div>
       <div className="grid grid-cols-3 gap-1.5">
@@ -162,108 +208,41 @@ function NumberPad({
 export default function FractionalCalculator() {
   const [state, setState] = useState<CalculatorState>(INITIAL_STATE);
 
-  // Get current fraction from state
-  const getCurrentFraction = useCallback((): Fraction => {
-    const wholeValue = parseFloat(state.whole) || 0;
-    const whole = Math.floor(wholeValue);
-    const decimalPart = wholeValue - whole;
-    const numerator = parseInt(state.numerator, 10) || 0;
-    const denominator = parseInt(state.denominator, 10) || 1;
-
-    // If denominator is 0, treat as 1
-    const safeDenom = denominator === 0 ? 1 : denominator;
-
-    // If there's a decimal part in the whole number, convert it to fraction
-    if (decimalPart > 0.0001) {
-      // Convert decimal to fraction with denominator based on precision
-      const precision = (state.whole.split('.')[1]?.length || 0);
-      const decimalDenom = Math.pow(10, precision);
-      const decimalNum = Math.round(decimalPart * decimalDenom);
-
-      // Add the decimal fraction to the existing fraction
-      // (decimalNum/decimalDenom) + (numerator/safeDenom)
-      const combinedNum = decimalNum * safeDenom + numerator * decimalDenom;
-      const combinedDenom = decimalDenom * safeDenom;
-
-      const result = toMixed(whole * combinedDenom + combinedNum, combinedDenom);
-      return result;
-    }
-
-    // Convert to proper mixed number if numerator >= denominator
-    if (numerator >= safeDenom && safeDenom > 0) {
-      const result = toMixed(whole * safeDenom + numerator, safeDenom);
-      return result;
-    }
-
-    return { whole, numerator, denominator: safeDenom };
-  }, [state.whole, state.numerator, state.denominator]);
-
-  // Handle number input for whole
-  const handleWholeNumber = useCallback((num: string) => {
+  // Handle a digit typed into one of the three pads
+  const handleDigit = useCallback((field: EntryField, digit: string) => {
     setState((prev) => {
-      if (prev.whole.length >= 6) return prev;
-      if (prev.whole === '0' && num !== '0') return { ...prev, whole: num, waitingForOperand: false };
-      if (prev.whole === '0' && num === '0') return prev;
-      return { ...prev, whole: prev.whole + num, waitingForOperand: false };
+      const next = appendDigit(field, prev[field], digit);
+      if (next === null) return { ...prev, activeField: field, error: null };
+      return { ...prev, [field]: next, activeField: field, waitingForOperand: false, error: null };
     });
   }, []);
 
   // Handle decimal input for whole
   const handleWholeDecimal = useCallback(() => {
     setState((prev) => {
-      if (prev.whole.includes('.')) return prev;
-      if (prev.whole === '') return { ...prev, whole: '0.', waitingForOperand: false };
-      return { ...prev, whole: prev.whole + '.', waitingForOperand: false };
+      if (prev.whole.includes('.')) return { ...prev, activeField: 'whole' };
+      return {
+        ...prev,
+        whole: prev.whole === '' ? '0.' : prev.whole + '.',
+        activeField: 'whole',
+        waitingForOperand: false,
+        error: null,
+      };
     });
   }, []);
 
-  // Handle number input for numerator
-  const handleNumerator = useCallback((num: string) => {
-    setState((prev) => {
-      if (prev.numerator.length >= 3) return prev;
-      if (prev.numerator === '0') return { ...prev, numerator: num, waitingForOperand: false };
-      return { ...prev, numerator: prev.numerator + num, waitingForOperand: false };
-    });
-  }, []);
-
-  // Handle number input for denominator
-  const handleDenominator = useCallback((num: string) => {
-    setState((prev) => {
-      if (prev.denominator.length >= 3) return prev;
-      if (prev.denominator === '0' && num === '0') return prev;
-      if (prev.denominator === '0') return { ...prev, denominator: num, waitingForOperand: false };
-      return { ...prev, denominator: prev.denominator + num, waitingForOperand: false };
-    });
-  }, []);
-
-  // Handle backspace for each field
-  const handleWholeBackspace = useCallback(() => {
-    setState((prev) => ({
-      ...prev,
-      whole: prev.whole.slice(0, -1),
-    }));
-  }, []);
-
-  const handleNumeratorBackspace = useCallback(() => {
-    setState((prev) => ({
-      ...prev,
-      numerator: prev.numerator.slice(0, -1),
-    }));
-  }, []);
-
-  const handleDenominatorBackspace = useCallback(() => {
-    setState((prev) => ({
-      ...prev,
-      denominator: prev.denominator.slice(0, -1),
-    }));
+  // Handle backspace for one pad
+  const handleBackspace = useCallback((field: EntryField) => {
+    setState((prev) => withSignCleared({ ...prev, [field]: prev[field].slice(0, -1), activeField: field }));
   }, []);
 
   // Handle operation
   const handleOperation = useCallback((op: Operation) => {
     setState((prev) => {
-      // If waiting for operand (nothing entered yet), ignore
+      // Still waiting for the second number: just swap the operator
       if (prev.waitingForOperand) {
-        return prev;
+        if (!prev.previousValue) return prev;
+        return { ...prev, operation: op, currentExpression: `${formatFraction(prev.previousValue)} ${op}` };
       }
 
       // If no input entered, ignore
@@ -271,37 +250,29 @@ export default function FractionalCalculator() {
         return prev;
       }
 
-      const current = getCurrentFraction();
-      const currentFormatted = formatFraction(current);
+      const current = entryToFraction(prev);
 
       // If we already have a previous value and operation, calculate first
-      if (prev.previousValue && prev.operation) {
-        const result = calculate(prev.previousValue, current, prev.operation);
-        const resultFormatted = formatFraction(result);
-        return {
-          ...prev,
-          whole: '',
-          numerator: '',
-          denominator: '',
-          previousValue: result,
-          operation: op,
-          waitingForOperand: true,
-          currentExpression: `${resultFormatted} ${op}`,
-        };
-      }
+      const value = prev.previousValue && prev.operation
+        ? calculate(prev.previousValue, current, prev.operation)
+        : current;
+      if (!value) return failed(prev, DIVIDE_BY_ZERO);
 
       return {
         ...prev,
         whole: '',
         numerator: '',
         denominator: '',
-        previousValue: current,
+        negative: false,
+        activeField: 'whole',
+        previousValue: value,
         operation: op,
         waitingForOperand: true,
-        currentExpression: `${currentFormatted} ${op}`,
+        currentExpression: `${formatFraction(value)} ${op}`,
+        error: null,
       };
     });
-  }, [getCurrentFraction]);
+  }, []);
 
   // Handle equals
   const handleEquals = useCallback(() => {
@@ -315,38 +286,42 @@ export default function FractionalCalculator() {
         return prev;
       }
 
-      const current = getCurrentFraction();
+      const current = entryToFraction(prev);
       const result = calculate(prev.previousValue, current, prev.operation);
+      if (!result) return failed(prev, DIVIDE_BY_ZERO);
 
-      const prevFormatted = formatFraction(prev.previousValue);
-      const currentFormatted = formatFraction(current);
-      const resultFormatted = formatFraction(result);
-
-      const expression = `${prevFormatted} ${prev.operation} ${currentFormatted}`;
+      const expression = `${formatFraction(prev.previousValue)} ${prev.operation} ${formatFraction(current)}`;
       const newHistoryEntry: HistoryEntry = {
         expression,
-        result: resultFormatted,
+        result: formatFraction(result),
       };
+
+      const whole = Math.abs(result.whole);
+      const numerator = Math.abs(result.numerator);
 
       return {
         ...prev,
-        whole: result.whole !== 0 ? result.whole.toString() : '',
-        numerator: result.numerator !== 0 ? result.numerator.toString() : '',
-        denominator: result.numerator !== 0 ? result.denominator.toString() : '',
+        whole: whole !== 0 ? whole.toString() : '',
+        numerator: numerator !== 0 ? numerator.toString() : '',
+        denominator: numerator !== 0 ? result.denominator.toString() : '',
+        negative: isNegativeFraction(result),
+        activeField: 'whole',
         previousValue: null,
         operation: null,
         waitingForOperand: false,
         currentExpression: '',
+        error: null,
         history: [newHistoryEntry, ...prev.history].slice(0, 20),
       };
     });
-  }, [getCurrentFraction]);
+  }, []);
 
   // Handle clear
   const handleClear = useCallback(() => {
     setState((prev) => ({
       ...INITIAL_STATE,
       history: prev.history,
+      showHistory: prev.showHistory,
     }));
   }, []);
 
@@ -366,17 +341,66 @@ export default function FractionalCalculator() {
     }));
   }, []);
 
+  // Keyboard entry. Digits go to the active pad; Space steps whole → numerator →
+  // denominator, and "/" does double duty: after a numerator it moves on to the
+  // denominator (so "3 1/4" types naturally), anywhere else it divides.
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    // Leave Enter and Space alone on a focused button so it still presses that button
+    const onButton = (e.target as HTMLElement).tagName === 'BUTTON';
+    const { key } = e;
+
+    if (/^\d$/.test(key)) {
+      handleDigit(state.activeField, key);
+    } else if (key === '.') {
+      handleWholeDecimal();
+    } else if (key === ' ') {
+      if (onButton) return;
+      setState((prev) => ({
+        ...prev,
+        activeField: FIELD_ORDER[(FIELD_ORDER.indexOf(prev.activeField) + 1) % FIELD_ORDER.length],
+      }));
+    } else if (key === '/') {
+      if (state.activeField === 'numerator' && state.numerator !== '') {
+        setState((prev) => ({ ...prev, activeField: 'denominator' }));
+      } else {
+        handleOperation('÷');
+      }
+    } else if (key === '+') {
+      handleOperation('+');
+    } else if (key === '-') {
+      handleOperation('-');
+    } else if (key === '*' || key === 'x' || key === 'X') {
+      handleOperation('×');
+    } else if (key === '=') {
+      handleEquals();
+    } else if (key === 'Enter') {
+      if (onButton) return;
+      handleEquals();
+    } else if (key === 'Backspace') {
+      handleBackspace(state.activeField);
+    } else if (key === 'Escape') {
+      handleClear();
+    } else {
+      return;
+    }
+    e.preventDefault();
+  };
+
   // Calculate display values
-  const currentFraction = getCurrentFraction();
+  const currentFraction = entryToFraction(state);
   const displayWhole = state.whole || '0';
   const displayNumerator = state.numerator || '0';
   const displayDenominator = state.denominator || '1';
-  // Calculate running total - what the result would be if equals was pressed now
+  const hasFraction = Boolean(state.numerator || state.denominator);
+  const showSign = state.negative && fractionToDecimal(currentFraction) !== 0;
+  // Calculate running total - what the result would be if equals was pressed now.
+  // null while the pending calculation is a division by zero.
   const runningTotal = (() => {
     if (state.previousValue && state.operation && !state.waitingForOperand) {
       // We have a previous value, operation, and current input - show the result
       const result = calculate(state.previousValue, currentFraction, state.operation);
-      return fractionToDecimal(result);
+      return result ? fractionToDecimal(result) : null;
     } else if (state.previousValue && state.waitingForOperand) {
       // Waiting for input - show previous value
       return fractionToDecimal(state.previousValue);
@@ -385,14 +409,23 @@ export default function FractionalCalculator() {
       return fractionToDecimal(currentFraction);
     }
   })();
+  const runningTotalText = runningTotal === null ? '—' : String(parseFloat(runningTotal.toFixed(4)));
 
   // Generate accessible description of current value
-  const accessibleValue = state.waitingForOperand
-    ? 'Waiting for input'
-    : `${displayWhole}${state.numerator || state.denominator ? ` and ${displayNumerator} over ${displayDenominator}` : ''} equals ${parseFloat(runningTotal.toFixed(4))}`;
+  const accessibleValue = state.error
+    ?? (state.waitingForOperand
+      ? 'Waiting for input'
+      : `${showSign ? 'minus ' : ''}${displayWhole}${hasFraction ? ` and ${displayNumerator} over ${displayDenominator}` : ''} equals ${runningTotalText}`);
 
   return (
-    <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden" role="application" aria-label="Fractional Calculator" data-testid="calculator">
+    <div
+      className="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+      role="group"
+      aria-label="Fractional Calculator"
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
+      data-testid="calculator"
+    >
       {/* Screen reader announcements */}
       <div className="sr-only" aria-live="polite" aria-atomic="true">
         {accessibleValue}
@@ -407,7 +440,11 @@ export default function FractionalCalculator() {
 
         {/* Main display with fraction notation */}
         <div className="flex items-center justify-end gap-3 min-h-[5rem]" data-testid="display">
-          {state.waitingForOperand ? (
+          {state.error ? (
+            <span className="text-red-300 text-2xl sm:text-3xl font-mono" data-testid="display-error">
+              {state.error}
+            </span>
+          ) : state.waitingForOperand ? (
             /* Show placeholder when waiting for input */
             <span className="text-stone-500 text-3xl sm:text-4xl font-mono" data-testid="display-placeholder">
               Enter value...
@@ -415,13 +452,19 @@ export default function FractionalCalculator() {
           ) : (
             /* Current value display */
             <div className="flex items-center gap-3" data-testid="display-value">
+              {showSign && (
+                <span className="text-white text-3xl font-bold font-mono" data-testid="display-sign">
+                  −
+                </span>
+              )}
+
               {/* Whole number */}
               <span className="text-white text-4xl sm:text-5xl font-bold font-mono" data-testid="display-whole">
-                {displayWhole !== '0' || (!state.numerator && !state.denominator) ? displayWhole : ''}
+                {displayWhole !== '0' || !hasFraction ? displayWhole : ''}
               </span>
 
               {/* Fraction part */}
-              {(state.numerator || state.denominator) && (
+              {hasFraction && (
                 <div className="flex flex-col items-center text-white leading-none" data-testid="display-fraction">
                   <span className="text-2xl sm:text-3xl font-mono border-b-2 border-white px-2 pb-1" data-testid="display-numerator">
                     {displayNumerator}
@@ -437,7 +480,7 @@ export default function FractionalCalculator() {
 
         {/* Decimal equivalent - always shows running total */}
         <div className="text-stone-400 text-right text-sm mt-2 font-mono" data-testid="decimal-display">
-          {`= ${parseFloat(runningTotal.toFixed(4))}`}
+          {`= ${runningTotalText}`}
         </div>
       </div>
 
@@ -450,6 +493,7 @@ export default function FractionalCalculator() {
               <button
                 onClick={clearHistory}
                 className="text-xs text-stone-500 hover:text-stone-700"
+                type="button"
               >
                 Clear
               </button>
@@ -499,22 +543,24 @@ export default function FractionalCalculator() {
         {/* Three number pads in a row */}
         <div className="flex gap-3 sm:gap-4 mb-3">
           <NumberPad
-            onNumber={handleWholeNumber}
-            onBackspace={handleWholeBackspace}
+            onNumber={(num) => handleDigit('whole', num)}
+            onBackspace={() => handleBackspace('whole')}
             onDecimal={handleWholeDecimal}
             label="Whole"
             showDecimal
             padId="whole"
+            active={state.activeField === 'whole'}
           />
 
           {/* Divider */}
           <div className="w-px bg-stone-300 self-stretch my-6" />
 
           <NumberPad
-            onNumber={handleNumerator}
-            onBackspace={handleNumeratorBackspace}
+            onNumber={(num) => handleDigit('numerator', num)}
+            onBackspace={() => handleBackspace('numerator')}
             label="Numerator"
             padId="numerator"
+            active={state.activeField === 'numerator'}
           />
 
           {/* Fraction slash visual */}
@@ -523,10 +569,11 @@ export default function FractionalCalculator() {
           </div>
 
           <NumberPad
-            onNumber={handleDenominator}
-            onBackspace={handleDenominatorBackspace}
+            onNumber={(num) => handleDigit('denominator', num)}
+            onBackspace={() => handleBackspace('denominator')}
             label="Denominator"
             padId="denominator"
+            active={state.activeField === 'denominator'}
           />
         </div>
 
@@ -534,6 +581,13 @@ export default function FractionalCalculator() {
         <CalcButton onClick={handleEquals} variant="equals" className="w-full h-12 sm:h-14 text-2xl" ariaLabel="Calculate result" testId="equals">
           =
         </CalcButton>
+
+        {/* Only useful with a hardware keyboard, so it stays off phone-sized screens */}
+        <p className="hidden sm:block text-xs text-stone-500 mt-3 text-center" data-testid="keyboard-hint">
+          Keyboard: type digits, <kbd className="font-mono">Space</kbd> moves to the next pad,{' '}
+          <kbd className="font-mono">+ − * /</kbd> for operations, <kbd className="font-mono">Enter</kbd> for =,{' '}
+          <kbd className="font-mono">Esc</kbd> to clear.
+        </p>
       </div>
     </div>
   );

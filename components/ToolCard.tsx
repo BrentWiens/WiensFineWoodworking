@@ -13,6 +13,8 @@ interface ToolCardProps {
   icon?: ReactNode;
   /** A private tool: shows a sign-in badge and skips prefetching (it would only hit the sign-in redirect). */
   locked?: boolean;
+  /** Heading level for the title: h3 when the cards sit under a section's own h2. */
+  headingLevel?: 'h2' | 'h3';
 }
 
 export default function ToolCard({
@@ -24,6 +26,7 @@ export default function ToolCard({
   imageObjectPosition = 'center',
   icon,
   locked = false,
+  headingLevel: Heading = 'h2',
 }: ToolCardProps) {
   return (
     <Link
@@ -56,7 +59,7 @@ export default function ToolCard({
         )}
       </div>
       <div className="p-5">
-        <h2 className="text-xl font-bold text-stone-800 mb-2">{title}</h2>
+        <Heading className="text-xl font-bold text-stone-800 mb-2">{title}</Heading>
         <p className="text-stone-600 text-sm">{description}</p>
       </div>
     </Link>

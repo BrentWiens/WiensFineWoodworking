@@ -24,7 +24,7 @@ export function calculateBoardFeet(dimensions: BoardDimensions): BoardFeetResult
   }
 
   const boardFeet = (thickness * width * length) / 144;
-  const totalBoardFeet = boardFeet * (quantity > 0 ? quantity : 1);
+  const totalBoardFeet = boardFeet * Math.max(0, quantity);
 
   return { boardFeet, totalBoardFeet, isValid: true };
 }
@@ -46,4 +46,42 @@ export function formatBoardFeet(value: number): string {
  */
 export function isValidNumericInput(value: string): boolean {
   return value === '' || /^\d*\.?\d*$/.test(value);
+}
+
+/**
+ * Validate input string for a dimension as it is being typed
+ * Allows what a decimal ("1.5"), fraction ("3/4") or mixed number ("1-1/2", "1 1/2") is made of
+ */
+export function isValidDimensionInput(value: string): boolean {
+  return /^[\d\s./-]*$/.test(value);
+}
+
+/**
+ * Validate input string for a whole-number quantity
+ */
+export function isValidQuantityInput(value: string): boolean {
+  return /^\d*$/.test(value);
+}
+
+/**
+ * Read a quantity field. Blank means one board, the same as the placeholder shows;
+ * an explicit 0 means none.
+ */
+export function parseQuantity(value: string): number {
+  const quantity = parseInt(value, 10);
+  return Number.isNaN(quantity) ? 1 : quantity;
+}
+
+/**
+ * Add a waste allowance, given as a percentage, to a board feet total
+ */
+export function addWaste(boardFeet: number, wastePercent: number): number {
+  return boardFeet * (1 + Math.max(0, wastePercent) / 100);
+}
+
+/**
+ * Format a dollar amount for display
+ */
+export function formatCost(value: number): string {
+  return `$${value.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }

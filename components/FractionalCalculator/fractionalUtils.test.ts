@@ -13,6 +13,10 @@ import {
   formatFraction,
   fractionToDecimal,
   calculate,
+  parseMeasurement,
+  toNearestFraction,
+  entryToFraction,
+  isNegativeFraction,
   Fraction,
 } from './fractionalUtils';
 
@@ -103,6 +107,16 @@ describe('toMixed', () => {
     expect(toMixed(-7, 2)).toEqual({ whole: -3, numerator: 1, denominator: 2 });
   });
 
+  it('keeps the sign on the numerator when the whole part is zero', () => {
+    expect(toMixed(-1, 4)).toEqual({ whole: 0, numerator: -1, denominator: 4 });
+    expect(toMixed(2, -4)).toEqual({ whole: 0, numerator: -1, denominator: 2 });
+  });
+
+  it('never returns negative zero', () => {
+    expect(toMixed(0, -4)).toEqual({ whole: 0, numerator: 0, denominator: 1 });
+    expect(toMixed(-8, 4)).toEqual({ whole: -2, numerator: 0, denominator: 1 });
+  });
+
   it('handles zero denominator', () => {
     expect(toMixed(5, 0)).toEqual({ whole: 0, numerator: 0, denominator: 1 });
   });
@@ -148,6 +162,27 @@ describe('subtractFractions', () => {
     expect(subtractFractions(a, b)).toEqual({ whole: -1, numerator: 0, denominator: 1 });
   });
 
+  it('keeps the sign when the result is between -1 and 0', () => {
+    const quarter: Fraction = { whole: 0, numerator: 1, denominator: 4 };
+    const half: Fraction = { whole: 0, numerator: 1, denominator: 2 };
+    const result = subtractFractions(quarter, half);
+    expect(result).toEqual({ whole: 0, numerator: -1, denominator: 4 });
+    expect(formatFraction(result)).toBe('-1/4');
+    expect(fractionToDecimal(result)).toBe(-0.25);
+
+    const one: Fraction = { whole: 1, numerator: 0, denominator: 1 };
+    const oneAndHalf: Fraction = { whole: 1, numerator: 1, denominator: 2 };
+    expect(fractionToDecimal(subtractFractions(one, oneAndHalf))).toBe(-0.5);
+  });
+
+  it('carries a small negative result through further arithmetic', () => {
+    const negQuarter: Fraction = { whole: 0, numerator: -1, denominator: 4 };
+    const one: Fraction = { whole: 1, numerator: 0, denominator: 1 };
+    expect(addFractions(negQuarter, one)).toEqual({ whole: 0, numerator: 3, denominator: 4 });
+    expect(multiplyFractions(negQuarter, negQuarter)).toEqual({ whole: 0, numerator: 1, denominator: 16 });
+    expect(subtractFractions(one, negQuarter)).toEqual({ whole: 1, numerator: 1, denominator: 4 });
+  });
+
   it('subtracts fraction from whole number', () => {
     const a: Fraction = { whole: 5, numerator: 0, denominator: 1 };
     const b: Fraction = { whole: 0, numerator: 1, denominator: 4 };
@@ -191,10 +226,11 @@ describe('divideFractions', () => {
     expect(divideFractions(a, b)).toEqual({ whole: 3, numerator: 11, denominator: 16 });
   });
 
-  it('handles division by zero', () => {
+  it('returns null for division by zero', () => {
     const a: Fraction = { whole: 5, numerator: 0, denominator: 1 };
     const b: Fraction = { whole: 0, numerator: 0, denominator: 1 };
-    expect(divideFractions(a, b)).toEqual({ whole: 0, numerator: 0, denominator: 1 });
+    expect(divideFractions(a, b)).toBeNull();
+    expect(calculate(a, b, '÷')).toBeNull();
   });
 });
 
@@ -337,5 +373,78 @@ describe('woodworking scenarios', () => {
     const dado: Fraction = { whole: 0, numerator: 1, denominator: 4 };
     const total = addFractions(material, dado);
     expect(total).toEqual({ whole: 1, numerator: 0, denominator: 1 });
+  });
+});
+
+describe('parseMeasurement', () => {
+  it('parses decimals, including a bare leading or trailing point', () => {
+    expect(parseMeasurement('3.5')).toBe(3.5);
+    expect(parseMeasurement('.5')).toBe(0.5);
+    expect(parseMeasurement('12.')).toBe(12);
+    expect(parseMeasurement(' 48 ')).toBe(48);
+  });
+
+  it('parses fractions and mixed numbers', () => {
+    expect(parseMeasurement('3/4')).toBe(0.75);
+    expect(parseMeasurement('23 1/2')).toBe(23.5);
+    expect(parseMeasurement('23-1/2')).toBe(23.5);
+    expect(parseMeasurement('4/4')).toBe(1);
+  });
+
+  it('returns null for blank or unreadable input', () => {
+    expect(parseMeasurement('')).toBeNull();
+    expect(parseMeasurement('abc')).toBeNull();
+    expect(parseMeasurement('1/0')).toBeNull();
+    expect(parseMeasurement('1.2.3')).toBeNull();
+    expect(parseMeasurement('23 1/')).toBeNull();
+  });
+});
+
+describe('toNearestFraction', () => {
+  it('rounds to the nearest 64th by default', () => {
+    expect(formatFraction(toNearestFraction(3.5355))).toBe('3-17/32');
+    expect(formatFraction(toNearestFraction(0.3333))).toBe('21/64');
+    expect(formatFraction(toNearestFraction(5))).toBe('5');
+  });
+
+  it('rounds up to the next whole number when that is nearest', () => {
+    expect(formatFraction(toNearestFraction(2.999))).toBe('3');
+  });
+
+  it('honours a coarser denominator', () => {
+    expect(formatFraction(toNearestFraction(1.3, 16))).toBe('1-5/16');
+  });
+});
+
+describe('entryToFraction', () => {
+  const entry = { whole: '', numerator: '', denominator: '', negative: false };
+
+  it('reads a mixed number', () => {
+    expect(entryToFraction({ ...entry, whole: '2', numerator: '3', denominator: '4' }))
+      .toEqual({ whole: 2, numerator: 3, denominator: 4 });
+  });
+
+  it('treats an empty entry as zero and a missing denominator as 1', () => {
+    expect(entryToFraction(entry)).toEqual({ whole: 0, numerator: 0, denominator: 1 });
+    expect(entryToFraction({ ...entry, numerator: '3' })).toEqual({ whole: 3, numerator: 0, denominator: 1 });
+  });
+
+  it('folds a decimal whole part into the fraction', () => {
+    expect(entryToFraction({ ...entry, whole: '2.5' })).toEqual({ whole: 2, numerator: 1, denominator: 2 });
+    expect(entryToFraction({ ...entry, whole: '0.25', numerator: '1', denominator: '4' }))
+      .toEqual({ whole: 0, numerator: 1, denominator: 2 });
+  });
+
+  it('carries an improper fraction into the whole part', () => {
+    expect(entryToFraction({ ...entry, whole: '1', numerator: '7', denominator: '4' }))
+      .toEqual({ whole: 2, numerator: 3, denominator: 4 });
+  });
+
+  it('applies the sign to the whole value', () => {
+    const negative = entryToFraction({ whole: '1', numerator: '7', denominator: '4', negative: true });
+    expect(negative).toEqual({ whole: -2, numerator: 3, denominator: 4 });
+    expect(isNegativeFraction(negative)).toBe(true);
+    expect(isNegativeFraction(entryToFraction({ ...entry, numerator: '1', denominator: '4', negative: true }))).toBe(true);
+    expect(isNegativeFraction(entryToFraction(entry))).toBe(false);
   });
 });

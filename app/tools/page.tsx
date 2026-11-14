@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { TOOLS_OG_IMAGE, TOOLS_TWITTER_IMAGE } from '@/lib/metadata';
+import { TOOLS } from '@/lib/tools';
 import { Navigation, Footer, ToolCard } from '@/components';
 import PageHero from '@/components/PageHero';
 
@@ -22,47 +23,6 @@ export const metadata: Metadata = {
         images: TOOLS_TWITTER_IMAGE,
     },
 };
-
-const TOOLS = [
-    {
-        href: '/tools/fractional-calculator',
-        title: 'Fractional Calculator',
-        description: 'A convenient fractional calculator. Add, subtract, multiply, and divide fractions with ease.',
-        imageSrc: '/images/fractional-calculator/fractional-calculator-preview.png',
-        imageAlt: 'Fractional calculator preview',
-    },
-    {
-        href: '/tools/board-feet-calculator',
-        title: 'Board Feet Calculator',
-        description: 'Calculate lumber volume in board feet from thickness, width, and length.',
-        imageSrc: '/images/board-feet-calculator/board-feet-calculator-preview.png',
-        imageAlt: 'Board feet calculator preview',
-        imageObjectPosition: 'top' as const,
-    },
-    {
-        href: '/tools/cut-list-optimizer',
-        title: 'Cut List Optimizer',
-        description: 'Optimize plywood cuts to minimize waste. Supports grain direction for consistent appearance.',
-        imageSrc: '/images/cut-list-optimizer/cut-list-optimizer-preview.png',
-        imageAlt: 'Cut list optimizer preview',
-        imageObjectPosition: 'top' as const,
-    },
-    {
-        href: '/tools/trig-calculator',
-        title: 'Trigonometry Calculator',
-        description: 'Solve any right triangle. Enter two known sides or angles to calculate the rest. Supports fractional input.',
-        imageSrc: '/images/trigonometry-calculator/trig-calculator.png',
-        imageAlt: 'Trigonometry calculator preview',
-    },
-    {
-        href: '/tools/dovetail-calculator',
-        title: 'Dovetail Joint Calculator',
-        description: 'Visualize and plan your dovetail joints with custom dimensions, pin angles, and spacing.',
-        imageSrc: '/images/dovetail-calculator/dovetail-calculator-preview.png',
-        imageAlt: 'Dovetail joint preview',
-        imageObjectPosition: 'top' as const,
-    },
-];
 
 // Everything here lives under /tools/business and requires Google sign-in (see proxy.ts).
 // Deliberately absent from the sitemap and the service worker's precache.
@@ -111,8 +71,8 @@ export default function ToolsPage() {
 
                 <div className="max-w-7xl mx-auto px-6 py-12">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {TOOLS.map(tool => (
-                            <ToolCard key={tool.href} {...tool} />
+                        {TOOLS.map(({ slug, ...tool }) => (
+                            <ToolCard key={slug} {...tool} />
                         ))}
                     </div>
 
@@ -130,7 +90,7 @@ export default function ToolsPage() {
                         </p>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {BUSINESS_TOOLS.map(tool => (
-                                <ToolCard key={tool.href} {...tool} locked />
+                                <ToolCard key={tool.href} {...tool} locked headingLevel="h3" />
                             ))}
                         </div>
                     </section>

@@ -6,7 +6,7 @@ test.describe('Trigonometry Calculator', () => {
 
     await expect(page).toHaveTitle(/Trigonometry Calculator/);
 
-    const calculator = page.getByRole('application', { name: 'Trigonometry Calculator' });
+    const calculator = page.getByRole('group', { name: 'Trigonometry Calculator' });
     await expect(calculator).toBeVisible();
 
     // Should have side and angle inputs
@@ -158,5 +158,72 @@ test.describe('Trigonometry Calculator - Navigation', () => {
 
     await page.waitForURL('/tools/trig-calculator');
     await expect(page).toHaveTitle(/Trigonometry Calculator/);
+  });
+});
+
+test.describe('Trigonometry Calculator - Re-solving', () => {
+  test('changing a value after solving clears the old answers and solves again', async ({ page }) => {
+    await page.goto('/tools/trig-calculator', { waitUntil: 'networkidle' });
+
+    await page.getByTestId('input-a').fill('3');
+    await page.getByTestId('input-b').fill('4');
+    await page.getByTestId('calculate').click();
+    await expect(page.getByTestId('input-c')).toHaveValue('5');
+
+    // Used to leave c = 5 behind and fail with "not a valid right triangle"
+    await page.getByTestId('input-a').fill('6');
+    await expect(page.getByTestId('input-c')).toHaveValue('');
+    await expect(page.getByTestId('input-b')).toHaveValue('4');
+
+    await page.getByTestId('input-b').fill('8');
+    await page.getByTestId('calculate').click();
+    await expect(page.getByTestId('error-message')).toHaveCount(0);
+    await expect(page.getByTestId('input-c')).toHaveValue('10');
+  });
+
+  test('pressing Calculate twice gives the same answer', async ({ page }) => {
+    await page.goto('/tools/trig-calculator', { waitUntil: 'networkidle' });
+
+    await page.getByTestId('input-a').fill('5');
+    await page.getByTestId('input-A').fill('30');
+    await page.getByTestId('calculate').click();
+    await page.getByTestId('calculate').click();
+
+    await expect(page.getByTestId('error-message')).toHaveCount(0);
+    await expect(page.getByTestId('input-c')).toHaveValue('10');
+  });
+
+  test('rejects an angle that contradicts the sides', async ({ page }) => {
+    await page.goto('/tools/trig-calculator', { waitUntil: 'networkidle' });
+
+    await page.getByTestId('input-a').fill('3');
+    await page.getByTestId('input-b').fill('4');
+    await page.getByTestId('input-A').fill('10');
+    await page.getByTestId('calculate').click();
+
+    await expect(page.getByTestId('error-message')).toContainText('Angle A does not match');
+  });
+
+  test('says which field it could not read', async ({ page }) => {
+    await page.goto('/tools/trig-calculator', { waitUntil: 'networkidle' });
+
+    await page.getByTestId('input-a').fill('abc');
+    await page.getByTestId('input-b').fill('4');
+    await page.getByTestId('calculate').click();
+
+    await expect(page.getByTestId('error-message')).toContainText('Side a');
+    await expect(page.getByTestId('error-message')).toContainText('abc');
+  });
+
+  test('shows solved sides as tape-measure fractions', async ({ page }) => {
+    await page.goto('/tools/trig-calculator', { waitUntil: 'networkidle' });
+
+    // 2.5 / sin(45°) = 3.536, which is 3-17/32 to the nearest 64th
+    await page.getByTestId('input-a').fill('2.5');
+    await page.getByTestId('input-A').fill('45');
+    await page.getByTestId('calculate').click();
+
+    await expect(page.getByTestId('fraction-a')).toHaveText('= 2-1/2');
+    await expect(page.getByTestId('fraction-c')).toHaveText('≈ 3-17/32');
   });
 });

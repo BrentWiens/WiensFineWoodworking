@@ -8,6 +8,7 @@ import {
   solveTriangle,
   formatSide,
   formatAngle,
+  formatAsFraction,
 } from './trigUtils';
 
 interface FieldState {
@@ -32,6 +33,28 @@ const ANGLE_FIELDS: { key: FieldKey; label: string }[] = [
   { key: 'A', label: 'Angle A' },
   { key: 'B', label: 'Angle B' },
 ];
+
+const FIELD_KEYS = Object.keys(INITIAL_FIELDS) as FieldKey[];
+const FIELD_LABELS = Object.fromEntries(
+  [...SIDE_FIELDS, ...ANGLE_FIELDS].map(({ key, label }) => [key, label])
+) as Record<FieldKey, string>;
+
+const NO_FIELDS: ReadonlySet<FieldKey> = new Set();
+
+const INPUT_CLASS = 'flex-1 min-w-0 px-3 py-2 border rounded-lg text-stone-800 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500';
+
+/** Solved fields are tinted so they read as answers rather than something the user typed. */
+function inputClass(computed: boolean): string {
+  return `${INPUT_CLASS} ${computed ? 'bg-amber-50 border-amber-300' : 'bg-white border-stone-300'}`;
+}
+
+/** The side as a tape-measure fraction, or null when that adds nothing to the decimal. */
+function fractionHint(value: number): string | null {
+  const fraction = formatAsFraction(value);
+  if (fraction === formatSide(value)) return null;
+  const exact = Math.abs(value * 64 - Math.round(value * 64)) < 1e-6;
+  return `${exact ? '=' : '≈'} ${fraction}`;
+}
 
 function TriangleDiagram({ result }: { result: SolveResult | null }) {
   const solved = result?.error === null ? result.values : null;
@@ -168,42 +191,69 @@ function TriangleDiagram({ result }: { result: SolveResult | null }) {
 export default function TrigCalculator() {
   const [fields, setFields] = useState<FieldState>(INITIAL_FIELDS);
   const [result, setResult] = useState<SolveResult | null>(null);
+  // Fields the last Calculate filled in, as opposed to ones the user typed
+  const [computed, setComputed] = useState<ReadonlySet<FieldKey>>(NO_FIELDS);
 
+  // Editing any value makes the previous answers stale, so they're cleared and the
+  // next Calculate solves from what the user actually entered.
   const handleChange = useCallback((key: FieldKey, value: string) => {
-    setFields(prev => ({ ...prev, [key]: value }));
+    setFields(prev => {
+      const next = { ...prev, [key]: value };
+      for (const stale of computed) {
+        if (stale !== key) next[stale] = '';
+      }
+      return next;
+    });
+    setComputed(NO_FIELDS);
     setResult(null);
-  }, []);
+  }, [computed]);
 
   const handleCalculate = useCallback(() => {
+    // Solve from the user's own entries only, so pressing Calculate twice is harmless
+    const entered = (key: FieldKey) => (computed.has(key) ? '' : fields[key]);
+
+    const unreadable = FIELD_KEYS.find(key => entered(key).trim() !== '' && parseInput(entered(key)) === null);
+    if (unreadable) {
+      setResult({
+        values: { a: null, b: null, c: null, A: null, B: null },
+        error: `${FIELD_LABELS[unreadable]}: can't read "${entered(unreadable).trim()}". Use a number or a fraction like 3-1/2.`,
+      });
+      return;
+    }
+
     const input: TriangleValues = {
-      a: parseInput(fields.a),
-      b: parseInput(fields.b),
-      c: parseInput(fields.c),
-      A: parseInput(fields.A),
-      B: parseInput(fields.B),
+      a: parseInput(entered('a')),
+      b: parseInput(entered('b')),
+      c: parseInput(entered('c')),
+      A: parseInput(entered('A')),
+      B: parseInput(entered('B')),
     };
     const solved = solveTriangle(input);
     setResult(solved);
 
     // Fill in solved values into fields (only fill empty ones)
     if (!solved.error) {
-      setFields(prev => ({
-        a: prev.a || (solved.values.a != null ? formatSide(solved.values.a) : ''),
-        b: prev.b || (solved.values.b != null ? formatSide(solved.values.b) : ''),
-        c: prev.c || (solved.values.c != null ? formatSide(solved.values.c) : ''),
-        A: prev.A || (solved.values.A != null ? formatAngle(solved.values.A) : ''),
-        B: prev.B || (solved.values.B != null ? formatAngle(solved.values.B) : ''),
-      }));
+      const filled = FIELD_KEYS.filter(key => entered(key).trim() === '' && solved.values[key] != null);
+      const format = (key: FieldKey, value: number) => (key === 'A' || key === 'B' ? formatAngle(value) : formatSide(value));
+      setFields(prev => {
+        const next = { ...prev };
+        for (const key of filled) next[key] = format(key, solved.values[key] as number);
+        return next;
+      });
+      setComputed(new Set(filled));
     }
-  }, [fields]);
+  }, [fields, computed]);
 
   const handleReset = useCallback(() => {
     setFields(INITIAL_FIELDS);
+    setComputed(NO_FIELDS);
     setResult(null);
   }, []);
 
+  const solvedValues = result?.error === null ? result.values : null;
+
   return (
-    <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden" role="application" aria-label="Trigonometry Calculator" data-testid="trig-calculator">
+    <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden" role="group" aria-label="Trigonometry Calculator" data-testid="trig-calculator">
 
       <div className="p-4 sm:p-6 bg-stone-50">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -217,23 +267,32 @@ export default function TrigCalculator() {
             <div className="space-y-3">
               {/* Side inputs */}
               <div className="text-xs text-stone-500 font-medium uppercase tracking-wide">Sides</div>
-              {SIDE_FIELDS.map(({ key, label }) => (
-                <div key={key} className="flex items-center gap-3">
-                  <label htmlFor={`field-${key}`} className="w-20 text-sm font-semibold text-stone-700 flex-shrink-0">
-                    {label}
-                  </label>
-                  <input
-                    id={`field-${key}`}
-                    type="text"
-                    inputMode="decimal"
-                    value={fields[key]}
-                    onChange={(e) => handleChange(key, e.target.value)}
-                    placeholder="e.g. 5 or 3-1/2"
-                    className="flex-1 px-3 py-2 border rounded-lg text-stone-800 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-white border-stone-300"
-                    data-testid={`input-${key}`}
-                  />
-                </div>
-              ))}
+              {SIDE_FIELDS.map(({ key, label }) => {
+                const value = solvedValues?.[key];
+                const hint = value != null ? fractionHint(value) : null;
+                return (
+                  <div key={key} className="flex items-center gap-3">
+                    <label htmlFor={`field-${key}`} className="w-20 text-sm font-semibold text-stone-700 flex-shrink-0">
+                      {label}
+                    </label>
+                    <input
+                      id={`field-${key}`}
+                      type="text"
+                      inputMode="decimal"
+                      value={fields[key]}
+                      onChange={(e) => handleChange(key, e.target.value)}
+                      placeholder="e.g. 5 or 3-1/2"
+                      className={inputClass(computed.has(key))}
+                      data-testid={`input-${key}`}
+                    />
+                    {hint && (
+                      <span className="w-24 flex-shrink-0 text-xs text-stone-600 font-mono" data-testid={`fraction-${key}`}>
+                        {hint}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
 
               {/* Angle inputs */}
               <div className="text-xs text-stone-500 font-medium uppercase tracking-wide mt-4">Angles (degrees)</div>
@@ -249,17 +308,25 @@ export default function TrigCalculator() {
                     value={fields[key]}
                     onChange={(e) => handleChange(key, e.target.value)}
                     placeholder="e.g. 45 or 30"
-                    className="flex-1 px-3 py-2 border rounded-lg text-stone-800 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-white border-stone-300"
+                    className={inputClass(computed.has(key))}
                     data-testid={`input-${key}`}
                   />
                 </div>
               ))}
+
+              {computed.size > 0 && (
+                <p className="text-xs text-stone-500" data-testid="solved-note">
+                  Shaded values were calculated, with sides also shown to the nearest 1/64. Change any value
+                  and calculate again.
+                </p>
+              )}
             </div>
 
             {/* Buttons */}
             <div className="flex gap-3 mt-5">
               <button
                 onClick={handleCalculate}
+                type="button"
                 className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg transition-colors active:scale-95 shadow-sm"
                 data-testid="calculate"
               >
@@ -267,6 +334,7 @@ export default function TrigCalculator() {
               </button>
               <button
                 onClick={handleReset}
+                type="button"
                 className="flex-1 bg-stone-400 hover:bg-stone-500 text-white font-semibold py-3 rounded-lg transition-colors active:scale-95"
                 data-testid="reset"
               >
@@ -278,7 +346,7 @@ export default function TrigCalculator() {
 
         {/* Error message */}
         {result?.error && (
-          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm text-center" data-testid="error-message">
+          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm text-center" role="alert" data-testid="error-message">
             {result.error}
           </div>
         )}

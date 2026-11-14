@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next'
 import { PROJECTS } from '@/lib/projects'
+import { TOOLS } from '@/lib/tools'
 
 const BASE_URL = 'https://wfinew.com'
 
@@ -13,14 +14,6 @@ const BASE_URL = 'https://wfinew.com'
 const LAST_MODIFIED = new Date()
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const tools = [
-    'dovetail-calculator',
-    'fractional-calculator',
-    'board-feet-calculator',
-    'cut-list-optimizer',
-    'trig-calculator',
-  ]
-
   return [
     {
       url: BASE_URL,
@@ -46,8 +39,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'yearly' as const,
       priority: 0.7,
     })),
-    ...tools.map(slug => ({
-      url: `${BASE_URL}/tools/${slug}`,
+    ...TOOLS.map(tool => ({
+      url: `${BASE_URL}${tool.href}`,
       lastModified: LAST_MODIFIED,
       changeFrequency: 'monthly' as const,
       priority: 0.6,

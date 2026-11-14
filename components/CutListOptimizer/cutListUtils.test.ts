@@ -3,6 +3,7 @@ import {
   createEmptyPiece,
   getPieceColor,
   getPieceLabel,
+  describePiece,
   parseSheetConfig,
   parsePieces,
   validatePiecesAgainstSheet,
@@ -60,7 +61,8 @@ describe('getPieceLabel', () => {
       rotated: false,
     };
 
-    expect(getPieceLabel(piece)).toBe('24 x 36');
+    // Length first, the order the inputs are in
+    expect(getPieceLabel(piece)).toBe('36 x 24');
   });
 
   it('handles decimal dimensions', () => {
@@ -73,7 +75,18 @@ describe('getPieceLabel', () => {
       rotated: false,
     };
 
-    expect(getPieceLabel(piece)).toBe('12.5 x 18.25');
+    expect(getPieceLabel(piece)).toBe('18.25 x 12.5');
+  });
+});
+
+describe('describePiece', () => {
+  it('leads with the name when the piece has one', () => {
+    expect(describePiece({ name: 'Shelf', width: 24, length: 36 })).toBe('Shelf (36 x 24)');
+  });
+
+  it('falls back to the size alone', () => {
+    expect(describePiece({ width: 24, length: 36 })).toBe('36 x 24');
+    expect(describePiece({ name: '  ', width: 24, length: 36 })).toBe('36 x 24');
   });
 });
 
@@ -163,6 +176,17 @@ describe('parseSheetConfig', () => {
     expect(result?.kerfWidth).toBe(0);
   });
 
+  it('reads a fractional kerf', () => {
+    const config: SheetConfig = {
+      width: '48',
+      length: '96',
+      kerfWidth: '1/8',
+      sheetsAvailable: '1',
+    };
+
+    expect(parseSheetConfig(config)?.kerfWidth).toBe(0.125);
+  });
+
   it('returns null for zero sheets available', () => {
     const config: SheetConfig = {
       width: '48',
@@ -241,6 +265,56 @@ describe('parsePieces', () => {
 
     expect(result.errors).toHaveLength(1);
     expect(result.errors[0]).toContain('Quantity must be at least 1');
+  });
+
+  it('reads fractions and mixed numbers instead of truncating them', () => {
+    const pieces: PieceInput[] = [
+      { id: '1', width: '23 1/2', length: '35-3/4', quantity: '1', grainDirection: 'no-preference' },
+      { id: '2', width: '3/4', length: '12', quantity: '1', grainDirection: 'no-preference' },
+    ];
+
+    const result = parsePieces(pieces);
+
+    expect(result.errors).toHaveLength(0);
+    expect(result.pieces[0].width).toBe(23.5);
+    expect(result.pieces[0].length).toBe(35.75);
+    expect(result.pieces[1].width).toBe(0.75);
+  });
+
+  it('rejects a dimension it cannot read in full', () => {
+    const pieces: PieceInput[] = [
+      { id: '1', width: '24in', length: '36', quantity: '1', grainDirection: 'no-preference' },
+    ];
+
+    expect(parsePieces(pieces).errors).toEqual(['Row 1: Invalid width']);
+  });
+
+  it('rejects a quantity that is not a whole number', () => {
+    const pieces: PieceInput[] = [
+      { id: '1', width: '24', length: '36', quantity: '2.9', grainDirection: 'no-preference' },
+    ];
+
+    expect(parsePieces(pieces).errors).toEqual(['Row 1: Quantity must be a whole number']);
+  });
+
+  it('treats a blank quantity as one', () => {
+    const pieces: PieceInput[] = [
+      { id: '1', width: '24', length: '36', quantity: '', grainDirection: 'no-preference' },
+    ];
+
+    expect(parsePieces(pieces).pieces[0].quantity).toBe(1);
+  });
+
+  it('carries a trimmed name through, dropping a blank one', () => {
+    const pieces: PieceInput[] = [
+      { id: '1', name: ' Shelf ', width: '24', length: '36', quantity: '1', grainDirection: 'no-preference' },
+      { id: '2', name: '  ', width: '24', length: '36', quantity: '1', grainDirection: 'no-preference' },
+    ];
+
+    const result = parsePieces(pieces);
+
+    expect(result.pieces[0].name).toBe('Shelf');
+    expect(result.pieces[1].name).toBeUndefined();
   });
 
   it('handles decimal dimensions', () => {
@@ -453,8 +527,41 @@ describe('optimizeCutList', () => {
 
     // The 30x60 pieces won't all fit
     if (result.unplacedPieces.length > 0) {
-      expect(result.warnings[0]).toContain('30 x 60');
+      expect(result.warnings[0]).toContain('60 x 30');
     }
+  });
+
+  it('says how many sheets the full list needs when they run out', () => {
+    const pieces: PieceData[] = [
+      { id: '1', width: 48, length: 96, quantity: 3, grainDirection: 'no-preference' },
+    ];
+
+    const result = optimizeCutList(pieces, { ...sheet, sheetsAvailable: 1 });
+
+    expect(result.unplacedPieces).toHaveLength(2);
+    expect(result.sheetsNeeded).toBe(3);
+    expect(result.warnings).toEqual(['Could not place: 96 x 48 (2). The full list needs 3 sheets.']);
+  });
+
+  it('leaves sheetsNeeded unset when everything fits', () => {
+    const pieces: PieceData[] = [
+      { id: '1', width: 24, length: 48, quantity: 2, grainDirection: 'no-preference' },
+    ];
+
+    const result = optimizeCutList(pieces, sheet);
+
+    expect(result.unplacedPieces).toHaveLength(0);
+    expect(result.sheetsNeeded).toBeUndefined();
+  });
+
+  it('names unplaced pieces that have a name', () => {
+    const pieces: PieceData[] = [
+      { id: '1', name: 'Side', width: 48, length: 96, quantity: 2, grainDirection: 'no-preference' },
+    ];
+
+    const result = optimizeCutList(pieces, { ...sheet, sheetsAvailable: 1 });
+
+    expect(result.warnings[0]).toContain('Side (96 x 48)');
   });
 
   it('accounts for kerf width', () => {
