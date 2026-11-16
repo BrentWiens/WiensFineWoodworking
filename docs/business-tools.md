@@ -43,8 +43,12 @@ used against the real database, locally and in production.
   vehicle insurance and licensing under Vehicle: other, with the description saying what it
   was. Line numbers are a guide; the accountant has the final say.
 - Vehicle-category expenses record the vehicle they belong to, ready for the vehicle claim.
-- Year summary by section and category: total paid, HST (input tax credits) and net of HST
-- CSV export: one row per expense, then totals by category
+- An optional project number on each expense, to total what a project cost. Blank means the
+  expense isn't tied to a project. It's free text for now (`expenses.project_number`); the
+  planned `jobs` table can adopt these numbers later.
+- Year summary by section and category: total paid, HST (input tax credits) and net of HST,
+  plus a "By project" table once any expense has a project number
+- CSV export: one row per expense, then totals by category and by project
 
 **Not built yet:** receipt photos, jobs, year-end reports, quotes and invoices. See
 [Next steps](#next-steps).

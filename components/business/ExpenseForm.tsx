@@ -5,7 +5,7 @@ import Link from 'next/link';
 import type { ActionResult } from '@/lib/actionResult';
 import { CATEGORIES, SECTIONS, getCategory } from '@/lib/expenses/categories';
 import { HST_PERCENT, centsToInput, hstIncluded, parseMoney } from '@/lib/money';
-import { Field, FormMessage, errorProps, inputClass, primaryButtonClass, secondaryButtonClass, useSubmit } from './forms';
+import { Field, FormMessage, Suggestions, errorProps, inputClass, primaryButtonClass, secondaryButtonClass, useSubmit } from './forms';
 
 export interface ExpenseFormValues {
   expenseDate: string;
@@ -14,6 +14,7 @@ export interface ExpenseFormValues {
   description: string;
   total: string;
   hst: string;
+  projectNumber: string;
 }
 
 interface ExpenseFormProps {
@@ -21,6 +22,8 @@ interface ExpenseFormProps {
   initial: ExpenseFormValues;
   /** Earlier vendors, offered as autocomplete. */
   vendors: string[];
+  /** Project numbers already in use, offered as autocomplete. */
+  projectNumbers: string[];
   mode: 'create' | 'edit';
   cancelHref?: string;
 }
@@ -30,7 +33,7 @@ interface ExpenseFormProps {
  * then one tap to work out the HST from the total. After a save the date stays put,
  * since receipts tend to come in batches from the same day.
  */
-export default function ExpenseForm({ action, initial, vendors, mode, cancelHref }: ExpenseFormProps) {
+export default function ExpenseForm({ action, initial, vendors, projectNumbers, mode, cancelHref }: ExpenseFormProps) {
   const [values, setValues] = useState(initial);
   const set = <K extends keyof ExpenseFormValues>(key: K, value: ExpenseFormValues[K]) =>
     setValues(v => ({ ...v, [key]: value }));
@@ -51,6 +54,7 @@ export default function ExpenseForm({ action, initial, vendors, mode, cancelHref
   const categoryField = errorProps(result, 'category', 'expense-category');
   const description = errorProps(result, 'description', 'expense-description');
   const hst = errorProps(result, 'hst', 'expense-hst');
+  const project = errorProps(result, 'projectNumber', 'expense-project');
 
   return (
     <form onSubmit={onSubmit} className="space-y-4" noValidate>
@@ -88,7 +92,6 @@ export default function ExpenseForm({ action, initial, vendors, mode, cancelHref
           id="expense-vendor"
           name="vendor"
           required
-          list="expense-vendor-options"
           autoComplete="off"
           placeholder="e.g. Lumber yard, Lee Valley"
           value={values.vendor}
@@ -96,11 +99,12 @@ export default function ExpenseForm({ action, initial, vendors, mode, cancelHref
           className={inputClass}
           {...vendor.inputProps}
         />
-        <datalist id="expense-vendor-options">
-          {vendors.map(v => (
-            <option key={v} value={v} />
-          ))}
-        </datalist>
+        <Suggestions
+          label="Earlier vendors"
+          options={vendors}
+          value={values.vendor}
+          onPick={name => set('vendor', name)}
+        />
       </Field>
 
       <Field label="Category" htmlFor="expense-category" error={categoryField.error} hint={category?.hint}>
@@ -138,6 +142,31 @@ export default function ExpenseForm({ action, initial, vendors, mode, cancelHref
           onChange={e => set('description', e.target.value)}
           className={inputClass}
           {...description.inputProps}
+        />
+      </Field>
+
+      <Field
+        label="Project number (optional)"
+        htmlFor="expense-project"
+        error={project.error}
+        hint="Leave blank if this isn't for a particular project."
+      >
+        <input
+          id="expense-project"
+          name="projectNumber"
+          autoComplete="off"
+          autoCapitalize="characters"
+          maxLength={50}
+          value={values.projectNumber}
+          onChange={e => set('projectNumber', e.target.value)}
+          className={inputClass}
+          {...project.inputProps}
+        />
+        <Suggestions
+          label="Earlier project numbers"
+          options={projectNumbers}
+          value={values.projectNumber}
+          onPick={number => set('projectNumber', number)}
         />
       </Field>
 

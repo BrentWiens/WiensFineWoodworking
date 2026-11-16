@@ -12,6 +12,8 @@ export interface SummaryExpense {
   category: string;
   totalCents: number;
   hstCents: number;
+  /** Null or absent when the expense isn't tied to a project. */
+  projectNumber?: string | null;
 }
 
 export interface Totals {
@@ -39,6 +41,14 @@ export interface ExpenseSummary extends Totals {
   months: (Totals & { month: number })[];
   /** Only sections and categories that have expenses, in T2125 order. */
   sections: SectionTotal[];
+  /** What each project cost this year, in project-number order. Empty when none are tagged. */
+  projects: ProjectTotal[];
+  /** Everything not tied to a project. */
+  unassigned: Totals;
+}
+
+export interface ProjectTotal extends Totals {
+  projectNumber: string;
 }
 
 const empty = (): Totals => ({ count: 0, totalCents: 0, hstCents: 0, netCents: 0 });
@@ -55,10 +65,18 @@ export function summarizeExpenses(year: number, expenses: SummaryExpense[]): Exp
   const overall = empty();
   const months = Array.from({ length: 12 }, (_, i) => ({ month: i + 1, ...empty() }));
   const byCategory = new Map<string, Totals>();
+  const byProject = new Map<string, Totals>();
+  const unassigned = empty();
 
   for (const e of expenses) {
     if (!e.expenseDate.startsWith(prefix)) continue;
     add(overall, e);
+    if (e.projectNumber) {
+      if (!byProject.has(e.projectNumber)) byProject.set(e.projectNumber, empty());
+      add(byProject.get(e.projectNumber)!, e);
+    } else {
+      add(unassigned, e);
+    }
     add(months[Number(e.expenseDate.slice(5, 7)) - 1], e);
     if (!byCategory.has(e.category)) byCategory.set(e.category, empty());
     add(byCategory.get(e.category)!, e);
@@ -96,5 +114,10 @@ export function summarizeExpenses(year: number, expenses: SummaryExpense[]): Exp
     }
   }
 
-  return { year, ...overall, months, sections: sections.filter(s => s.count > 0) };
+  // Numeric-aware, so project 9 sorts before project 10
+  const projects = [...byProject.entries()]
+    .sort(([a], [b]) => a.localeCompare(b, 'en-CA', { numeric: true, sensitivity: 'base' }))
+    .map(([projectNumber, totals]) => ({ projectNumber, ...totals }));
+
+  return { year, ...overall, months, sections: sections.filter(s => s.count > 0), projects, unassigned };
 }

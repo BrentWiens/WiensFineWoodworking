@@ -13,6 +13,8 @@ export interface ExpenseInput {
   totalCents: number;
   /** The HST within that total, claimed back as an input tax credit. */
   hstCents: number;
+  /** The project it was bought for, or null when it isn't tied to one. */
+  projectNumber: string | null;
 }
 
 /** The highest HST rate in Canada (Atlantic provinces). More than this is a typo. */
@@ -46,15 +48,17 @@ const expenseSchema = (today: string) =>
         .refine(c => c > 0, 'Total must be more than 0')
         .refine(c => c <= 100_000_000, 'Total looks too large'),
       hst: z.preprocess(blankToUndefined, money('HST').optional()),
+      projectNumber: z.preprocess(blankToUndefined, z.string().trim().max(50, 'Project number is too long').optional()),
     })
     .refine(v => v.hst === undefined || v.hst * (100 + MAX_HST_PERCENT) <= v.total * MAX_HST_PERCENT, {
       message: 'HST is more than the tax on this total could be. Check the amounts.',
       path: ['hst'],
     })
-    .transform(({ total, hst, ...rest }): ExpenseInput => ({
+    .transform(({ total, hst, projectNumber, ...rest }): ExpenseInput => ({
       ...rest,
       totalCents: total,
       hstCents: hst ?? 0,
+      projectNumber: projectNumber ?? null,
     }));
 
 export function parseExpense(input: Record<string, unknown>, now: Date = new Date()): ParseResult<ExpenseInput> {

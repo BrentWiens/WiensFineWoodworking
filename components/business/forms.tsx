@@ -89,6 +89,58 @@ export function Field({
   );
 }
 
+const MAX_SUGGESTIONS = 5;
+
+/**
+ * Autocomplete for a text input, as a row of buttons under it.
+ *
+ * Used instead of a native `<datalist>`: on a phone the browser draws a datalist's
+ * dropdown over the on-screen keyboard, which made it impossible to type a name
+ * that wasn't already in the list. These sit in the page flow, so they can never
+ * cover the keyboard. Nothing shows until something is typed, and nothing once the
+ * text already is one of the options.
+ */
+export function Suggestions({
+  options,
+  value,
+  onPick,
+  label,
+}: {
+  options: string[];
+  value: string;
+  onPick: (option: string) => void;
+  /** What is being suggested, for screen readers: "Earlier destinations". */
+  label: string;
+}) {
+  const typed = value.trim().toLowerCase();
+  if (!typed) return null;
+  if (options.some(option => option.toLowerCase() === typed)) return null;
+
+  // Names that start with what was typed first, then ones that merely contain it
+  const matches = [
+    ...options.filter(option => option.toLowerCase().startsWith(typed)),
+    ...options.filter(option => !option.toLowerCase().startsWith(typed) && option.toLowerCase().includes(typed)),
+  ].slice(0, MAX_SUGGESTIONS);
+  if (matches.length === 0) return null;
+
+  return (
+    <div role="group" aria-label={label} className="mt-2 flex flex-wrap gap-2">
+      {matches.map(option => (
+        <button
+          key={option}
+          type="button"
+          // Keeps focus (and the keyboard) on the input while a suggestion is tapped
+          onPointerDown={event => event.preventDefault()}
+          onClick={() => onPick(option)}
+          className="max-w-full truncate rounded-full border border-stone-300 bg-stone-50 px-3 py-1.5 text-sm text-stone-800 hover:bg-stone-100"
+        >
+          {option}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 /** aria props tying an input to its error message, if it has one. */
 export function errorProps(result: ActionResult | undefined, field: string, id: string) {
   const error = result && !result.ok ? firstError(result.errors, field) : undefined;

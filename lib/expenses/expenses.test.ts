@@ -58,8 +58,23 @@ describe('parseExpense', () => {
         description: 'Walnut for dining table',
         totalCents: 56500,
         hstCents: 6500,
+        projectNumber: null,
       },
     });
+  });
+
+  it('keeps a project number, trimmed, and treats a blank one as no project', () => {
+    const tagged = parseExpense({ ...validExpense, projectNumber: ' 2026-014 ' }, NOW);
+    expect(tagged.ok && tagged.data.projectNumber).toBe('2026-014');
+
+    const blank = parseExpense({ ...validExpense, projectNumber: '   ' }, NOW);
+    expect(blank.ok && blank.data.projectNumber).toBeNull();
+  });
+
+  it('rejects a project number that is too long', () => {
+    const result = parseExpense({ ...validExpense, projectNumber: 'x'.repeat(51) }, NOW);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.errors.projectNumber).toEqual(['Project number is too long']);
   });
 
   it('treats a blank HST as none charged', () => {
@@ -151,7 +166,28 @@ describe('summarizeExpenses', () => {
   });
 
   it('is empty for a year with nothing in it', () => {
-    expect(summarizeExpenses(2024, sample)).toMatchObject({ count: 0, totalCents: 0, sections: [] });
+    expect(summarizeExpenses(2024, sample)).toMatchObject({ count: 0, totalCents: 0, sections: [], projects: [] });
+  });
+
+  it('counts everything as unassigned when no expense has a project', () => {
+    expect(summary.projects).toEqual([]);
+    expect(summary.unassigned).toEqual({ count: 4, totalCents: 26450, hstCents: 2870, netCents: 23580 });
+  });
+
+  it('totals by project, in number order, leaving the rest unassigned', () => {
+    const tagged = summarizeExpenses(2026, [
+      { expenseDate: '2026-02-01', category: 'materials', totalCents: 11300, hstCents: 1300, projectNumber: '10' },
+      { expenseDate: '2026-02-03', category: 'shop_supplies', totalCents: 2260, hstCents: 260, projectNumber: '9' },
+      { expenseDate: '2026-02-05', category: 'materials', totalCents: 5650, hstCents: 650, projectNumber: '10' },
+      { expenseDate: '2026-02-07', category: 'office', totalCents: 1500, hstCents: 0, projectNumber: null },
+      { expenseDate: '2025-06-01', category: 'materials', totalCents: 99999, hstCents: 0, projectNumber: '10' },
+    ]);
+
+    expect(tagged.projects).toEqual([
+      { projectNumber: '9', count: 1, totalCents: 2260, hstCents: 260, netCents: 2000 },
+      { projectNumber: '10', count: 2, totalCents: 16950, hstCents: 1950, netCents: 15000 },
+    ]);
+    expect(tagged.unassigned).toEqual({ count: 1, totalCents: 1500, hstCents: 0, netCents: 1500 });
   });
 });
 
@@ -168,10 +204,29 @@ describe('expensesCsv', () => {
       },
     ];
     const lines = expensesCsv(expenses, summarizeExpenses(2026, expenses)).replace(/^﻿/, '').split('\r\n');
-    expect(lines[0]).toBe('Date,Vendor,Description,Category,T2125 line,Total paid,HST,Net of HST');
-    expect(lines[1]).toBe('2026-01-15,Lumber yard,"Walnut, ""8/4""",Materials,8320,113.00,13.00,100.00');
+    expect(lines[0]).toBe('Date,Vendor,Description,Category,T2125 line,Total paid,HST,Net of HST,Project');
+    expect(lines[1]).toBe('2026-01-15,Lumber yard,"Walnut, ""8/4""",Materials,8320,113.00,13.00,100.00,');
     expect(lines[2]).toBe('');
     expect(lines[4]).toBe('Materials,Cost of goods sold,8320,1,113.00,13.00,100.00');
     expect(lines[5]).toBe('All expenses,,,1,113.00,13.00,100.00');
+    // No project block when nothing is tagged
+    expect(lines[6]).toBe('');
+    expect(lines).toHaveLength(7);
+  });
+
+  it('adds the project to each row and a totals block by project', () => {
+    const expenses = [
+      { expenseDate: '2026-01-15', vendor: 'Lumber yard', description: 'Walnut', category: 'materials', totalCents: 11300, hstCents: 1300, projectNumber: '2026-014' },
+      { expenseDate: '2026-01-16', vendor: 'Staples', description: 'Paper', category: 'office', totalCents: 2260, hstCents: 260, projectNumber: null },
+    ];
+    const lines = expensesCsv(expenses, summarizeExpenses(2026, expenses)).replace(/^﻿/, '').split('\r\n');
+
+    expect(lines[1]).toBe('2026-01-15,Lumber yard,Walnut,Materials,8320,113.00,13.00,100.00,2026-014');
+    expect(lines[2].endsWith(',20.00,')).toBe(true);
+
+    const start = lines.indexOf('Projects 2026,Expenses,Total paid,HST,Net of HST');
+    expect(start).toBeGreaterThan(0);
+    expect(lines[start + 1]).toBe('2026-014,1,113.00,13.00,100.00');
+    expect(lines[start + 2]).toBe('No project,1,22.60,2.60,20.00');
   });
 });

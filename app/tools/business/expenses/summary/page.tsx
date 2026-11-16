@@ -1,7 +1,7 @@
 import YearPicker from '@/components/business/YearPicker';
 import { currentYear, parseYearParam } from '@/lib/dates';
 import { expenseYears, listExpenses } from '@/lib/expenses/data';
-import { summarizeExpenses, type SectionTotal } from '@/lib/expenses/summary';
+import { summarizeExpenses, type ExpenseSummary, type SectionTotal } from '@/lib/expenses/summary';
 import { formatCents } from '@/lib/money';
 
 const BASE = '/tools/business/expenses';
@@ -46,7 +46,57 @@ export default async function ExpenseSummaryPage({
       ) : (
         summary.sections.map(section => <SectionTable key={section.id} section={section} year={year} />)
       )}
+
+      {summary.projects.length > 0 && <ProjectTable summary={summary} />}
     </div>
+  );
+}
+
+/** What each project cost this year, with everything untagged on its own row. */
+function ProjectTable({ summary }: { summary: ExpenseSummary }) {
+  const rows = [
+    ...summary.projects.map(p => ({ key: `project-${p.projectNumber}`, label: `Project ${p.projectNumber}`, ...p })),
+    ...(summary.unassigned.count > 0 ? [{ key: 'unassigned', label: 'No project', ...summary.unassigned }] : []),
+  ];
+
+  return (
+    <section className="bg-white border border-stone-200 rounded-lg overflow-hidden">
+      <div className="px-4 pt-4 pb-2">
+        <h2 className="text-lg font-semibold text-stone-800">By project</h2>
+        <p className="text-sm text-stone-500">
+          Expenses entered with a project number, for {summary.year} only. A project that spans two years shows
+          part of its cost in each.
+        </p>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <caption className="sr-only">Expenses by project, {summary.year}</caption>
+          <thead className="bg-stone-100 text-stone-600">
+            <tr>
+              <th scope="col" className="text-left font-medium px-4 py-2">Project</th>
+              <th scope="col" className="text-right font-medium px-3 py-2">Total</th>
+              <th scope="col" className="text-right font-medium px-3 py-2">HST</th>
+              <th scope="col" className="text-right font-medium px-4 py-2">Net</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-stone-100 text-stone-800">
+            {rows.map(row => (
+              <tr key={row.key}>
+                <th scope="row" className="text-left font-normal px-4 py-2">
+                  {row.label}
+                  <span className="block text-xs text-stone-500">
+                    {row.count} {row.count === 1 ? 'expense' : 'expenses'}
+                  </span>
+                </th>
+                <td className="text-right px-3 py-2 tabular-nums">{formatCents(row.totalCents)}</td>
+                <td className="text-right px-3 py-2 tabular-nums">{formatCents(row.hstCents)}</td>
+                <td className="text-right px-4 py-2 tabular-nums">{formatCents(row.netCents)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
   );
 }
 

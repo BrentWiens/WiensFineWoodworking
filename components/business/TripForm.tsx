@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import type { ActionResult } from '@/lib/actionResult';
-import { Field, FormMessage, errorProps, inputClass, primaryButtonClass, secondaryButtonClass, useSubmit } from './forms';
+import { Field, FormMessage, Suggestions, errorProps, inputClass, primaryButtonClass, secondaryButtonClass, useSubmit } from './forms';
 
 export interface TripFormValues {
   tripDate: string;
@@ -49,6 +49,13 @@ export default function TripForm({ action, initial, places, suggestions, mode, c
       destination: place.name,
       oneWayKm: place.oneWayKm !== null ? String(place.oneWayKm) : v.oneWayKm,
     }));
+  };
+
+  // A suggestion that is a saved place fills in its distance too, like the select above
+  const pickDestination = (name: string) => {
+    const place = places.find(p => p.name === name);
+    if (place) pickPlace(String(place.id));
+    else set('destination', name);
   };
 
   const oneWay = Number(values.oneWayKm);
@@ -113,7 +120,6 @@ export default function TripForm({ action, initial, places, suggestions, mode, c
           id="trip-destination"
           name="destination"
           required
-          list="trip-destination-options"
           autoComplete="off"
           placeholder="e.g. Lumber yard, client's house"
           value={values.destination}
@@ -121,11 +127,12 @@ export default function TripForm({ action, initial, places, suggestions, mode, c
           className={inputClass}
           {...destination.inputProps}
         />
-        <datalist id="trip-destination-options">
-          {destinationOptions.map(d => (
-            <option key={d} value={d} />
-          ))}
-        </datalist>
+        <Suggestions
+          label="Earlier destinations"
+          options={destinationOptions}
+          value={values.destination}
+          onPick={pickDestination}
+        />
       </Field>
 
       <div className="grid grid-cols-2 gap-3 items-start">

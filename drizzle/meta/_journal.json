@@ -29,6 +29,13 @@
       "when": 1794598645529,
       "tag": "0003_drop_expense_notes",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794863467162,
+      "tag": "0004_expense_project_number",
+      "breakpoints": true
     }
   ]
 }

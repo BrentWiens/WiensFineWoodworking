@@ -123,6 +123,11 @@ export const expenses = pgTable(
     hstCents: integer('hst_cents').notNull().default(0),
     /** Set for vehicle categories, so the claim can apply that vehicle's business-use %. */
     vehicleId: integer('vehicle_id').references(() => vehicles.id, { onDelete: 'restrict' }),
+    /**
+     * The project this was bought for, to total what each project cost. Null means
+     * it isn't tied to a project. Free text for now; a jobs table can adopt it later.
+     */
+    projectNumber: text('project_number'),
     ...timestamps,
   },
   t => [
