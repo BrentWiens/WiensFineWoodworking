@@ -1,5 +1,5 @@
 import 'server-only';
-import { and, desc, eq, gte, isNotNull, lt, max, sql } from 'drizzle-orm';
+import { and, desc, eq, gte, lt, max, sql } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { expenses, type Expense } from '@/lib/db/schema';
 import { verifySession } from '@/lib/auth/dal';
@@ -63,19 +63,6 @@ export async function expenseYears(current: number): Promise<number[]> {
     .selectDistinct({ year: sql<number>`extract(year from ${expenses.expenseDate})::int` })
     .from(expenses);
   return [...new Set([current, ...rows.map(r => Number(r.year))])].sort((a, b) => b - a);
-}
-
-/** Project numbers already in use, most recently used first, for autocomplete. */
-export async function recentProjectNumbers(limit = 30): Promise<string[]> {
-  await verifySession();
-  const rows = await db()
-    .select({ projectNumber: expenses.projectNumber })
-    .from(expenses)
-    .where(isNotNull(expenses.projectNumber))
-    .groupBy(expenses.projectNumber)
-    .orderBy(desc(max(expenses.expenseDate)))
-    .limit(limit);
-  return rows.flatMap(r => r.projectNumber ?? []);
 }
 
 /** Recently used vendors, most recent first, for autocomplete. */

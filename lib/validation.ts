@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { addDays, isIsoDate } from './dates';
+import { parseMoney } from './money';
 
 /**
  * Form-parsing helpers shared by the business tools' validation modules
@@ -30,3 +32,36 @@ export function formToObject(formData: FormData): Record<string, string> {
   }
   return out;
 }
+
+/** A tax-included dollar amount typed into a form, as cents. */
+export const money = (label: string) =>
+  z.string({ error: `${label} is required` }).transform((value, ctx) => {
+    const cents = parseMoney(value);
+    if (cents === null) {
+      ctx.addIssue({ code: 'custom', message: `${label} must be an amount like 12.34` });
+      return z.NEVER;
+    }
+    return cents;
+  });
+
+/** The day something happened: a real date, not long ago, and not in the future. */
+export const entryDate = (today: string) =>
+  z
+    .string({ error: 'Date is required' })
+    .refine(isIsoDate, 'Enter a valid date')
+    .refine(d => d >= '2000-01-01', 'Date is too far in the past')
+    // One day of slack: the phone and the server can disagree about midnight.
+    .refine(d => d <= addDays(today, 1), 'Date is in the future');
+
+/** The highest HST rate in Canada (Atlantic provinces). More than this is a typo. */
+const MAX_HST_PERCENT = 15;
+
+/** Whether `hstCents` could be the tax inside a tax-included `totalCents`. */
+export const hstFitsTotal = (hstCents: number, totalCents: number) =>
+  hstCents * (100 + MAX_HST_PERCENT) <= totalCents * MAX_HST_PERCENT;
+
+/** An optional project number; blank means not tied to a project. */
+export const projectNumberField = z.preprocess(
+  blankToUndefined,
+  z.string().trim().max(50, 'Project number is too long').optional(),
+);

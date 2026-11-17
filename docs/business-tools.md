@@ -5,7 +5,7 @@ Private tools for running the business side of Wiens Fine Woodworking. They live
 testing, and require Google sign-in. Only addresses in `ALLOWED_EMAILS` can sign in.
 
 The long-term goal is to keep all the business accounting and supporting records in one place,
-built in this order: mileage → expenses → jobs and year-end reports → quotes, invoices and income.
+built in this order: mileage → expenses → projects → year-end reports → quotes and invoices.
 The business is a sole proprietorship in Kitchener, Ontario, so CRA rules apply, distances are
 in km, and HST registration is coming soon, so the tools are designed as if already registered.
 Multi-user access isn't needed yet, though this could become a product one day.
@@ -43,14 +43,46 @@ used against the real database, locally and in production.
   vehicle insurance and licensing under Vehicle: other, with the description saying what it
   was. Line numbers are a guide; the accountant has the final say.
 - Vehicle-category expenses record the vehicle they belong to, ready for the vehicle claim.
-- An optional project number on each expense, to total what a project cost. Blank means the
-  expense isn't tied to a project. It's free text for now (`expenses.project_number`); the
-  planned `jobs` table can adopt these numbers later.
+- An optional project on each expense, chosen from the active projects. "No project" means the
+  expense isn't tied to one.
 - Year summary by section and category: total paid, HST (input tax credits) and net of HST,
   plus a "By project" table once any expense has a project number
 - CSV export: one row per expense, then totals by category and by project
 
-**Not built yet:** receipt photos, jobs, year-end reports, quotes and invoices. See
+**Projects** (`/tools/business/projects`) — built 2026-11-16
+- A project has a number, a name, an optional client, notes, and a status (active or complete).
+- The list shows every project with its income, expenses and profit, active ones first.
+- A project's page records the payments received for it (date, amount, what it was, HST
+  included) and lists the expenses and trips linked to it, each opening in its own log.
+- The project's page breaks its costs down by expense category, adds a mileage estimate
+  (km × `KM_RATE_CENTS`), and shows the profit.
+- Expenses and trips link to a project by its **number**, stored as text
+  (`expenses.project_number`, `trips.project_number`), so a trip or expense form only needs
+  the project picker. Changing a project's number rewrites it on its expenses and trips.
+  Payments link by id (`project_income.project_id`).
+- A number used on an expense or trip that no project has is flagged on the list, with a link
+  to add the project. A project can only be deleted once its payments are removed; its
+  expenses and trips are kept and become unlinked.
+- The trip and expense forms only offer active projects, plus whatever the entry already has.
+
+**Accounting** (`/tools/business/accounting`) — built 2026-11-16
+- Year summary: a profit and loss for the year. Income is the payments received on projects.
+  Expenses are listed by category, with meals at 50%. The vehicle line is the business-use %
+  of the year's vehicle expenses and vehicle CCA once the odometer readings are in, and a
+  per-km estimate until then. Tools of $500+ come in through CCA, not as an expense.
+- A tax set-aside figure (30% of net income, a rule of thumb).
+- HST threshold: income over the four calendar quarters ending with the current one, against
+  $30,000. Clients outside Canada count. Hidden once registered.
+- Capital assets: a CCA schedule per class (8 tools, 10 vehicle) showing start UCC, purchases,
+  the half-year-rule limit, the amount claimed and end UCC. The amount claimed each year is
+  entered by hand. Expenses in the "Tools and equipment ($500+)" category join class 8
+  automatically; the vehicle and older machines are added on this page.
+- **The rules live in `lib/accounting/rules.ts`**: `HST_REGISTERED_FROM` (null today; set it to
+  the registration date and expenses from then on count net of HST), the per-km rate, the
+  set-aside %, the threshold and the meals %. The business is not HST-registered yet, so
+  every expense currently counts in full, HST included.
+
+**Not built yet:** receipt photos, a T2125 line-by-line report, quotes and invoices. See
 [Next steps](#next-steps).
 
 ## Setup
@@ -92,9 +124,9 @@ every request.
 | Google sign-in (OIDC with PKCE, built by hand with `jose`; no auth library) | `lib/auth/google.ts`, `app/api/auth/google/route.ts`, `app/api/auth/google/callback/route.ts` |
 | Session cookie (signed JWT, 30 days, `SameSite=Lax`, which the redirect back from Google needs) | `lib/auth/session.ts` |
 | Redirect to `/login` for signed-out visitors | `proxy.ts` (matcher `/tools/business/:path*`) |
-| **Real authorization**: every data function calls `verifySession()` first | `lib/auth/dal.ts`, `lib/mileage/data.ts`, `lib/expenses/data.ts` |
+| **Real authorization**: every data function calls `verifySession()` first | `lib/auth/dal.ts`, `lib/mileage/data.ts`, `lib/expenses/data.ts`, `lib/projectTracking/data.ts`, `lib/accounting/data.ts` |
 | Schema and migrations (Drizzle with Neon HTTP) | `lib/db/schema.ts`, `drizzle/` |
-| Pure, unit-tested logic (validation, summaries, CSV, categories) | `lib/mileage/*`, `lib/expenses/*` |
+| Pure, unit-tested logic (validation, summaries, CSV, categories) | `lib/mileage/*`, `lib/expenses/*`, `lib/projectTracking/*`, `lib/accounting/*` (the tracker; `lib/projects.ts` is the public portfolio) |
 | Shared helpers: form parsing, money (cents, HST), dates, CSV | `lib/validation.ts`, `lib/money.ts`, `lib/dates.ts`, `lib/csv.ts` |
 | Pages and Server Actions | `app/tools/business/` |
 | Shared components: forms (submitting without React's automatic form reset), tabs, year picker | `components/business/` |
@@ -122,8 +154,6 @@ These rules matter when adding more tools:
    connected in Vercel (`BLOB_READ_WRITE_TOKEN`) and the Blob host added to the CSP's `img-src`.
 3. **Year-end archive:** records must be kept 6 years, and Neon's free plan only restores
    recent history.
-4. **Jobs and reports:** a `jobs` table that trips, expenses and invoices can all link to; the
-   vehicle claim (business % × the year's vehicle expenses, which already carry their
-   `vehicle_id`); CCA for tools and equipment; and a T2125 summary.
-5. **Quotes, invoices and income:** moved over from the separate tool used today, with HST
-   charged on invoices.
+4. **Reports:** a T2125 summary laid out line by line for the accountant.
+5. **Quotes and invoices:** moved over from the separate tool used today, with HST charged on
+   invoices, and linked to projects so a paid invoice becomes the project's income.

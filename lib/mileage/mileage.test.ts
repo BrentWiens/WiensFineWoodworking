@@ -28,6 +28,7 @@ describe('parseTrip', () => {
         purpose: 'Buy walnut for dining table',
         distanceKm: 24.6,
         roundTrip: true,
+        projectNumber: null,
       },
     });
   });

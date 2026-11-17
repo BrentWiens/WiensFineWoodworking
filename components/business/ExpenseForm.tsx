@@ -5,7 +5,7 @@ import Link from 'next/link';
 import type { ActionResult } from '@/lib/actionResult';
 import { CATEGORIES, SECTIONS, getCategory } from '@/lib/expenses/categories';
 import { HST_PERCENT, centsToInput, hstIncluded, parseMoney } from '@/lib/money';
-import { Field, FormMessage, Suggestions, errorProps, inputClass, primaryButtonClass, secondaryButtonClass, useSubmit } from './forms';
+import { Field, FormMessage, ProjectSelect, Suggestions, errorProps, inputClass, primaryButtonClass, secondaryButtonClass, useSubmit } from './forms';
 
 export interface ExpenseFormValues {
   expenseDate: string;
@@ -22,8 +22,8 @@ interface ExpenseFormProps {
   initial: ExpenseFormValues;
   /** Earlier vendors, offered as autocomplete. */
   vendors: string[];
-  /** Project numbers already in use, offered as autocomplete. */
-  projectNumbers: string[];
+  /** The active projects, for the project picker. */
+  projects: { number: string; name: string }[];
   mode: 'create' | 'edit';
   cancelHref?: string;
 }
@@ -33,7 +33,7 @@ interface ExpenseFormProps {
  * then one tap to work out the HST from the total. After a save the date stays put,
  * since receipts tend to come in batches from the same day.
  */
-export default function ExpenseForm({ action, initial, vendors, projectNumbers, mode, cancelHref }: ExpenseFormProps) {
+export default function ExpenseForm({ action, initial, vendors, projects, mode, cancelHref }: ExpenseFormProps) {
   const [values, setValues] = useState(initial);
   const set = <K extends keyof ExpenseFormValues>(key: K, value: ExpenseFormValues[K]) =>
     setValues(v => ({ ...v, [key]: value }));
@@ -145,30 +145,13 @@ export default function ExpenseForm({ action, initial, vendors, projectNumbers, 
         />
       </Field>
 
-      <Field
-        label="Project number (optional)"
-        htmlFor="expense-project"
+      <ProjectSelect
+        id="expense-project"
+        value={values.projectNumber}
+        onChange={number => set('projectNumber', number)}
+        projects={projects}
         error={project.error}
-        hint="Leave blank if this isn't for a particular project."
-      >
-        <input
-          id="expense-project"
-          name="projectNumber"
-          autoComplete="off"
-          autoCapitalize="characters"
-          maxLength={50}
-          value={values.projectNumber}
-          onChange={e => set('projectNumber', e.target.value)}
-          className={inputClass}
-          {...project.inputProps}
-        />
-        <Suggestions
-          label="Earlier project numbers"
-          options={projectNumbers}
-          value={values.projectNumber}
-          onPick={number => set('projectNumber', number)}
-        />
-      </Field>
+      />
 
       <Field
         label="HST paid ($)"

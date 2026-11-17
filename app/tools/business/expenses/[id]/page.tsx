@@ -1,7 +1,8 @@
 import { notFound } from 'next/navigation';
 import ExpenseForm from '@/components/business/ExpenseForm';
 import ConfirmButton from '@/components/business/ConfirmButton';
-import { getExpense, recentProjectNumbers, recentVendors } from '@/lib/expenses/data';
+import { getExpense, recentVendors } from '@/lib/expenses/data';
+import { projectOptions } from '@/lib/projectTracking/data';
 import { centsToInput, formatCents } from '@/lib/money';
 import { deleteExpenseAction, updateExpenseAction } from '../actions';
 
@@ -9,7 +10,7 @@ export default async function EditExpensePage({ params }: { params: Promise<{ id
   const id = Number((await params).id);
   if (!Number.isInteger(id) || id <= 0) notFound();
 
-  const [expense, vendors, projectNumbers] = await Promise.all([getExpense(id), recentVendors(), recentProjectNumbers()]);
+  const [expense, vendors, projects] = await Promise.all([getExpense(id), recentVendors(), projectOptions()]);
   if (!expense) notFound();
 
   const backHref = `/tools/business/expenses?year=${expense.expenseDate.slice(0, 4)}`;
@@ -22,7 +23,7 @@ export default async function EditExpensePage({ params }: { params: Promise<{ id
           mode="edit"
           action={updateExpenseAction.bind(null, expense.id)}
           vendors={vendors}
-          projectNumbers={projectNumbers}
+          projects={projects}
           cancelHref={backHref}
           initial={{
             expenseDate: expense.expenseDate,

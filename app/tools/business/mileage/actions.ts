@@ -28,6 +28,9 @@ const SAVE_FAILED: ActionResult = { ok: false, message: 'Could not save. Check y
 
 function refreshMileage() {
   revalidatePath(BASE, 'layout');
+  // A project's km are its trips
+  revalidatePath('/tools/business/projects', 'layout');
+  revalidatePath('/tools/business/accounting', 'layout');
 }
 
 /** Runs a write, turning unexpected failures into a message while letting redirects through. */

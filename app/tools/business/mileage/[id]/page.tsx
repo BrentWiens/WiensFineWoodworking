@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import TripForm from '@/components/business/TripForm';
 import ConfirmButton from '@/components/business/ConfirmButton';
 import { getTrip, listPlaces, recentDestinations } from '@/lib/mileage/data';
+import { projectOptions } from '@/lib/projectTracking/data';
 import { oneWayKmFor } from '@/lib/mileage/validation';
 import { deleteTripAction, updateTripAction } from '../actions';
 
@@ -9,7 +10,12 @@ export default async function EditTripPage({ params }: { params: Promise<{ id: s
   const id = Number((await params).id);
   if (!Number.isInteger(id) || id <= 0) notFound();
 
-  const [trip, places, recent] = await Promise.all([getTrip(id), listPlaces(), recentDestinations()]);
+  const [trip, places, recent, projects] = await Promise.all([
+    getTrip(id),
+    listPlaces(),
+    recentDestinations(),
+    projectOptions(),
+  ]);
   if (!trip) notFound();
 
   const backHref = `/tools/business/mileage?year=${trip.tripDate.slice(0, 4)}`;
@@ -22,6 +28,7 @@ export default async function EditTripPage({ params }: { params: Promise<{ id: s
           mode="edit"
           action={updateTripAction.bind(null, trip.id)}
           places={places}
+          projects={projects}
           suggestions={recent.map(r => r.destination)}
           cancelHref={backHref}
           initial={{
@@ -31,6 +38,7 @@ export default async function EditTripPage({ params }: { params: Promise<{ id: s
             purpose: trip.purpose,
             oneWayKm: String(oneWayKmFor(trip)),
             roundTrip: trip.roundTrip,
+            projectNumber: trip.projectNumber ?? '',
           }}
         />
       </section>

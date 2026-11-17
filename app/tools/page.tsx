@@ -52,6 +52,28 @@ const BUSINESS_TOOLS = [
             </svg>
         ),
     },
+    {
+        href: '/tools/business/projects',
+        title: 'Projects',
+        description: 'Gather the payments, expenses and trips for each project in one place to see what it earned, what it cost and what it made.',
+        icon: (
+            <svg viewBox="0 0 24 24" className="w-16 h-16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M4 7.5a1.5 1.5 0 0 1 1.5-1.5h4l2 2h7A1.5 1.5 0 0 1 20 9.5v8a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5z" />
+                <path d="M8 16v-2M12 16v-4M16 16v-3" />
+            </svg>
+        ),
+    },
+    {
+        href: '/tools/business/accounting',
+        title: 'Accounting',
+        description: 'The year at a glance: income, expenses and net income, what to set aside for tax, the HST threshold, and depreciation on tools and the vehicle.',
+        icon: (
+            <svg viewBox="0 0 24 24" className="w-16 h-16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <rect x="5" y="3" width="14" height="18" rx="1.5" />
+                <path d="M8 7h8M8 11h2M12 11h1M15 11h1M8 14.5h2M12 14.5h1M15 14.5h1M8 18h2M12 18h4" />
+            </svg>
+        ),
+    },
 ];
 
 export default function ToolsPage() {

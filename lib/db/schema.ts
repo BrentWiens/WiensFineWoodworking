@@ -96,6 +96,8 @@ export const trips = pgTable(
     /** Total distance driven for the trip — already doubled when it was a round trip. */
     distanceKm: numeric('distance_km', { precision: 7, scale: 1, mode: 'number' }).notNull(),
     roundTrip: boolean('round_trip').notNull().default(true),
+    /** The project the trip was for (projects.number), or null when it isn't tied to one. */
+    projectNumber: text('project_number'),
     ...timestamps,
   },
   t => [
@@ -124,8 +126,8 @@ export const expenses = pgTable(
     /** Set for vehicle categories, so the claim can apply that vehicle's business-use %. */
     vehicleId: integer('vehicle_id').references(() => vehicles.id, { onDelete: 'restrict' }),
     /**
-     * The project this was bought for, to total what each project cost. Null means
-     * it isn't tied to a project. Free text for now; a jobs table can adopt it later.
+     * The project this was bought for (projects.number), to total what each project
+     * cost. Null means it isn't tied to a project.
      */
     projectNumber: text('project_number'),
     ...timestamps,
@@ -137,7 +139,94 @@ export const expenses = pgTable(
   ],
 );
 
-export type Trip = typeof trips.$inferSelect;
+/**
+ * A piece of work for a client: what its expenses, trips and income are gathered under.
+ *
+ * Expenses and trips point at a project by its number, as text, rather than by id.
+ * The number is what gets written on the quote and the invoice, and expenses carried
+ * numbers before this table existed. Renaming a project's number rewrites them (see
+ * lib/projectTracking/data.ts). Income only ever exists inside a project, so it
+ * links by id.
+ */
+export const projects = pgTable(
+  'projects',
+  {
+    id: serial('id').primaryKey(),
+    number: text('number').notNull(),
+    name: text('name').notNull(),
+    client: text('client'),
+    /** 'active' or 'complete' (lib/projectTracking/validation.ts). */
+    status: text('status').notNull().default('active'),
+    notes: text('notes'),
+    ...timestamps,
+  },
+  t => [uniqueIndex('projects_number').on(t.number)],
+);
+
+/** A payment received for a project: a deposit, a progress payment, the balance. */
+export const projectIncome = pgTable(
+  'project_income',
+  {
+    id: serial('id').primaryKey(),
+    projectId: integer('project_id')
+      .notNull()
+      .references(() => projects.id, { onDelete: 'restrict' }),
+    incomeDate: date('income_date', { mode: 'string' }).notNull(),
+    description: text('description').notNull(),
+    /** What was received, tax included. */
+    totalCents: integer('total_cents').notNull(),
+    /** The HST within the total, owed to the CRA once registered. */
+    hstCents: integer('hst_cents').notNull().default(0),
+    ...timestamps,
+  },
+  t => [
+    index('project_income_project').on(t.projectId),
+    check('project_income_total_positive', sql`${t.totalCents} > 0`),
+    check('project_income_hst_within_total', sql`${t.hstCents} >= 0 AND ${t.hstCents} <= ${t.totalCents}`),
+  ],
+);
+
+/**
+ * Something written off over several years that was not bought through the expense
+ * log: the vehicle, or a machine owned before the business started. Tools of $500+
+ * entered as expenses (category 'equipment') are capital assets without a row here.
+ */
+export const capitalAssets = pgTable(
+  'capital_assets',
+  {
+    id: serial('id').primaryKey(),
+    name: text('name').notNull(),
+    /** CCA class id from lib/accounting/cca.ts: '8' tools, '10' vehicle. */
+    ccaClass: text('cca_class').notNull(),
+    acquiredDate: date('acquired_date', { mode: 'string' }).notNull(),
+    /** What it cost, or what it was worth when it started being used for the business. */
+    costCents: integer('cost_cents').notNull(),
+    notes: text('notes'),
+    ...timestamps,
+  },
+  t => [check('capital_assets_cost_positive', sql`${t.costCents} > 0`)],
+);
+
+/** The capital cost allowance claimed for one class in one year. The owner picks the amount. */
+export const ccaClaims = pgTable(
+  'cca_claims',
+  {
+    id: serial('id').primaryKey(),
+    year: integer('year').notNull(),
+    ccaClass: text('cca_class').notNull(),
+    claimedCents: integer('claimed_cents').notNull(),
+    ...timestamps,
+  },
+  t => [
+    uniqueIndex('cca_claims_year_class').on(t.year, t.ccaClass),
+    check('cca_claims_not_negative', sql`${t.claimedCents} >= 0`),
+  ],
+);
+
+export type CapitalAsset = typeof capitalAssets.$inferSelect;
+export type Project = typeof projects.$inferSelect;
+export type ProjectIncome = typeof projectIncome.$inferSelect;
+export type Trip =typeof trips.$inferSelect;
 export type Expense = typeof expenses.$inferSelect;
 export type Place = typeof places.$inferSelect;
 export type Vehicle = typeof vehicles.$inferSelect;

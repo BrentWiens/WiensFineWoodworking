@@ -4,6 +4,7 @@ import YearPicker from '@/components/business/YearPicker';
 import { VehicleForm } from '@/components/business/SettingsForms';
 import { currentYear, formatShortDate, monthName, parseYearParam, todayIso } from '@/lib/dates';
 import { getOdometerYear, getVehicle, listPlaces, listTrips, recentDestinations, tripYears } from '@/lib/mileage/data';
+import { projectOptions } from '@/lib/projectTracking/data';
 import { formatKm, summarizeYear, type YearSummary } from '@/lib/mileage/summary';
 import type { Trip } from '@/lib/db/schema';
 import { createTripAction, saveVehicleAction } from './actions';
@@ -28,12 +29,13 @@ export default async function MileagePage({
     );
   }
 
-  const [trips, places, recent, years, odometer] = await Promise.all([
+  const [trips, places, recent, years, odometer, projects] = await Promise.all([
     listTrips(year),
     listPlaces(),
     recentDestinations(),
     tripYears(currentYear()),
     getOdometerYear(year),
+    projectOptions(),
   ]);
   const summary = summarizeYear(year, trips, odometer);
 
@@ -58,6 +60,7 @@ export default async function MileagePage({
           mode="create"
           action={createTripAction}
           places={places}
+          projects={projects}
           suggestions={recent.map(r => r.destination)}
           initial={{
             tripDate: todayIso(),
@@ -66,6 +69,7 @@ export default async function MileagePage({
             purpose: '',
             oneWayKm: '',
             roundTrip: true,
+            projectNumber: '',
           }}
         />
       </section>
@@ -131,6 +135,9 @@ function TripList({ trips, year, summary }: { trips: Trip[]; year: number; summa
                   <p className="text-right shrink-0">
                     <span className="font-semibold text-stone-800 tabular-nums">{formatKm(trip.distanceKm)}</span>
                     <span className="block text-xs text-stone-500">{trip.roundTrip ? 'round trip' : 'one way'}</span>
+                    {trip.projectNumber && (
+                      <span className="block text-xs text-stone-500">Project {trip.projectNumber}</span>
+                    )}
                   </p>
                 </Link>
               </li>

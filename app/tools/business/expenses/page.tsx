@@ -3,7 +3,8 @@ import ExpenseForm from '@/components/business/ExpenseForm';
 import YearPicker from '@/components/business/YearPicker';
 import { currentYear, formatShortDate, monthName, parseYearParam, todayIso } from '@/lib/dates';
 import { categoryLabel } from '@/lib/expenses/categories';
-import { expenseYears, listExpenses, recentProjectNumbers, recentVendors } from '@/lib/expenses/data';
+import { expenseYears, listExpenses, recentVendors } from '@/lib/expenses/data';
+import { projectOptions } from '@/lib/projectTracking/data';
 import { summarizeExpenses, type ExpenseSummary } from '@/lib/expenses/summary';
 import type { Expense } from '@/lib/db/schema';
 import { formatCents } from '@/lib/money';
@@ -18,10 +19,10 @@ export default async function ExpensesPage({
 }) {
   const year = parseYearParam((await searchParams).year);
 
-  const [expenses, vendors, projectNumbers, years] = await Promise.all([
+  const [expenses, vendors, projects, years] = await Promise.all([
     listExpenses(year),
     recentVendors(),
-    recentProjectNumbers(),
+    projectOptions(),
     expenseYears(currentYear()),
   ]);
   const summary = summarizeExpenses(year, expenses);
@@ -43,7 +44,7 @@ export default async function ExpensesPage({
           mode="create"
           action={createExpenseAction}
           vendors={vendors}
-          projectNumbers={projectNumbers}
+          projects={projects}
           initial={{
             expenseDate: todayIso(),
             vendor: '',

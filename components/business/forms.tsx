@@ -141,6 +141,59 @@ export function Suggestions({
   );
 }
 
+/**
+ * Picks the project a trip or expense belongs to. Submits the project's number as
+ * `projectNumber`, or blank for none. A select rather than a text box, so a typo
+ * can't quietly start a second project.
+ */
+export function ProjectSelect({
+  id,
+  value,
+  onChange,
+  projects,
+  error,
+}: {
+  id: string;
+  value: string;
+  onChange: (projectNumber: string) => void;
+  /** The active projects. */
+  projects: { number: string; name: string }[];
+  error?: string;
+}) {
+  // A finished project, or a number entered before projects existed, stays selectable
+  const listed = projects.some(p => p.number === value);
+
+  return (
+    <Field
+      label="Project (optional)"
+      htmlFor={id}
+      error={error}
+      hint={
+        projects.length === 0 && !value
+          ? 'No active projects yet. Add one under Projects to link this to it.'
+          : "Leave as No project if this isn't for a particular project."
+      }
+    >
+      <select
+        id={id}
+        name="projectNumber"
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        className={inputClass}
+        {...(error ? { 'aria-invalid': true as const, 'aria-describedby': `${id}-error` } : {})}
+      >
+        <option value="">No project</option>
+        {projects.map(p => (
+          <option key={p.number} value={p.number}>
+            {p.number} · {p.name}
+          </option>
+        ))}
+        {value && !listed && <option value={value}>{value}</option>}
+      </select>
+    </Field>
+  );
+}
+
 /** aria props tying an input to its error message, if it has one. */
 export function errorProps(result: ActionResult | undefined, field: string, id: string) {
   const error = result && !result.ok ? firstError(result.errors, field) : undefined;

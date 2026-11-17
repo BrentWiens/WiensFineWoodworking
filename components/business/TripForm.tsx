@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import type { ActionResult } from '@/lib/actionResult';
-import { Field, FormMessage, Suggestions, errorProps, inputClass, primaryButtonClass, secondaryButtonClass, useSubmit } from './forms';
+import { Field, FormMessage, ProjectSelect, Suggestions, errorProps, inputClass, primaryButtonClass, secondaryButtonClass, useSubmit } from './forms';
 
 export interface TripFormValues {
   tripDate: string;
@@ -12,12 +12,15 @@ export interface TripFormValues {
   purpose: string;
   oneWayKm: string;
   roundTrip: boolean;
+  projectNumber: string;
 }
 
 interface TripFormProps {
   action: (formData: FormData) => Promise<ActionResult>;
   initial: TripFormValues;
   places: { id: number; name: string; oneWayKm: number | null }[];
+  /** The active projects, for the project picker. */
+  projects: { number: string; name: string }[];
   /** Earlier destinations, offered as autocomplete. */
   suggestions: string[];
   mode: 'create' | 'edit';
@@ -29,7 +32,7 @@ interface TripFormProps {
  * (fills destination and distance), type the purpose, save. After a save the date
  * and start point stay put, since the next trip is usually the same day.
  */
-export default function TripForm({ action, initial, places, suggestions, mode, cancelHref }: TripFormProps) {
+export default function TripForm({ action, initial, places, projects, suggestions, mode, cancelHref }: TripFormProps) {
   const [values, setValues] = useState(initial);
   const set = <K extends keyof TripFormValues>(key: K, value: TripFormValues[K]) =>
     setValues(v => ({ ...v, [key]: value }));
@@ -67,6 +70,7 @@ export default function TripForm({ action, initial, places, suggestions, mode, c
   const destination = errorProps(result, 'destination', 'trip-destination');
   const km = errorProps(result, 'oneWayKm', 'trip-km');
   const purpose = errorProps(result, 'purpose', 'trip-purpose');
+  const project = errorProps(result, 'projectNumber', 'trip-project');
 
   return (
     <form onSubmit={onSubmit} className="space-y-4" noValidate>
@@ -180,6 +184,14 @@ export default function TripForm({ action, initial, places, suggestions, mode, c
           {...purpose.inputProps}
         />
       </Field>
+
+      <ProjectSelect
+        id="trip-project"
+        value={values.projectNumber}
+        onChange={number => set('projectNumber', number)}
+        projects={projects}
+        error={project.error}
+      />
 
       <FormMessage result={result} />
 

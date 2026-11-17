@@ -18,6 +18,9 @@ const SAVE_FAILED: ActionResult = { ok: false, message: 'Could not save. Check y
 
 function refreshExpenses() {
   revalidatePath(BASE, 'layout');
+  // A project's costs are its expenses
+  revalidatePath('/tools/business/projects', 'layout');
+  revalidatePath('/tools/business/accounting', 'layout');
 }
 
 /** Runs a write, turning unexpected failures into a message while letting redirects through. */

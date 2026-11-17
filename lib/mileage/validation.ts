@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { addDays, isIsoDate, todayIso } from '../dates';
-import { blankToUndefined, parse, text, type ParseResult } from '../validation';
+import { todayIso } from '../dates';
+import { blankToUndefined, entryDate, parse, projectNumberField, text, type ParseResult } from '../validation';
 
 /** Rounds to one decimal, the precision distances are stored at. */
 export function roundKm(km: number): number {
@@ -34,27 +34,26 @@ export interface TripInput {
   /** Total distance driven: one-way × 2 for a round trip. */
   distanceKm: number;
   roundTrip: boolean;
+  /** The project the trip was for, or null when it isn't tied to one. */
+  projectNumber: string | null;
 }
 
 const tripSchema = (today: string) =>
   z
     .object({
-      tripDate: z
-        .string({ error: 'Date is required' })
-        .refine(isIsoDate, 'Enter a valid date')
-        .refine(d => d >= '2000-01-01', 'Date is too far in the past')
-        // One day of slack: the phone and the server can disagree about midnight.
-        .refine(d => d <= addDays(today, 1), 'Date is in the future'),
+      tripDate: entryDate(today),
       origin: text('Start', 200),
       destination: text('Destination', 200),
       purpose: text('Business purpose', 500),
       oneWayKm: km('Distance'),
       roundTrip: z.preprocess(v => v === 'on' || v === 'true' || v === true, z.boolean()),
+      projectNumber: projectNumberField,
     })
-    .transform(({ oneWayKm, roundTrip, ...rest }): TripInput => ({
+    .transform(({ oneWayKm, roundTrip, projectNumber, ...rest }): TripInput => ({
       ...rest,
       roundTrip,
       distanceKm: roundKm(oneWayKm * (roundTrip ? 2 : 1)),
+      projectNumber: projectNumber ?? null,
     }));
 
 export function parseTrip(input: Record<string, unknown>, now: Date = new Date()): ParseResult<TripInput> {
