@@ -22,7 +22,8 @@ export function parseMoney(value: string): number | null {
 
 /** "$1,234.56" */
 export function formatCents(cents: number): string {
-  return (cents / 100).toLocaleString('en-CA', { style: 'currency', currency: 'CAD' });
+  // + 0 turns -0 (a negated zero, e.g. a deduction of nothing) into 0, so it isn't shown as -$0.00
+  return (cents / 100 + 0).toLocaleString('en-CA', { style: 'currency', currency: 'CAD' });
 }
 
 /** "1234.56" — for an input's value, where grouping commas would get in the way. */
