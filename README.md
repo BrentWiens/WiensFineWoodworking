@@ -6,14 +6,16 @@ A modern, responsive website for Wiens Fine Woodworking showcasing custom furnit
 
 ## Tech Stack
 
-- **Framework:** Next.js 16.3 (App Router)
+- **Framework:** Next.js 16.4 (App Router)
 - **Language:** TypeScript 6
 - **Styling:** Tailwind CSS v4
 - **Database:** Neon Postgres with Drizzle ORM (private business tools only)
+- **File storage:** private Vercel Blob store for receipt photos (business tools only)
+- **AI:** Claude API (`@anthropic-ai/sdk`) reads receipt photos to fill in expenses
 - **Auth:** Google sign-in (OpenID Connect via `jose`), limited to an email allowlist
 - **Deployment:** Vercel
 - **Testing:** Vitest (unit), Playwright (E2E)
-- **CI:** GitHub Actions (lint, type-check, unit tests, E2E tests)
+- **CI:** GitHub Actions on Node 24 (lint, type-check, unit tests, E2E tests)
 - **Monitoring:** Vercel Analytics, Vercel Speed Insights, Vercel runtime logs
 
 ### Pinned major versions
@@ -37,7 +39,7 @@ Two majors are available but deliberately held back — both are blocked on
 - 🎨 **Modern UI** - Clean design with smooth animations and hover effects
 - 🔍 **SEO Optimized** - Meta tags, canonical URLs, OpenGraph, Twitter Cards, and Schema.org structured data (`LocalBusiness` with service area and offer catalog, plus `CreativeWork` and `BreadcrumbList` on each project page)
 - 🔒 **Secure Contact Form** - Cloudflare Turnstile bot protection, rate limiting, input sanitization, email notifications, and a social-media fallback shown whenever the form becomes unusable so an enquiry is never silently lost
-- 🧾 **Private Business Tools** - A mileage log and an expense log under `/tools/business`, behind Google sign-in and backed by Neon Postgres. Setup, architecture and the roadmap are in [docs/business-tools.md](docs/business-tools.md)
+- 🧾 **Private Business Tools** - Bookkeeping for the business under `/tools/business`, behind Google sign-in and backed by Neon Postgres: a mileage log, an expense log with receipt photos that Claude reads to fill in each expense, project tracking (amount, payments, costs and profit per job) and accounting (yearly profit and loss, HST threshold, CCA schedule). Setup, architecture and the roadmap are in [docs/business-tools.md](docs/business-tools.md)
 
 ## Local Development
 ```bash
@@ -70,7 +72,7 @@ GMAIL_USER=your_gmail_address
 GMAIL_APP_PASSWORD=your_gmail_app_password
 ```
 
-The private business tools need more (a database, a Google OAuth client and a session secret). See [docs/business-tools.md](docs/business-tools.md#setup).
+The private business tools need more (a database, a Google OAuth client, a session secret, a private Blob store for receipts and an Anthropic API key). See [docs/business-tools.md](docs/business-tools.md#setup). Once the project is linked to Vercel, `vercel env pull .env.local` writes them all; it replaces the whole file, so copy it first.
 
 ### Running Tests
 
@@ -118,7 +120,9 @@ WiensFineWoodworking/
 │   │   ├── trig-calculator/page.tsx
 │   │   └── business/         # Private tools (sign-in required)
 │   │       ├── mileage/      # Mileage log: trips, year summary, CSV export
-│   │       └── expenses/     # Expense log: entries, year summary, CSV export
+│   │       ├── expenses/     # Expense log: receipts (split, photos), year summary, CSV export
+│   │       ├── projects/     # Projects: amount, payments, costs and profit per job
+│   │       └── accounting/   # Year profit and loss, HST threshold, CCA schedule
 │   ├── api/contact/route.ts  # Contact form API
 │   ├── api/auth/google/      # Google sign-in: start and callback routes
 │   ├── login/page.tsx        # Sign-in page for the private tools
@@ -164,7 +168,9 @@ WiensFineWoodworking/
 │   ├── auth/                 # Google sign-in, session cookie, session checks
 │   ├── db/                   # Database connection and schema
 │   ├── mileage/              # Mileage validation, data access, summary, CSV
-│   ├── expenses/             # Expense categories, validation, data access, summary, CSV
+│   ├── expenses/             # Expense categories, receipts (split, photo storage, reading), summary, CSV
+│   ├── projectTracking/      # Business projects: validation, totals, data access
+│   ├── accounting/           # Tax rules, year accounts, HST threshold, CCA
 │   └── validation.ts, money.ts, dates.ts, csv.ts  # Shared helpers
 ├── drizzle/                  # Database migrations
 ├── docs/business-tools.md    # Private tools: setup, architecture, roadmap
@@ -236,7 +242,7 @@ npm start
 ## Key Technical Decisions
 
 ### Server Components by Default
-Most components are Server Components for optimal performance. Only the Gallery uses `'use client'` for interactive lightbox functionality.
+Most components are Server Components for optimal performance. `'use client'` is kept to what needs the browser: the gallery lightbox, the calculators, the contact form and the business tools' forms.
 
 ### No client-side error reporting
 Sentry was removed deliberately. See *Monitoring & Observability* below for the
@@ -267,16 +273,16 @@ Components use barrel exports (`components/index.ts`) for cleaner imports throug
 
 ### Quality Assurance
 - **E2E Testing:** Playwright tests covering the gallery, project pages, contact form, page metadata, and all 5 calculator tools
-- **Unit Testing:** Vitest tests for the calculator utilities, the project registry (photos on disk, story links, description length), and image sizing
+- **Unit Testing:** Vitest tests for the calculator utilities, the project registry (photos on disk, story links, description length), image sizing, and the business tools' logic (validation, receipt splitting and reading, project totals, tax rules, CCA)
 - **Metadata regression tests:** [`tests/metadata.spec.ts`](tests/metadata.spec.ts) asserts that every page's `og:image` and `twitter:image` resolve to a real 200 response, not just that the tag exists — a previous bug pointed them at a path that 404'd, so every social share preview rendered blank
-- **CI:** GitHub Actions runs lint, type-check, unit tests, and E2E tests on every push and PR. E2E runs against the production build (`npm run start`) rather than the dev server, so it exercises static generation and real response headers
+- **CI:** GitHub Actions runs lint, type-check, unit tests, and E2E tests on every push and PR, on Node 24 (the same as local development; Node 22's npm 10 rejects the npm 11 lock file). E2E runs against the production build (`npm run start`) rather than the dev server, so it exercises static generation and real response headers
 - **Type Safety:** Strict TypeScript configuration with `tsc --noEmit` checks
 
 ### Security
 - **Bot Protection:** Cloudflare Turnstile on contact form, plus a honeypot field checked server-side
 - **Rate Limiting:** Contact form limited to 3 requests/minute per IP (best-effort; per-instance in-memory, so Turnstile is the real defence)
 - **Input Sanitization:** HTML escaping on all contact form fields
-- **Private tools:** `/tools/business/*` requires Google sign-in limited to an email allowlist. [`proxy.ts`](proxy.ts) redirects signed-out visitors, and every database function re-checks the session. These pages are excluded from the service worker cache, the sitemap and search indexing
+- **Private tools:** `/tools/business/*` requires Google sign-in limited to an email allowlist. [`proxy.ts`](proxy.ts) redirects signed-out visitors, and every database function re-checks the session. These pages are excluded from the service worker cache, the sitemap and search indexing. Receipt photos sit in a private Blob store with no public URLs, and are only served through a route that checks the session
 - **HTTPS:** Enforced via Vercel
 - **Security Headers:** Set in [`next.config.ts`](next.config.ts) — Content-Security-Policy, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, and HSTS. The CSP uses `'unsafe-inline'` for scripts because nonces would require middleware, which would opt every route out of static generation
 

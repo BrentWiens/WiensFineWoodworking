@@ -6,14 +6,18 @@ testing, and require Google sign-in. Only addresses in `ALLOWED_EMAILS` can sign
 
 The long-term goal is to keep all the business accounting and supporting records in one place,
 built in this order: mileage → expenses → projects → year-end reports → quotes and invoices.
-The business is a sole proprietorship in Kitchener, Ontario, so CRA rules apply, distances are
-in km, and HST registration is coming soon, so the tools are designed as if already registered.
+The business is a sole proprietorship in Kitchener, Ontario, so CRA rules apply and distances are
+in km. It isn't HST-registered yet but will be once income nears the $30,000 threshold, so the
+tools record the HST on every receipt and payment, and the accounting switches to counting
+expenses net of HST from the registration date (`lib/accounting/rules.ts`).
 Multi-user access isn't needed yet, though this could become a product one day.
 
-## Status (2026-11-13)
+## Status (2026-11-18)
 
-Live on wfinew.com since 2026-11-13. Sign-in, the mileage log and the expense log have been
-used against the real database, locally and in production.
+Live on wfinew.com since 2026-11-13. Sign-in, the mileage log, the expense log (including
+split receipts and receipt photos read by Claude), projects and accounting are all in use
+against the real database, locally and in production. The 2026 projects and their invoiced
+income were imported from the earlier spreadsheet.
 
 **The mileage log** (`/tools/business/mileage`)
 - Phone-friendly trip entry, with saved places that fill in the destination and one-way km
@@ -107,8 +111,8 @@ used against the real database, locally and in production.
   set-aside %, the threshold and the meals %. The business is not HST-registered yet, so
   every expense currently counts in full, HST included.
 
-**Not built yet:** receipt photos, a T2125 line-by-line report, quotes and invoices. See
-[Next steps](#next-steps).
+**Not built yet:** backup and recovery, a year-end archive, a T2125 line-by-line report, quotes
+and invoices. See [Next steps](#next-steps).
 
 ## Setup
 
@@ -126,7 +130,7 @@ used against the real database, locally and in production.
    | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | From step 2 |
    | `ALLOWED_EMAILS` | Comma-separated list of the Google accounts allowed to sign in |
    | `SESSION_SECRET` | At least 32 random characters, e.g. `node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"` |
-   | `BLOB_STORE_ID` | Set when a **private** Blob store is connected (Storage → Create → Blob → access Private), which also lets the app sign in to it with OIDC. Locally, `vercel env pull` brings both; or set `BLOB_READ_WRITE_TOKEN` from the store's settings. Without it the receipt photo field is hidden. |
+   | `BLOB_STORE_ID` | Set when a **private** Blob store is connected to the project (Storage → Create → Blob → access Private; the store is `blob-wfinew`). The app signs in to it with Vercel's OIDC token, so no read-write token is needed. Connect it to **Development** as well as Production, or `vercel env pull` can't bring it down for local work; a new connection can take a minute before access works. Without it the receipt photo field is hidden. |
    | `ANTHROPIC_API_KEY` | From console.anthropic.com → API keys, for reading receipts. Without it, photos are stored but not read. |
 
    Vercel stores Production values as Sensitive, and Sensitive values can't be pulled to a
@@ -137,8 +141,10 @@ used against the real database, locally and in production.
 
    **Local development and production share one database.** Anything entered while testing
    locally is real data in the live log.
-4. **Pull and migrate:** run `vercel env pull .env.local`, then `npm run db:migrate`. This
-   applies every migration in `drizzle/` that hasn't run yet.
+4. **Pull and migrate:** copy `.env.local` somewhere safe (the pull replaces the whole file),
+   run `vercel env pull .env.local`, then `npm run db:migrate`. This applies every migration in
+   `drizzle/` that hasn't run yet, and is safe to run again. Restart `npm run dev` after a pull:
+   it only reads `.env.local` and `next.config.ts` when it starts.
 
 To sign out every device at once, change `SESSION_SECRET` and redeploy. To revoke one
 account, remove it from `ALLOWED_EMAILS`. Existing sessions are checked against the list on
@@ -153,6 +159,8 @@ every request.
 | Redirect to `/login` for signed-out visitors | `proxy.ts` (matcher `/tools/business/:path*`) |
 | **Real authorization**: every data function calls `verifySession()` first | `lib/auth/dal.ts`, `lib/mileage/data.ts`, `lib/expenses/data.ts`, `lib/projectTracking/data.ts`, `lib/accounting/data.ts` |
 | Schema and migrations (Drizzle with Neon HTTP) | `lib/db/schema.ts`, `drizzle/` |
+| Receipt photos: private Blob storage and the authenticated route that serves them | `lib/expenses/receiptFiles.ts`, `lib/expenses/receiptPath.ts`, `app/tools/business/expenses/receipt/route.ts` |
+| Receipt reading with Claude (the request in `scanRequest.ts`, the API call in `scan.ts`, turning the result into form values in `scanResult.ts`) | `lib/expenses/scan*.ts` |
 | Pure, unit-tested logic (validation, summaries, CSV, categories) | `lib/mileage/*`, `lib/expenses/*`, `lib/projectTracking/*`, `lib/accounting/*` (the tracker; `lib/projects.ts` is the public portfolio) |
 | Shared helpers: form parsing, money (cents, HST), dates, CSV | `lib/validation.ts`, `lib/money.ts`, `lib/dates.ts`, `lib/csv.ts` |
 | Pages and Server Actions | `app/tools/business/` |
@@ -164,6 +172,9 @@ These rules matter when adding more tools:
   service worker must never cache these pages.
 - **Never query the database from a page or action directly.** Go through a data module whose
   functions call `verifySession()`.
+- **Receipt files stay private.** Store them only through `lib/expenses/receiptFiles.ts` (private
+  Blob store, `access: 'private'`) and show them only through the receipt route, which checks
+  the session. Never give a receipt a public URL.
 - **Dates are `YYYY-MM-DD` strings** in Toronto time (`lib/dates.ts`). Distances are km to
   1 decimal place. **Money must be integer cents** (`lib/money.ts` converts at the edges).
 - **Expense category ids are stored in the database.** Add new categories freely, but never
