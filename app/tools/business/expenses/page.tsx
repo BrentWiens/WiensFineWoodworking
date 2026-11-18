@@ -4,6 +4,7 @@ import YearPicker from '@/components/business/YearPicker';
 import { currentYear, formatShortDate, monthName, parseYearParam, todayIso } from '@/lib/dates';
 import { categoryLabel } from '@/lib/expenses/categories';
 import { expenseYears, listExpenses, recentVendors } from '@/lib/expenses/data';
+import { blankReceipt, groupReceipts, type Receipt } from '@/lib/expenses/receipts';
 import { projectOptions } from '@/lib/projectTracking/data';
 import { summarizeExpenses, type ExpenseSummary } from '@/lib/expenses/summary';
 import type { Expense } from '@/lib/db/schema';
@@ -45,15 +46,7 @@ export default async function ExpensesPage({
           action={createExpenseAction}
           vendors={vendors}
           projects={projects}
-          initial={{
-            expenseDate: todayIso(),
-            vendor: '',
-            category: '',
-            description: '',
-            total: '',
-            hst: '',
-            projectNumber: '',
-          }}
+          initial={blankReceipt(todayIso())}
         />
       </section>
 
@@ -76,16 +69,16 @@ function ExpenseList({ expenses, year, summary }: { expenses: Expense[]; year: n
     return <p className="text-stone-500 text-center py-8">No expenses entered for {year} yet.</p>;
   }
 
-  // Newest first, grouped by month.
-  const groups = new Map<number, Expense[]>();
-  for (const expense of expenses) {
-    const month = Number(expense.expenseDate.slice(5, 7));
-    groups.set(month, [...(groups.get(month) ?? []), expense]);
+  // Newest first, grouped by month; the items of a split receipt show as one entry.
+  const groups = new Map<number, Receipt<Expense>[]>();
+  for (const receipt of groupReceipts(expenses)) {
+    const month = Number(receipt.lines[0].expenseDate.slice(5, 7));
+    groups.set(month, [...(groups.get(month) ?? []), receipt]);
   }
 
   return (
     <section className="space-y-5" aria-label={`Expenses in ${year}`}>
-      {[...groups].map(([month, monthExpenses]) => (
+      {[...groups].map(([month, receipts]) => (
         <div key={month}>
           <h3 className="flex justify-between text-sm font-semibold text-stone-500 uppercase tracking-wide mb-2 px-1">
             <span>
@@ -94,23 +87,27 @@ function ExpenseList({ expenses, year, summary }: { expenses: Expense[]; year: n
             <span className="tabular-nums">{formatCents(summary.months[month - 1].totalCents)}</span>
           </h3>
           <ul className="bg-white border border-stone-200 rounded-lg divide-y divide-stone-100">
-            {monthExpenses.map(expense => (
-              <li key={expense.id}>
+            {receipts.map(receipt => (
+              <li key={receipt.id}>
                 <Link
-                  href={`${BASE}/${expense.id}`}
+                  href={`${BASE}/${receipt.id}`}
                   className="flex items-start justify-between gap-3 px-4 py-3 hover:bg-stone-50"
                 >
                   <div className="min-w-0">
-                    <p className="font-medium text-stone-800 truncate">{expense.vendor}</p>
+                    <p className="font-medium text-stone-800 truncate">{receipt.lines[0].vendor}</p>
                     <p className="text-sm text-stone-500 truncate">
-                      {formatShortDate(expense.expenseDate)} · {expense.description}
+                      {formatShortDate(receipt.lines[0].expenseDate)} · {unique(receipt.lines.map(l => l.description)).join(' · ')}
                     </p>
                   </div>
                   <p className="text-right shrink-0">
-                    <span className="font-semibold text-stone-800 tabular-nums">{formatCents(expense.totalCents)}</span>
-                    <span className="block text-xs text-stone-500">{categoryLabel(expense.category)}</span>
-                    {expense.projectNumber && (
-                      <span className="block text-xs text-stone-500">Project {expense.projectNumber}</span>
+                    <span className="font-semibold text-stone-800 tabular-nums">{formatCents(receipt.totalCents)}</span>
+                    <span className="block text-xs text-stone-500">
+                      {unique(receipt.lines.map(l => categoryLabel(l.category))).join(' + ')}
+                    </span>
+                    {receipt.lines.some(l => l.projectNumber) && (
+                      <span className="block text-xs text-stone-500">
+                        {projectsLabel(receipt.lines.flatMap(l => (l.projectNumber ? [l.projectNumber] : [])))}
+                      </span>
                     )}
                   </p>
                 </Link>
@@ -121,4 +118,11 @@ function ExpenseList({ expenses, year, summary }: { expenses: Expense[]; year: n
       ))}
     </section>
   );
+}
+
+const unique = (values: string[]) => [...new Set(values)];
+
+function projectsLabel(numbers: string[]): string {
+  const distinct = unique(numbers);
+  return `${distinct.length === 1 ? 'Project' : 'Projects'} ${distinct.join(', ')}`;
 }

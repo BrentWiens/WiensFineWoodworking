@@ -19,8 +19,8 @@ interface TripFormProps {
   action: (formData: FormData) => Promise<ActionResult>;
   initial: TripFormValues;
   places: { id: number; name: string; oneWayKm: number | null }[];
-  /** The active projects, for the project picker. */
-  projects: { number: string; name: string }[];
+  /** Every project, active ones first, for the project picker. */
+  projects: { number: string; name: string; active: boolean }[];
   /** Earlier destinations, offered as autocomplete. */
   suggestions: string[];
   mode: 'create' | 'edit';

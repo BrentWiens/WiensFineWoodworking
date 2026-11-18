@@ -6,9 +6,9 @@ import { KM_RATE_CENTS, MEALS_DEDUCTIBLE_PERCENT } from '@/lib/accounting/rules'
 import { formatShortDate, todayIso } from '@/lib/dates';
 import { categoryLabel } from '@/lib/expenses/categories';
 import { formatKm } from '@/lib/mileage/summary';
-import { formatCents } from '@/lib/money';
+import { centsToInput, formatCents } from '@/lib/money';
 import { getProjectDetail } from '@/lib/projectTracking/data';
-import { projectTotals, type ProjectTotals } from '@/lib/projectTracking/summary';
+import { outstandingCents, projectTotals, type ProjectTotals } from '@/lib/projectTracking/summary';
 import { statusLabel } from '@/lib/projectTracking/validation';
 import type { Expense, ProjectIncome, Trip } from '@/lib/db/schema';
 import { addIncomeAction, deleteIncomeAction, deleteProjectAction, updateProjectAction } from '../actions';
@@ -44,6 +44,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
 
       <section className={`${cardClass} p-4 sm:p-5`}>
         <h2 className="text-lg font-semibold text-stone-800 mb-3">Money received</h2>
+        <PaymentStatus priceCents={project.priceCents} receivedCents={totals.receivedCents} />
         {income.length > 0 && <IncomeList income={income} />}
         <IncomeForm action={addIncomeAction.bind(null, project.id)} today={todayIso()} />
       </section>
@@ -87,6 +88,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
             number: project.number,
             name: project.name,
             client: project.client ?? '',
+            amount: project.priceCents === null ? '' : centsToInput(project.priceCents),
             status: project.status,
             notes: project.notes ?? '',
           }}
@@ -107,6 +109,46 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
           </ConfirmButton>
         )}
       </div>
+    </div>
+  );
+}
+
+/** The project amount, what has been paid against it, and what is still owed. */
+function PaymentStatus({ priceCents, receivedCents }: { priceCents: number | null; receivedCents: number }) {
+  const outstanding = outstandingCents(priceCents, receivedCents);
+  if (priceCents === null || outstanding === null) {
+    return (
+      <p className="text-sm text-stone-600 mb-4">
+        {receivedCents > 0 && <>Paid {formatCents(receivedCents)} so far. </>}
+        Add the project amount under Project details to see what is still owed.
+      </p>
+    );
+  }
+  return (
+    <div className="mb-5">
+      <dl className="grid grid-cols-3 gap-2 text-center">
+        <PaymentStat label="Project amount" cents={priceCents} />
+        <PaymentStat label="Paid" cents={receivedCents} />
+        <PaymentStat label="Outstanding" cents={Math.max(outstanding, 0)} highlight={outstanding > 0} />
+      </dl>
+      <p className="text-sm text-stone-600 mt-2">
+        {outstanding > 0
+          ? `${formatCents(outstanding)} still to be paid.`
+          : outstanding === 0
+            ? 'Paid in full.'
+            : `Paid ${formatCents(-outstanding)} more than the project amount. Check the amount or the payments.`}
+      </p>
+    </div>
+  );
+}
+
+function PaymentStat({ label, cents, highlight }: { label: string; cents: number; highlight?: boolean }) {
+  return (
+    <div className={`rounded-lg border px-2 py-2 ${highlight ? 'border-amber-200 bg-amber-50' : 'border-stone-200'}`}>
+      <dt className="text-xs text-stone-500">{label}</dt>
+      <dd className={`font-semibold tabular-nums ${highlight ? 'text-amber-900' : 'text-stone-800'}`}>
+        {formatCents(cents)}
+      </dd>
     </div>
   );
 }

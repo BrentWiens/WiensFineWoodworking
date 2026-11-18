@@ -17,6 +17,8 @@ export interface ProjectInput {
   number: string;
   name: string;
   client: string | null;
+  /** What the client pays for the whole job, HST included; null when not settled yet. */
+  priceCents: number | null;
   status: ProjectStatus;
   notes: string | null;
 }
@@ -29,13 +31,21 @@ const projectSchema = z
     number: text('Project number', 50),
     name: text('Name', 200),
     client: optionalText('Client', 200),
+    amount: z.preprocess(
+      blankToUndefined,
+      money('Project amount')
+        .refine(c => c > 0, 'Project amount must be more than 0')
+        .refine(c => c <= 100_000_000, 'Project amount looks too large')
+        .optional(),
+    ),
     // A new project's form has no status field; it starts out active.
     status: z.preprocess(blankToUndefined, z.enum(PROJECT_STATUSES, { error: 'Choose a status' }).default('active')),
     notes: optionalText('Notes', 2000),
   })
-  .transform(({ client, notes, ...rest }): ProjectInput => ({
+  .transform(({ client, amount, notes, ...rest }): ProjectInput => ({
     ...rest,
     client: client ?? null,
+    priceCents: amount ?? null,
     notes: notes ?? null,
   }));
 

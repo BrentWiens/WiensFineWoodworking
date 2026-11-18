@@ -1,54 +1,57 @@
 import { notFound } from 'next/navigation';
 import ExpenseForm from '@/components/business/ExpenseForm';
 import ConfirmButton from '@/components/business/ConfirmButton';
-import { getExpense, recentVendors } from '@/lib/expenses/data';
+import { getReceipt, recentVendors } from '@/lib/expenses/data';
+import { receiptFormValues } from '@/lib/expenses/receipts';
 import { projectOptions } from '@/lib/projectTracking/data';
-import { centsToInput, formatCents } from '@/lib/money';
+import { formatCents } from '@/lib/money';
 import { deleteExpenseAction, updateExpenseAction } from '../actions';
 
+/** Edits a receipt: one expense, or every item split from the same receipt. */
 export default async function EditExpensePage({ params }: { params: Promise<{ id: string }> }) {
   const id = Number((await params).id);
   if (!Number.isInteger(id) || id <= 0) notFound();
 
-  const [expense, vendors, projects] = await Promise.all([getExpense(id), recentVendors(), projectOptions()]);
-  if (!expense) notFound();
+  const [lines, vendors, projects] = await Promise.all([getReceipt(id), recentVendors(), projectOptions()]);
+  if (lines.length === 0) notFound();
 
-  const backHref = `/tools/business/expenses?year=${expense.expenseDate.slice(0, 4)}`;
+  const [first] = lines;
+  const split = lines.length > 1;
+  const totalCents = lines.reduce((sum, line) => sum + line.totalCents, 0);
+  const backHref = `/tools/business/expenses?year=${first.expenseDate.slice(0, 4)}`;
+  const entered = (date: Date) => date.toLocaleDateString('en-CA', { timeZone: 'America/Toronto' });
+  const edited = lines.some(line => line.updatedAt.getTime() - line.createdAt.getTime() > 1000);
+  const lastEdit = new Date(Math.max(...lines.map(line => line.updatedAt.getTime())));
 
   return (
     <div className="space-y-6">
       <section className="bg-white border border-stone-200 rounded-lg p-4 sm:p-5">
-        <h2 className="text-lg font-semibold text-stone-800 mb-3">Edit expense</h2>
+        <h2 className="text-lg font-semibold text-stone-800 mb-3">{split ? 'Edit receipt' : 'Edit expense'}</h2>
         <ExpenseForm
           mode="edit"
-          action={updateExpenseAction.bind(null, expense.id)}
+          action={updateExpenseAction.bind(null, first.id)}
           vendors={vendors}
           projects={projects}
           cancelHref={backHref}
-          initial={{
-            expenseDate: expense.expenseDate,
-            vendor: expense.vendor,
-            category: expense.category,
-            description: expense.description,
-            total: centsToInput(expense.totalCents),
-            hst: expense.hstCents > 0 ? centsToInput(expense.hstCents) : '',
-            projectNumber: expense.projectNumber ?? '',
-          }}
+          initial={receiptFormValues(lines)}
         />
       </section>
 
-      <div className="flex items-center justify-between text-sm text-stone-500">
+      <div className="flex items-center justify-between gap-3 text-sm text-stone-500">
         <span>
-          Entered {expense.createdAt.toLocaleDateString('en-CA', { timeZone: 'America/Toronto' })}
-          {expense.updatedAt.getTime() - expense.createdAt.getTime() > 1000 &&
-            `, edited ${expense.updatedAt.toLocaleDateString('en-CA', { timeZone: 'America/Toronto' })}`}
+          Entered {entered(first.createdAt)}
+          {edited && `, edited ${entered(lastEdit)}`}
         </span>
         <ConfirmButton
-          action={deleteExpenseAction.bind(null, expense.id)}
-          confirmMessage={`Delete ${formatCents(expense.totalCents)} at ${expense.vendor} on ${expense.expenseDate}?`}
+          action={deleteExpenseAction.bind(null, first.id)}
+          confirmMessage={
+            split
+              ? `Delete this ${formatCents(totalCents)} receipt at ${first.vendor} on ${first.expenseDate}, all ${lines.length} items?`
+              : `Delete ${formatCents(totalCents)} at ${first.vendor} on ${first.expenseDate}?`
+          }
           className="text-red-700 hover:text-red-900 underline underline-offset-2 disabled:opacity-50"
         >
-          Delete expense
+          {split ? 'Delete receipt' : 'Delete expense'}
         </ConfirmButton>
       </div>
     </div>

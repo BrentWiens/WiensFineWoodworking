@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { ProjectForm } from '@/components/business/ProjectForms';
 import { formatCents } from '@/lib/money';
 import { projectOverview, type ProjectOverview } from '@/lib/projectTracking/data';
+import { outstandingCents } from '@/lib/projectTracking/summary';
 import { createProjectAction } from './actions';
 
 const BASE = '/tools/business/projects';
@@ -20,6 +21,8 @@ export default async function ProjectsPage({
   const { projects, unknownNumbers } = await projectOverview();
   const active = projects.filter(p => p.status !== 'complete');
   const complete = projects.filter(p => p.status === 'complete');
+  const owing = projects.filter(p => (owed(p) ?? 0) > 0);
+  const owingCents = owing.reduce((total, p) => total + owed(p)!, 0);
 
   return (
     <div className="space-y-6">
@@ -30,6 +33,12 @@ export default async function ProjectsPage({
         </p>
       ) : (
         <>
+          {owing.length > 0 && (
+            <p className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-amber-900">
+              <span className="font-semibold">{formatCents(owingCents)}</span> still to be paid on{' '}
+              {owing.length === 1 ? '1 project' : `${owing.length} projects`}.
+            </p>
+          )}
           <ProjectList title="Active" projects={active} empty="No active projects." />
           {complete.length > 0 && <ProjectList title="Complete" projects={complete} />}
           <p className="text-sm text-stone-500">
@@ -66,11 +75,16 @@ export default async function ProjectsPage({
           key={prefill}
           mode="create"
           action={createProjectAction}
-          initial={{ number: prefill, name: '', client: '', status: 'active', notes: '' }}
+          initial={{ number: prefill, name: '', client: '', amount: '', status: 'active', notes: '' }}
         />
       </section>
     </div>
   );
+}
+
+/** What the client still owes on a project; null when it has no amount set. */
+function owed(project: OverviewProject): number | null {
+  return outstandingCents(project.priceCents, project.totals.receivedCents);
 }
 
 function ProjectList({ title, projects, empty }: { title: string; projects: OverviewProject[]; empty?: string }) {
@@ -83,6 +97,7 @@ function ProjectList({ title, projects, empty }: { title: string; projects: Over
         <ul className="bg-white border border-stone-200 rounded-lg divide-y divide-stone-100">
           {projects.map(project => {
             const totals = project.totals;
+            const owing = owed(project) ?? 0;
             return (
               <li key={project.id}>
                 <Link
@@ -98,6 +113,9 @@ function ProjectList({ title, projects, empty }: { title: string; projects: Over
                       In {formatCents(totals.incomeCents)} · Out{' '}
                       {formatCents(totals.expenseCents + totals.mileageCents)}
                     </p>
+                    {owing > 0 && (
+                      <p className="text-sm font-medium text-amber-800">{formatCents(owing)} still to be paid</p>
+                    )}
                   </div>
                   <p className="text-right shrink-0">
                     <span

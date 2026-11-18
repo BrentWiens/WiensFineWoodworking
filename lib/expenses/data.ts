@@ -1,5 +1,7 @@
 import 'server-only';
-import { and, desc, eq, gte, lt, max, sql } from 'drizzle-orm';
+import { randomUUID } from 'node:crypto';
+import { and, asc, desc, eq, gte, inArray, lt, max, sql } from 'drizzle-orm';
+import type { BatchItem } from 'drizzle-orm/batch';
 import { db } from '@/lib/db';
 import { expenses, type Expense } from '@/lib/db/schema';
 import { verifySession } from '@/lib/auth/dal';
@@ -29,31 +31,66 @@ export async function listExpensesChronological(year: number): Promise<Expense[]
   return (await listExpenses(year)).reverse();
 }
 
-export async function getExpense(id: number): Promise<Expense | null> {
+/**
+ * The receipt an expense belongs to: just that expense, or every item split from
+ * the same receipt, in entry order. Empty when there is no such expense.
+ */
+export async function getReceipt(id: number): Promise<Expense[]> {
   await verifySession();
   const [expense] = await db().select().from(expenses).where(eq(expenses.id, id)).limit(1);
-  return expense ?? null;
+  if (!expense) return [];
+  if (!expense.receiptGroup) return [expense];
+  return db().select().from(expenses).where(eq(expenses.receiptGroup, expense.receiptGroup)).orderBy(asc(expenses.id));
 }
 
 /** Vehicle categories are tied to the vehicle in use, everything else to none. */
-async function withVehicle(input: ExpenseInput) {
-  const vehicle = isVehicleCategory(input.category) ? await getVehicle() : null;
-  return { ...input, vehicleId: vehicle?.id ?? null };
+async function withVehicle(items: ExpenseInput[]) {
+  const vehicle = items.some(item => isVehicleCategory(item.category)) ? await getVehicle() : null;
+  return items.map(item => ({ ...item, vehicleId: isVehicleCategory(item.category) ? (vehicle?.id ?? null) : null }));
 }
 
-export async function createExpense(input: ExpenseInput): Promise<void> {
-  await verifySession();
-  await db().insert(expenses).values(await withVehicle(input));
+/** Runs the writes as one transaction (a Neon HTTP batch). */
+async function inOneGo(queries: BatchItem<'pg'>[]) {
+  if (queries.length > 0) await db().batch(queries as [BatchItem<'pg'>, ...BatchItem<'pg'>[]]);
 }
 
-export async function updateExpense(id: number, input: ExpenseInput): Promise<void> {
+/** Saves a receipt's items: one expense each, tied together when there is more than one. */
+export async function createReceipt(items: ExpenseInput[]): Promise<void> {
   await verifySession();
-  await db().update(expenses).set(await withVehicle(input)).where(eq(expenses.id, id));
+  const receiptGroup = items.length > 1 ? randomUUID() : null;
+  const rows = (await withVehicle(items)).map(row => ({ ...row, receiptGroup }));
+  await db().insert(expenses).values(rows);
 }
 
-export async function deleteExpense(id: number): Promise<void> {
-  await verifySession();
-  await db().delete(expenses).where(eq(expenses.id, id));
+/**
+ * Replaces the receipt that expense `id` belongs to with these items. Items are
+ * matched to the saved expenses in order, so each keeps its id and entry date; extra
+ * items are added and leftover expenses removed, all in one transaction. Returns
+ * false when the expense no longer exists.
+ */
+export async function updateReceipt(id: number, items: ExpenseInput[]): Promise<boolean> {
+  const saved = await getReceipt(id);
+  if (saved.length === 0) return false;
+
+  const receiptGroup = items.length > 1 ? (saved[0].receiptGroup ?? randomUUID()) : null;
+  const rows = (await withVehicle(items)).map(row => ({ ...row, receiptGroup }));
+  const leftover = saved.slice(rows.length).map(expense => expense.id);
+
+  await inOneGo([
+    ...rows.slice(0, saved.length).map((row, i) => db().update(expenses).set(row).where(eq(expenses.id, saved[i].id))),
+    ...(rows.length > saved.length ? [db().insert(expenses).values(rows.slice(saved.length))] : []),
+    ...(leftover.length > 0 ? [db().delete(expenses).where(inArray(expenses.id, leftover))] : []),
+  ]);
+  return true;
+}
+
+/** Deletes the receipt expense `id` belongs to, every item of it. */
+export async function deleteReceipt(id: number): Promise<void> {
+  const saved = await getReceipt(id);
+  if (saved.length === 0) return;
+  await db()
+    .delete(expenses)
+    .where(inArray(expenses.id, saved.map(expense => expense.id)));
 }
 
 /** Years that have expenses, plus the current one, newest first — for the year picker. */

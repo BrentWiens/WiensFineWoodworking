@@ -43,15 +43,26 @@ used against the real database, locally and in production.
   vehicle insurance and licensing under Vehicle: other, with the description saying what it
   was. Line numbers are a guide; the accountant has the final say.
 - Vehicle-category expenses record the vehicle they belong to, ready for the vehicle claim.
-- An optional project on each expense, chosen from the active projects. "No project" means the
+- An optional project on each expense, chosen from the projects (active ones listed first). "No project" means the
   expense isn't tied to one.
+- A receipt with more than one kind of item (small tools and materials) can be split into up
+  to 10 items, each with its own category, description, project and before-tax amount. The
+  items must add up to the receipt before tax; its HST is shared out in proportion, to the
+  cent (`lib/expenses/receipts.ts`). Each item is saved as its own expense, so every report
+  works per item; items of one receipt share `expenses.receipt_group`, show as one entry in
+  the list, and are edited and deleted together.
 - Year summary by section and category: total paid, HST (input tax credits) and net of HST,
   plus a "By project" table once any expense has a project number
 - CSV export: one row per expense, then totals by category and by project
 
 **Projects** (`/tools/business/projects`) — built 2026-11-16
-- A project has a number, a name, an optional client, notes, and a status (active or complete).
-- The list shows every project with its income, expenses and profit, active ones first.
+- A project has a number, a name, an optional client, notes, a status (active or complete), and
+  an optional project amount: what the client pays for the whole job, HST included
+  (`projects.price_cents`), set when it's agreed and editable after.
+- The list shows every project with its income, expenses and profit, active ones first. Projects
+  with money still owed (amount less everything paid) are flagged, with the total owed on top.
+- A project's page shows the amount, what has been paid (HST included) and what is outstanding.
+  Paid more than the amount is pointed out rather than hidden.
 - A project's page records the payments received for it (date, amount, what it was, HST
   included) and lists the expenses and trips linked to it, each opening in its own log.
 - The project's page breaks its costs down by expense category, adds a mileage estimate
@@ -63,7 +74,8 @@ used against the real database, locally and in production.
 - A number used on an expense or trip that no project has is flagged on the list, with a link
   to add the project. A project can only be deleted once its payments are removed; its
   expenses and trips are kept and become unlinked.
-- The trip and expense forms only offer active projects, plus whatever the entry already has.
+- The trip and expense forms offer every project: active ones grouped at the top, complete ones
+  below (costs often come in after a job is finished).
 
 **Accounting** (`/tools/business/accounting`) — built 2026-11-16
 - Year summary: a profit and loss for the year. Income is the payments received on projects.

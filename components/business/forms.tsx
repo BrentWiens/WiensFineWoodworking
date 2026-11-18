@@ -143,25 +143,32 @@ export function Suggestions({
 
 /**
  * Picks the project a trip or expense belongs to. Submits the project's number as
- * `projectNumber`, or blank for none. A select rather than a text box, so a typo
- * can't quietly start a second project.
+ * `projectNumber` (or `name`), or blank for none. A select rather than a text box, so a typo
+ * can't quietly start a second project. Active projects are grouped at the top,
+ * complete ones below.
  */
 export function ProjectSelect({
   id,
+  name = 'projectNumber',
   value,
   onChange,
   projects,
   error,
 }: {
   id: string;
+  name?: string;
   value: string;
   onChange: (projectNumber: string) => void;
-  /** The active projects. */
-  projects: { number: string; name: string }[];
+  /** Every project, active ones first (lib/projectTracking/data projectOptions). */
+  projects: { number: string; name: string; active: boolean }[];
   error?: string;
 }) {
-  // A finished project, or a number entered before projects existed, stays selectable
+  // A number entered before its project existed stays selectable
   const listed = projects.some(p => p.number === value);
+  const groups = [
+    { label: 'Active', projects: projects.filter(p => p.active) },
+    { label: 'Complete', projects: projects.filter(p => !p.active) },
+  ].filter(group => group.projects.length > 0);
 
   return (
     <Field
@@ -170,23 +177,27 @@ export function ProjectSelect({
       error={error}
       hint={
         projects.length === 0 && !value
-          ? 'No active projects yet. Add one under Projects to link this to it.'
+          ? 'No projects yet. Add one under Projects to link this to it.'
           : "Leave as No project if this isn't for a particular project."
       }
     >
       <select
         id={id}
-        name="projectNumber"
+        name={name}
         value={value}
         onChange={e => onChange(e.target.value)}
         className={inputClass}
         {...(error ? { 'aria-invalid': true as const, 'aria-describedby': `${id}-error` } : {})}
       >
         <option value="">No project</option>
-        {projects.map(p => (
-          <option key={p.number} value={p.number}>
-            {p.number} · {p.name}
-          </option>
+        {groups.map(group => (
+          <optgroup key={group.label} label={group.label}>
+            {group.projects.map(p => (
+              <option key={p.number} value={p.number}>
+                {p.number} · {p.name}
+              </option>
+            ))}
+          </optgroup>
         ))}
         {value && !listed && <option value={value}>{value}</option>}
       </select>

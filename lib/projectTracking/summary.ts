@@ -20,7 +20,10 @@ export interface CostLine {
 
 export interface ProjectTotals {
   incomeCount: number;
+  /** Income without any HST collected: what the business earned. */
   incomeCents: number;
+  /** Everything received, HST included: what the client has paid. */
+  receivedCents: number;
   /** Expenses by category, in the expense form's order. Only categories with expenses. */
   costs: CostLine[];
   expenseCount: number;
@@ -62,6 +65,7 @@ export function projectTotals(
   return {
     incomeCount: income.length,
     incomeCents,
+    receivedCents: income.reduce((total, payment) => total + payment.totalCents, 0),
     costs,
     expenseCount: expenses.length,
     expenseCents,
@@ -70,6 +74,14 @@ export function projectTotals(
     mileageCents: driving,
     profitCents: incomeCents - expenseCents - driving,
   };
+}
+
+/**
+ * What the client still owes: the project amount less everything paid so far.
+ * Null when no amount is set. Negative when more was paid than the amount.
+ */
+export function outstandingCents(priceCents: number | null, receivedCents: number): number | null {
+  return priceCents === null ? null : priceCents - receivedCents;
 }
 
 /** Totals for every project at once, keyed by project id, from everything tagged. */

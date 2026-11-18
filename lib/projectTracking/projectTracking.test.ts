@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseIncome, parseProject } from './validation';
-import { compareProjectNumbers, projectTotals, sortProjects, totalsByProject, unknownProjectNumbers } from './summary';
+import { compareProjectNumbers, outstandingCents, projectTotals, sortProjects, totalsByProject, unknownProjectNumbers } from './summary';
 
 const NOW = new Date('2026-11-16T15:00:00Z');
 
@@ -8,13 +8,28 @@ describe('parseProject', () => {
   it('needs only a number and a name, and starts out active', () => {
     expect(parseProject({ number: ' 2026-014 ', name: 'Walnut dining table', client: '', notes: '' })).toEqual({
       ok: true,
-      data: { number: '2026-014', name: 'Walnut dining table', client: null, status: 'active', notes: null },
+      data: { number: '2026-014', name: 'Walnut dining table', client: null, priceCents: null, status: 'active', notes: null },
     });
   });
 
   it('keeps the client, status and notes when given', () => {
     const result = parseProject({ number: '14', name: 'Table', client: 'Smith', status: 'complete', notes: 'Paid in full' });
     expect(result.ok && result.data).toMatchObject({ client: 'Smith', status: 'complete', notes: 'Paid in full' });
+  });
+
+  it('reads the project amount as cents, blank meaning not settled yet', () => {
+    const result = parseProject({ number: '24', name: 'Entryway Millwork', amount: '$2,996.00' });
+    expect(result.ok && result.data.priceCents).toBe(299600);
+    const blank = parseProject({ number: '24', name: 'Entryway Millwork', amount: ' ' });
+    expect(blank.ok && blank.data.priceCents).toBeNull();
+  });
+
+  it('rejects a project amount that is zero or not an amount', () => {
+    for (const amount of ['0', 'abc', '-5']) {
+      const result = parseProject({ number: '24', name: 'Entryway Millwork', amount });
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(Object.keys(result.errors)).toEqual(['amount']);
+    }
   });
 
   it('requires the number and the name', () => {
@@ -70,7 +85,12 @@ describe('projectTotals', () => {
   );
 
   it('totals income', () => {
-    expect(totals).toMatchObject({ incomeCount: 2, incomeCents: 150000 });
+    expect(totals).toMatchObject({ incomeCount: 2, incomeCents: 150000, receivedCents: 150000 });
+  });
+
+  it('counts what the client paid with HST, and what was earned without it', () => {
+    const withHst = projectTotals([{ totalCents: 113000, hstCents: 13000 }], [], []);
+    expect(withHst).toMatchObject({ incomeCents: 100000, receivedCents: 113000 });
   });
 
   it('breaks costs down by category in form order, HST included, meals at half', () => {
@@ -93,6 +113,18 @@ describe('projectTotals', () => {
   it('shows a loss as a negative profit, and zeros for an empty project', () => {
     expect(projectTotals([], [expense('materials', 5000)], []).profitCents).toBe(-5000);
     expect(projectTotals([], [], [])).toMatchObject({ profitCents: 0, km: 0, tripCount: 0, costs: [] });
+  });
+});
+
+describe('outstandingCents', () => {
+  it('is the project amount less what has been paid', () => {
+    expect(outstandingCents(299600, 100000)).toBe(199600);
+    expect(outstandingCents(299600, 299600)).toBe(0);
+  });
+
+  it('goes negative when more was paid than the amount, and is null with no amount', () => {
+    expect(outstandingCents(100000, 120000)).toBe(-20000);
+    expect(outstandingCents(null, 50000)).toBeNull();
   });
 });
 

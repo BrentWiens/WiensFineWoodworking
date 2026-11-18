@@ -12,19 +12,23 @@ export interface ProjectFormValues {
   number: string;
   name: string;
   client: string;
+  /** The project amount, as typed: "2996.00", or blank when not settled. */
+  amount: string;
   status: string;
   notes: string;
 }
 
 /**
  * A project's details. A new project needs only a number and a name and starts out
- * active; status and notes appear once it exists.
+ * active; status and notes appear once it exists. The amount can be set from the
+ * start or added once it's agreed.
  */
 export function ProjectForm({ action, initial, mode }: { action: Action; initial: ProjectFormValues; mode: 'create' | 'edit' }) {
   const { result, pending, onSubmit } = useSubmit(action);
   const number = errorProps(result, 'number', 'project-number');
   const name = errorProps(result, 'name', 'project-name');
   const client = errorProps(result, 'client', 'project-client');
+  const amount = errorProps(result, 'amount', 'project-amount');
   const status = errorProps(result, 'status', 'project-status');
   const notes = errorProps(result, 'notes', 'project-notes');
 
@@ -58,15 +62,33 @@ export function ProjectForm({ action, initial, mode }: { action: Action; initial
         </Field>
       </div>
 
+      <Field label="Client (optional)" htmlFor="project-client" error={client.error}>
+        <input
+          id="project-client"
+          name="client"
+          autoComplete="off"
+          defaultValue={initial.client}
+          className={inputClass}
+          {...client.inputProps}
+        />
+      </Field>
+
       <div className={mode === 'edit' ? 'grid grid-cols-[1fr_9rem] gap-3' : undefined}>
-        <Field label="Client (optional)" htmlFor="project-client" error={client.error}>
+        <Field
+          label="Project amount ($, optional)"
+          htmlFor="project-amount"
+          error={amount.error}
+          hint="What the client pays for the whole job, HST included. Leave blank until it's agreed."
+        >
           <input
-            id="project-client"
-            name="client"
+            id="project-amount"
+            name="amount"
+            inputMode="decimal"
             autoComplete="off"
-            defaultValue={initial.client}
+            placeholder="0.00"
+            defaultValue={initial.amount}
             className={inputClass}
-            {...client.inputProps}
+            {...amount.inputProps}
           />
         </Field>
         {mode === 'edit' && (

@@ -130,10 +130,16 @@ export const expenses = pgTable(
      * cost. Null means it isn't tied to a project.
      */
     projectNumber: text('project_number'),
+    /**
+     * Shared by the expenses split from one receipt (lib/expenses/receipts.ts), which
+     * are edited and deleted together. Null for a receipt entered as one expense.
+     */
+    receiptGroup: text('receipt_group'),
     ...timestamps,
   },
   t => [
     index('expenses_expense_date').on(t.expenseDate),
+    index('expenses_receipt_group').on(t.receiptGroup),
     check('expenses_total_positive', sql`${t.totalCents} > 0`),
     check('expenses_hst_within_total', sql`${t.hstCents} >= 0 AND ${t.hstCents} <= ${t.totalCents}`),
   ],
@@ -155,6 +161,8 @@ export const projects = pgTable(
     number: text('number').notNull(),
     name: text('name').notNull(),
     client: text('client'),
+    /** What the client pays for the whole job, HST included; null until it's settled. */
+    priceCents: integer('price_cents'),
     /** 'active' or 'complete' (lib/projectTracking/validation.ts). */
     status: text('status').notNull().default('active'),
     notes: text('notes'),

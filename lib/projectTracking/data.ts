@@ -14,16 +14,20 @@ import type { IncomeInput, ProjectInput } from './validation';
 export interface ProjectOption {
   number: string;
   name: string;
+  active: boolean;
 }
 
-/** Active projects, newest number first, for the project picker on a trip or expense. */
+/**
+ * Every project for the picker on a trip or expense: active ones first, then the
+ * rest, newest number first in each. Complete projects are included because their
+ * costs often arrive after the work is done.
+ */
 export async function projectOptions(): Promise<ProjectOption[]> {
   await verifySession();
   const rows = await db()
     .select({ number: projects.number, name: projects.name, status: projects.status })
-    .from(projects)
-    .where(eq(projects.status, 'active'));
-  return sortProjects(rows).map(({ number, name }) => ({ number, name }));
+    .from(projects);
+  return sortProjects(rows).map(({ number, name, status }) => ({ number, name, active: status !== 'complete' }));
 }
 
 export interface ProjectOverview {

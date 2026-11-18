@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CATEGORIES, SECTIONS, categoryLabel, isCategoryId, isVehicleCategory } from './categories';
-import { parseExpense } from './validation';
+import { parseReceipt } from './validation';
+import { groupReceipts, receiptFormValues, splitReceipt } from './receipts';
 import { summarizeExpenses, type SummaryExpense } from './summary';
 import { expensesCsv } from './csv';
 
@@ -9,8 +10,8 @@ const NOW = new Date('2026-11-06T15:00:00Z');
 const validExpense = {
   expenseDate: '2026-11-06',
   vendor: 'Lumber yard',
-  category: 'materials',
-  description: 'Walnut for dining table',
+  'category.0': 'materials',
+  'description.0': 'Walnut for dining table',
   total: '565.00',
   hst: '65.00',
 };
@@ -47,51 +48,53 @@ describe('categories', () => {
   });
 });
 
-describe('parseExpense', () => {
-  it('converts amounts to cents', () => {
-    expect(parseExpense(validExpense, NOW)).toEqual({
+describe('parseReceipt', () => {
+  it('turns a receipt with one item into one expense for the whole amount', () => {
+    expect(parseReceipt(validExpense, NOW)).toEqual({
       ok: true,
-      data: {
-        expenseDate: '2026-11-06',
-        vendor: 'Lumber yard',
-        category: 'materials',
-        description: 'Walnut for dining table',
-        totalCents: 56500,
-        hstCents: 6500,
-        projectNumber: null,
-      },
+      data: [
+        {
+          expenseDate: '2026-11-06',
+          vendor: 'Lumber yard',
+          category: 'materials',
+          description: 'Walnut for dining table',
+          totalCents: 56500,
+          hstCents: 6500,
+          projectNumber: null,
+        },
+      ],
     });
   });
 
   it('keeps a project number, trimmed, and treats a blank one as no project', () => {
-    const tagged = parseExpense({ ...validExpense, projectNumber: ' 2026-014 ' }, NOW);
-    expect(tagged.ok && tagged.data.projectNumber).toBe('2026-014');
+    const tagged = parseReceipt({ ...validExpense, 'projectNumber.0': ' 2026-014 ' }, NOW);
+    expect(tagged.ok && tagged.data[0].projectNumber).toBe('2026-014');
 
-    const blank = parseExpense({ ...validExpense, projectNumber: '   ' }, NOW);
-    expect(blank.ok && blank.data.projectNumber).toBeNull();
+    const blank = parseReceipt({ ...validExpense, 'projectNumber.0': '   ' }, NOW);
+    expect(blank.ok && blank.data[0].projectNumber).toBeNull();
   });
 
   it('rejects a project number that is too long', () => {
-    const result = parseExpense({ ...validExpense, projectNumber: 'x'.repeat(51) }, NOW);
+    const result = parseReceipt({ ...validExpense, 'projectNumber.0': 'x'.repeat(51) }, NOW);
     expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.errors.projectNumber).toEqual(['Project number is too long']);
+    if (!result.ok) expect(result.errors['projectNumber.0']).toEqual(['Project number is too long']);
   });
 
   it('treats a blank HST as none charged', () => {
-    const result = parseExpense({ ...validExpense, hst: '' }, NOW);
-    expect(result.ok && result.data.hstCents).toBe(0);
+    const result = parseReceipt({ ...validExpense, hst: '' }, NOW);
+    expect(result.ok && result.data[0].hstCents).toBe(0);
   });
 
   it('accepts a dollar sign and grouping commas', () => {
-    const result = parseExpense({ ...validExpense, total: '$1,130.00', hst: '$130' }, NOW);
-    expect(result.ok && [result.data.totalCents, result.data.hstCents]).toEqual([113000, 13000]);
+    const result = parseReceipt({ ...validExpense, total: '$1,130.00', hst: '$130' }, NOW);
+    expect(result.ok && [result.data[0].totalCents, result.data[0].hstCents]).toEqual([113000, 13000]);
   });
 
   it('requires the vendor, category, description and total', () => {
-    const result = parseExpense({ expenseDate: '2026-11-06' }, NOW);
+    const result = parseReceipt({ expenseDate: '2026-11-06' }, NOW);
     expect(result.ok).toBe(false);
     if (result.ok) return;
-    expect(Object.keys(result.errors).sort()).toEqual(['category', 'description', 'total', 'vendor']);
+    expect(Object.keys(result.errors).sort()).toEqual(['category.0', 'description.0', 'total', 'vendor']);
   });
 
   it.each([
@@ -99,29 +102,134 @@ describe('parseExpense', () => {
     ['12.345', 'Total must be an amount like 12.34'],
     ['abc', 'Total must be an amount like 12.34'],
   ])('rejects a total of %j', (total, message) => {
-    const result = parseExpense({ ...validExpense, total, hst: '' }, NOW);
+    const result = parseReceipt({ ...validExpense, total, hst: '' }, NOW);
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.errors.total).toEqual([message]);
   });
 
   it('rejects an unknown category', () => {
-    const result = parseExpense({ ...validExpense, category: 'snacks' }, NOW);
+    const result = parseReceipt({ ...validExpense, 'category.0': 'snacks' }, NOW);
     expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.errors.category).toEqual(['Choose a category']);
+    if (!result.ok) expect(result.errors['category.0']).toEqual(['Choose a category']);
   });
 
   it('rejects HST larger than any Canadian rate allows', () => {
     // 15% HST on $100 is $15 of a $115 total; $16 can't be right.
-    expect(parseExpense({ ...validExpense, total: '115', hst: '15' }, NOW).ok).toBe(true);
-    const result = parseExpense({ ...validExpense, total: '115', hst: '16' }, NOW);
+    expect(parseReceipt({ ...validExpense, total: '115', hst: '15' }, NOW).ok).toBe(true);
+    const result = parseReceipt({ ...validExpense, total: '115', hst: '16' }, NOW);
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.errors.hst?.[0]).toMatch(/HST is more than/);
   });
 
   it('rejects dates in the future but allows a day of clock slack', () => {
-    expect(parseExpense({ ...validExpense, expenseDate: '2026-11-07' }, NOW).ok).toBe(true);
-    expect(parseExpense({ ...validExpense, expenseDate: '2026-11-08' }, NOW).ok).toBe(false);
-    expect(parseExpense({ ...validExpense, expenseDate: '2026-02-30' }, NOW).ok).toBe(false);
+    expect(parseReceipt({ ...validExpense, expenseDate: '2026-11-07' }, NOW).ok).toBe(true);
+    expect(parseReceipt({ ...validExpense, expenseDate: '2026-11-08' }, NOW).ok).toBe(false);
+    expect(parseReceipt({ ...validExpense, expenseDate: '2026-02-30' }, NOW).ok).toBe(false);
+  });
+
+  // Tools and materials on one receipt: $40 + $60 before tax, $13 HST, $113 total
+  const split = {
+    expenseDate: '2026-11-06',
+    vendor: 'Home Depot',
+    total: '113.00',
+    hst: '13.00',
+    'category.0': 'small_tools',
+    'description.0': 'Clamps',
+    'subtotal.0': '40',
+    'projectNumber.0': '24',
+    'category.1': 'materials',
+    'description.1': 'Plywood',
+    'subtotal.1': '60',
+    'projectNumber.1': '',
+  };
+
+  it('splits a receipt into an expense per item, sharing the HST by amount', () => {
+    const result = parseReceipt(split, NOW);
+    expect(result.ok && result.data).toEqual([
+      expect.objectContaining({ category: 'small_tools', description: 'Clamps', totalCents: 4520, hstCents: 520, projectNumber: '24' }),
+      expect.objectContaining({ category: 'materials', description: 'Plywood', totalCents: 6780, hstCents: 780, projectNumber: null }),
+    ]);
+  });
+
+  it('needs each item’s amount once split', () => {
+    const result = parseReceipt({ ...split, 'subtotal.1': '' }, NOW);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.errors).toEqual({ 'subtotal.1': ['Amount is required'] });
+  });
+
+  it('says how far off the items are from the receipt', () => {
+    const result = parseReceipt({ ...split, 'subtotal.1': '55' }, NOW);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.errors.items?.[0]).toMatch(/add up to \$95\.00 before tax, but the receipt is \$100\.00/);
+  });
+
+  it('reports each item’s errors under its own number', () => {
+    const result = parseReceipt({ ...split, 'category.1': '', 'description.0': '' }, NOW);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(Object.keys(result.errors).sort()).toEqual(['category.1', 'description.0']);
+  });
+
+  it('caps how many items a receipt can be split into', () => {
+    const many = Object.fromEntries(Array.from({ length: 11 }, (_, i) => [`category.${i}`, 'materials']));
+    const result = parseReceipt({ ...split, ...many }, NOW);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(Object.keys(result.errors)).toEqual(['items']);
+  });
+});
+
+describe('splitReceipt', () => {
+  it('shares the HST in proportion, the items adding up to the receipt to the cent', () => {
+    // $10 HST over three equal items can't be 3.33 each; one of them gets the extra cent
+    const items = splitReceipt(4000, 1000, [1000, 1000, 1000]);
+    expect(items.map(i => i.hstCents)).toEqual([334, 333, 333]);
+    expect(items.reduce((sum, i) => sum + i.totalCents, 0)).toBe(4000);
+  });
+
+  it('gives no HST to any item when none was charged', () => {
+    expect(splitReceipt(5000, 0, [2000, 3000])).toEqual([
+      { totalCents: 2000, hstCents: 0 },
+      { totalCents: 3000, hstCents: 0 },
+    ]);
+  });
+
+  it('refuses items that do not add up to the receipt before tax', () => {
+    expect(() => splitReceipt(11300, 1300, [4000, 5000])).toThrow();
+    expect(() => splitReceipt(11300, 1300, [10000, 0])).toThrow();
+  });
+});
+
+describe('receipts', () => {
+  const line = (id: number, receiptGroup: string | null, totalCents: number, hstCents = 0) => ({
+    id,
+    expenseDate: '2026-11-06',
+    vendor: 'Home Depot',
+    description: `Item ${id}`,
+    category: 'materials',
+    totalCents,
+    hstCents,
+    projectNumber: null,
+    receiptGroup,
+  });
+
+  it('gather the items of a split receipt where the first one sits, in entry order', () => {
+    const receipts = groupReceipts([line(9, null, 100), line(8, 'a', 200), line(7, null, 300), line(5, 'a', 400)]);
+    expect(receipts.map(r => [r.id, r.lines.map(l => l.id), r.totalCents])).toEqual([
+      [9, [9], 100],
+      [5, [5, 8], 600],
+      [7, [7], 300],
+    ]);
+  });
+
+  it('turn a saved split receipt back into the form that entered it', () => {
+    const values = receiptFormValues([line(5, 'a', 4520, 520), line(8, 'a', 6780, 780)]);
+    expect(values).toMatchObject({ total: '113.00', hst: '13.00' });
+    expect(values.items.map(i => i.subtotal)).toEqual(['40.00', '60.00']);
+  });
+
+  it('leave a one-item receipt without a before-tax amount, as it was entered', () => {
+    const values = receiptFormValues([line(3, null, 56500, 6500)]);
+    expect(values).toMatchObject({ total: '565.00', hst: '65.00' });
+    expect(values.items).toEqual([{ category: 'materials', description: 'Item 3', projectNumber: '', subtotal: '' }]);
   });
 });
 

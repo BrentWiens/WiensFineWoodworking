@@ -4,57 +4,86 @@ import { useState } from 'react';
 import Link from 'next/link';
 import type { ActionResult } from '@/lib/actionResult';
 import { CATEGORIES, SECTIONS, getCategory } from '@/lib/expenses/categories';
-import { HST_PERCENT, centsToInput, hstIncluded, parseMoney } from '@/lib/money';
+import {
+  MAX_RECEIPT_ITEMS,
+  blankItem,
+  splitReceipt,
+  type ReceiptFormValues,
+  type ReceiptItemValues,
+} from '@/lib/expenses/receipts';
+import { HST_PERCENT, centsToInput, formatCents, hstIncluded, parseMoney } from '@/lib/money';
 import { Field, FormMessage, ProjectSelect, Suggestions, errorProps, inputClass, primaryButtonClass, secondaryButtonClass, useSubmit } from './forms';
-
-export interface ExpenseFormValues {
-  expenseDate: string;
-  vendor: string;
-  category: string;
-  description: string;
-  total: string;
-  hst: string;
-  projectNumber: string;
-}
 
 interface ExpenseFormProps {
   action: (formData: FormData) => Promise<ActionResult>;
-  initial: ExpenseFormValues;
+  initial: ReceiptFormValues;
   /** Earlier vendors, offered as autocomplete. */
   vendors: string[];
-  /** The active projects, for the project picker. */
-  projects: { number: string; name: string }[];
+  /** Every project, active ones first, for the project picker. */
+  projects: { number: string; name: string; active: boolean }[];
   mode: 'create' | 'edit';
   cancelHref?: string;
 }
 
 /**
- * Built for entering a receipt on a phone at the checkout: total, vendor, category,
- * then one tap to work out the HST from the total. After a save the date stays put,
- * since receipts tend to come in batches from the same day.
+ * Built for entering a receipt on a phone at the checkout: total, vendor, then one tap
+ * to work out the HST from the total, then what it was. A receipt with more than one
+ * kind of thing on it (small tools and materials) can be split into items, each with
+ * its own category and project; each item's amount is entered before tax, as the
+ * receipt lists it, and the HST is shared out between them.
+ *
+ * After a save the date stays put, since receipts tend to come in batches from the
+ * same day.
  */
 export default function ExpenseForm({ action, initial, vendors, projects, mode, cancelHref }: ExpenseFormProps) {
   const [values, setValues] = useState(initial);
-  const set = <K extends keyof ExpenseFormValues>(key: K, value: ExpenseFormValues[K]) =>
+  const set = <K extends keyof ReceiptFormValues>(key: K, value: ReceiptFormValues[K]) =>
     setValues(v => ({ ...v, [key]: value }));
+  const setItem = (index: number, change: Partial<ReceiptItemValues>) =>
+    setValues(v => ({ ...v, items: v.items.map((item, i) => (i === index ? { ...item, ...change } : item)) }));
 
   const { result, pending, onSubmit } = useSubmit(action, {
     onSuccess: mode === 'create' ? () => setValues(v => ({ ...initial, expenseDate: v.expenseDate })) : undefined,
   });
 
+  const split = values.items.length > 1;
+  const addItem = () =>
+    setValues(v => ({
+      ...v,
+      // A new item is usually for the same job as the one above it
+      items: [...v.items, blankItem(v.items[v.items.length - 1].projectNumber)],
+    }));
+  const removeItem = (index: number) =>
+    setValues(v => {
+      const items = v.items.filter((_, i) => i !== index);
+      // Back to one item: it is the whole receipt again
+      return { ...v, items: items.length === 1 ? [{ ...items[0], subtotal: '' }] : items };
+    });
+
   const totalCents = parseMoney(values.total);
+  const hstCents = values.hst.trim() === '' ? 0 : parseMoney(values.hst);
   const fillHst = () => {
     if (totalCents !== null) set('hst', centsToInput(hstIncluded(totalCents)));
   };
-  const category = getCategory(values.category);
+
+  // The split's arithmetic, for the running check under the items
+  const beforeTaxCents = totalCents !== null && hstCents !== null ? totalCents - hstCents : null;
+  const subtotals = values.items.map(item => parseMoney(item.subtotal));
+  const enteredCents = subtotals.reduce<number>((sum, cents) => sum + (cents ?? 0), 0);
+  const balanced =
+    split && beforeTaxCents !== null && subtotals.every(c => c !== null && c > 0) && enteredCents === beforeTaxCents;
+  const withHst = balanced ? splitReceipt(totalCents!, hstCents!, subtotals as number[]) : null;
+  const fillRest = (index: number) => {
+    if (beforeTaxCents === null) return;
+    const others = subtotals.reduce<number>((sum, cents, i) => (i === index ? sum : sum + (cents ?? 0)), 0);
+    if (beforeTaxCents - others > 0) setItem(index, { subtotal: centsToInput(beforeTaxCents - others) });
+  };
 
   const date = errorProps(result, 'expenseDate', 'expense-date');
   const total = errorProps(result, 'total', 'expense-total');
   const vendor = errorProps(result, 'vendor', 'expense-vendor');
-  const categoryField = errorProps(result, 'category', 'expense-category');
-  const description = errorProps(result, 'description', 'expense-description');
   const hst = errorProps(result, 'hst', 'expense-hst');
-  const project = errorProps(result, 'projectNumber', 'expense-project');
+  const itemsError = errorProps(result, 'items', 'expense-items').error;
 
   return (
     <form onSubmit={onSubmit} className="space-y-4" noValidate>
@@ -107,52 +136,6 @@ export default function ExpenseForm({ action, initial, vendors, projects, mode, 
         />
       </Field>
 
-      <Field label="Category" htmlFor="expense-category" error={categoryField.error} hint={category?.hint}>
-        <select
-          id="expense-category"
-          name="category"
-          required
-          value={values.category}
-          onChange={e => set('category', e.target.value)}
-          className={inputClass}
-          {...categoryField.inputProps}
-        >
-          <option value="">Choose a category…</option>
-          {SECTIONS.map(section => (
-            <optgroup key={section.id} label={section.label}>
-              {CATEGORIES.filter(c => c.section === section.id).map(c => (
-                <option key={c.id} value={c.id}>
-                  {c.label}
-                </option>
-              ))}
-            </optgroup>
-          ))}
-          {/* An expense saved under a since-retired category keeps it until changed. */}
-          {values.category && !category && <option value={values.category}>{values.category}</option>}
-        </select>
-      </Field>
-
-      <Field label="What was it for?" htmlFor="expense-description" error={description.error}>
-        <input
-          id="expense-description"
-          name="description"
-          required
-          placeholder="e.g. Walnut for Smith dining table"
-          value={values.description}
-          onChange={e => set('description', e.target.value)}
-          className={inputClass}
-          {...description.inputProps}
-        />
-      </Field>
-
-      <ProjectSelect
-        id="expense-project"
-        value={values.projectNumber}
-        onChange={number => set('projectNumber', number)}
-        projects={projects}
-        error={project.error}
-      />
-
       <Field
         label="HST paid ($)"
         htmlFor="expense-hst"
@@ -182,6 +165,61 @@ export default function ExpenseForm({ action, initial, vendors, projects, mode, 
         </div>
       </Field>
 
+      {split && (
+        <div>
+          <h3 className="font-semibold text-stone-800">Items on this receipt</h3>
+          <p className="text-sm text-stone-500">
+            Enter each item&apos;s amount before tax, as the receipt lists it. The HST is shared out between them.
+          </p>
+        </div>
+      )}
+
+      {values.items.map((item, index) =>
+        split ? (
+          <fieldset key={index} className="border border-stone-200 rounded-lg p-3 sm:p-4 space-y-4">
+            <legend className="px-1 text-sm font-semibold text-stone-600">Item {index + 1}</legend>
+            <ItemFields
+              index={index}
+              item={item}
+              split
+              result={result}
+              projects={projects}
+              onChange={change => setItem(index, change)}
+              onFillRest={() => fillRest(index)}
+              canFillRest={beforeTaxCents !== null}
+              withHstCents={withHst?.[index].totalCents}
+            />
+            <button
+              type="button"
+              onClick={() => removeItem(index)}
+              className="text-sm text-red-700 hover:text-red-900 underline underline-offset-2"
+            >
+              Remove item {index + 1}
+            </button>
+          </fieldset>
+        ) : (
+          <ItemFields
+            key={index}
+            index={index}
+            item={item}
+            split={false}
+            result={result}
+            projects={projects}
+            onChange={change => setItem(index, change)}
+          />
+        ),
+      )}
+
+      {split && (
+        <SplitCheck beforeTaxCents={beforeTaxCents} enteredCents={enteredCents} balanced={balanced} error={itemsError} />
+      )}
+
+      {values.items.length < MAX_RECEIPT_ITEMS && (
+        <button type="button" onClick={addItem} className={`${secondaryButtonClass} w-full sm:w-auto`}>
+          {split ? '+ Add another item' : '+ Split into another category'}
+        </button>
+      )}
+
       <FormMessage result={result} />
 
       <div className="flex gap-3">
@@ -195,5 +233,147 @@ export default function ExpenseForm({ action, initial, vendors, projects, mode, 
         )}
       </div>
     </form>
+  );
+}
+
+/** One item's fields. Named "category.0", "description.0"…, which is what the action reads. */
+function ItemFields({
+  index,
+  item,
+  split,
+  result,
+  projects,
+  onChange,
+  onFillRest,
+  canFillRest,
+  withHstCents,
+}: {
+  index: number;
+  item: ReceiptItemValues;
+  split: boolean;
+  result: ActionResult | undefined;
+  projects: ExpenseFormProps['projects'];
+  onChange: (change: Partial<ReceiptItemValues>) => void;
+  onFillRest?: () => void;
+  canFillRest?: boolean;
+  withHstCents?: number;
+}) {
+  const id = (field: string) => `expense-${field}-${index}`;
+  const category = getCategory(item.category);
+  const categoryField = errorProps(result, `category.${index}`, id('category'));
+  const description = errorProps(result, `description.${index}`, id('description'));
+  const subtotal = errorProps(result, `subtotal.${index}`, id('subtotal'));
+  const project = errorProps(result, `projectNumber.${index}`, id('project'));
+
+  return (
+    <>
+      <Field label="Category" htmlFor={id('category')} error={categoryField.error} hint={category?.hint}>
+        <select
+          id={id('category')}
+          name={`category.${index}`}
+          required
+          value={item.category}
+          onChange={e => onChange({ category: e.target.value })}
+          className={inputClass}
+          {...categoryField.inputProps}
+        >
+          <option value="">Choose a category…</option>
+          {SECTIONS.map(section => (
+            <optgroup key={section.id} label={section.label}>
+              {CATEGORIES.filter(c => c.section === section.id).map(c => (
+                <option key={c.id} value={c.id}>
+                  {c.label}
+                </option>
+              ))}
+            </optgroup>
+          ))}
+          {/* An expense saved under a since-retired category keeps it until changed. */}
+          {item.category && !category && <option value={item.category}>{item.category}</option>}
+        </select>
+      </Field>
+
+      <Field label="What was it for?" htmlFor={id('description')} error={description.error}>
+        <input
+          id={id('description')}
+          name={`description.${index}`}
+          required
+          placeholder={split ? 'e.g. Clamps and bits' : 'e.g. Walnut for Smith dining table'}
+          value={item.description}
+          onChange={e => onChange({ description: e.target.value })}
+          className={inputClass}
+          {...description.inputProps}
+        />
+      </Field>
+
+      {split && (
+        <Field
+          label="Amount before tax ($)"
+          htmlFor={id('subtotal')}
+          error={subtotal.error}
+          hint={withHstCents !== undefined ? `${formatCents(withHstCents)} with its share of the HST.` : undefined}
+        >
+          <div className="flex gap-2">
+            <input
+              id={id('subtotal')}
+              name={`subtotal.${index}`}
+              inputMode="decimal"
+              autoComplete="off"
+              required
+              placeholder="0.00"
+              value={item.subtotal}
+              onChange={e => onChange({ subtotal: e.target.value })}
+              className={inputClass}
+              {...subtotal.inputProps}
+            />
+            <button type="button" onClick={onFillRest} disabled={!canFillRest} className={`${secondaryButtonClass} shrink-0`}>
+              The rest
+            </button>
+          </div>
+        </Field>
+      )}
+
+      <ProjectSelect
+        id={id('project')}
+        name={`projectNumber.${index}`}
+        value={item.projectNumber}
+        onChange={number => onChange({ projectNumber: number })}
+        projects={projects}
+        error={project.error}
+      />
+    </>
+  );
+}
+
+/** Whether the items add up to the receipt before tax, as they're typed. */
+function SplitCheck({
+  beforeTaxCents,
+  enteredCents,
+  balanced,
+  error,
+}: {
+  beforeTaxCents: number | null;
+  enteredCents: number;
+  balanced: boolean;
+  error?: string;
+}) {
+  const gap = beforeTaxCents === null ? null : beforeTaxCents - enteredCents;
+  return (
+    <div id="expense-items-error" className="text-sm" aria-live="polite">
+      {beforeTaxCents === null ? (
+        <p className="text-stone-500">Enter the total and HST to check the items against the receipt.</p>
+      ) : (
+        <p className={balanced ? 'text-stone-600' : 'text-amber-800'}>
+          Items: {formatCents(enteredCents)} of {formatCents(beforeTaxCents)} before tax.{' '}
+          {balanced
+            ? 'They match the receipt.'
+            : gap! > 0
+              ? `${formatCents(gap!)} still to go on an item.`
+              : gap! < 0
+                ? `${formatCents(-gap!)} more than the receipt.`
+                : 'Every item needs an amount.'}
+        </p>
+      )}
+      {error && <p className="text-red-700 mt-1">{error}</p>}
+    </div>
   );
 }

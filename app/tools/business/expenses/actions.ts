@@ -3,8 +3,8 @@
 import { revalidatePath } from 'next/cache';
 import { redirect, unstable_rethrow } from 'next/navigation';
 import type { ActionResult } from '@/lib/actionResult';
-import { createExpense, deleteExpense, getExpense, updateExpense } from '@/lib/expenses/data';
-import { parseExpense } from '@/lib/expenses/validation';
+import { createReceipt, deleteReceipt, getReceipt, updateReceipt } from '@/lib/expenses/data';
+import { parseReceipt, type ExpenseInput } from '@/lib/expenses/validation';
 import { formatCents } from '@/lib/money';
 import { formToObject } from '@/lib/validation';
 
@@ -40,36 +40,48 @@ function parseId(id: unknown): number | null {
   return Number.isInteger(n) && n > 0 ? n : null;
 }
 
+/** "Lumber yard, $113.00" or "Lumber yard, $113.00 in 2 categories". */
+function savedMessage(items: ExpenseInput[]): string {
+  const total = items.reduce((sum, item) => sum + item.totalCents, 0);
+  const split = items.length > 1 ? ` in ${items.length} categories` : '';
+  return `Saved: ${items[0].vendor}, ${formatCents(total)}${split}`;
+}
+
 export async function createExpenseAction(formData: FormData): Promise<ActionResult> {
-  const parsed = parseExpense(formToObject(formData));
+  const parsed = parseReceipt(formToObject(formData));
   if (!parsed.ok) return { ok: false, errors: parsed.errors };
 
-  const failed = await attempt(() => createExpense(parsed.data));
+  const failed = await attempt(() => createReceipt(parsed.data));
   if (failed) return failed;
 
   refreshExpenses();
-  return { ok: true, message: `Saved: ${parsed.data.vendor}, ${formatCents(parsed.data.totalCents)}` };
+  return { ok: true, message: savedMessage(parsed.data) };
 }
 
 export async function updateExpenseAction(id: number, formData: FormData): Promise<ActionResult> {
   const expenseId = parseId(id);
   if (!expenseId) return { ok: false, message: 'Unknown expense.' };
 
-  const parsed = parseExpense(formToObject(formData));
+  const parsed = parseReceipt(formToObject(formData));
   if (!parsed.ok) return { ok: false, errors: parsed.errors };
 
-  const failed = await attempt(() => updateExpense(expenseId, parsed.data));
+  let found = false;
+  const failed = await attempt(async () => {
+    found = await updateReceipt(expenseId, parsed.data);
+  });
   if (failed) return failed;
+  if (!found) return { ok: false, message: 'This expense was deleted.' };
 
   refreshExpenses();
-  redirect(`${BASE}?year=${parsed.data.expenseDate.slice(0, 4)}`);
+  redirect(`${BASE}?year=${parsed.data[0].expenseDate.slice(0, 4)}`);
 }
 
+/** Deletes the whole receipt: every item split from it. */
 export async function deleteExpenseAction(id: number): Promise<void> {
   const expenseId = parseId(id);
   if (!expenseId) return;
-  const expense = await getExpense(expenseId);
-  await deleteExpense(expenseId);
+  const [expense] = await getReceipt(expenseId);
+  await deleteReceipt(expenseId);
   refreshExpenses();
   redirect(expense ? `${BASE}?year=${expense.expenseDate.slice(0, 4)}` : BASE);
 }
