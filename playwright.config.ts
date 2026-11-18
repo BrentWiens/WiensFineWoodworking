@@ -5,7 +5,10 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  // GitHub's runners for public repos have 4 CPUs, and CI tests the prebuilt
+  // production server, which serves each page at once, so 4 workers run the suite
+  // in about a third of the time one did. Locally, Playwright picks half the cores.
+  workers: process.env.CI ? 4 : undefined,
   reporter: 'html',
   // Local runs hit `next dev`, which compiles each route and lazy chunk on first
   // request. With several workers that regularly pushes a first paint past the 5s

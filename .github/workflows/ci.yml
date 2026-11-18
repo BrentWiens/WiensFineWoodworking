@@ -3,18 +3,34 @@ name: CI
 on:
   push:
     branches: [main]
+    # Docs can't break the build, so a docs-only change doesn't need a run
+    paths-ignore: ['**.md', 'docs/**']
   pull_request:
     branches: [main]
+    paths-ignore: ['**.md', 'docs/**']
 
 permissions:
   contents: read
 
+# A newer push makes an older run on the same branch pointless: cancel it
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  lint-and-typecheck:
+  # One job rather than one per check: dependencies install once, and GitHub bills
+  # each job rounded up to the minute. Each check still runs and reports even when
+  # an earlier one fails (`!cancelled()`), so one push shows every problem at once.
+  checks:
     runs-on: ubuntu-latest
+    env:
+      # See the `images.unoptimized` comment in next.config.ts.
+      E2E_UNOPTIMIZED_IMAGES: '1'
     steps:
       - uses: actions/checkout@v4
 
+      # Node 24 to match local development: the lock file is written by its npm 11,
+      # which Node 22's npm 10 rejects as out of sync.
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
@@ -26,47 +42,25 @@ jobs:
         run: npm run lint
 
       - name: Type check
+        if: ${{ !cancelled() }}
         run: npm run type-check
 
-  unit-tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-          cache: 'npm'
-
-      - run: npm ci
-
       - name: Unit tests
+        if: ${{ !cancelled() }}
         run: npm test
 
-  e2e-tests:
-    runs-on: ubuntu-latest
-    env:
-      # See the `images.unoptimized` comment in next.config.ts.
-      E2E_UNOPTIMIZED_IMAGES: '1'
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-          cache: 'npm'
-
-      - run: npm ci
-
       - name: Install Playwright browsers
+        if: ${{ !cancelled() }}
         run: npx playwright install --with-deps chromium
 
       - name: Build
+        if: ${{ !cancelled() }}
         run: npm run build
         env:
           NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${{ secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}
 
       - name: E2E tests
+        if: ${{ !cancelled() }}
         run: npm run test:e2e
         env:
           NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${{ secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}
