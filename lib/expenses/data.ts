@@ -8,6 +8,7 @@ import { verifySession } from '@/lib/auth/dal';
 import { yearRange } from '@/lib/dates';
 import { getVehicle } from '@/lib/mileage/data';
 import { isVehicleCategory } from './categories';
+import { deleteReceiptFiles } from './receiptFiles';
 import type { ExpenseInput } from './validation';
 
 /**
@@ -81,16 +82,20 @@ export async function updateReceipt(id: number, items: ExpenseInput[]): Promise<
     ...(rows.length > saved.length ? [db().insert(expenses).values(rows.slice(saved.length))] : []),
     ...(leftover.length > 0 ? [db().delete(expenses).where(inArray(expenses.id, leftover))] : []),
   ]);
+  // A replaced or removed photo is no longer needed
+  const before = saved[0].receiptPath;
+  if (before && before !== items[0].receiptPath) await deleteReceiptFiles([before]);
   return true;
 }
 
-/** Deletes the receipt expense `id` belongs to, every item of it. */
+/** Deletes the receipt expense `id` belongs to, every item of it, and its photo. */
 export async function deleteReceipt(id: number): Promise<void> {
   const saved = await getReceipt(id);
   if (saved.length === 0) return;
   await db()
     .delete(expenses)
     .where(inArray(expenses.id, saved.map(expense => expense.id)));
+  await deleteReceiptFiles(saved.map(expense => expense.receiptPath));
 }
 
 /** Years that have expenses, plus the current one, newest first — for the year picker. */

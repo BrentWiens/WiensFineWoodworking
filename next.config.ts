@@ -29,6 +29,13 @@ const csp = [
 ].join('; ');
 
 const nextConfig: NextConfig = {
+  experimental: {
+    serverActions: {
+      // Receipt uploads (lib/expenses/receiptFiles.ts): photos are shrunk on the
+      // phone first, but a PDF can be up to 4 MB, plus the form's own overhead.
+      bodySizeLimit: '4.5mb',
+    },
+  },
   images: {
     // CI's E2E build only. Under `next start`, the optimizer can wedge an image for
     // the life of the server when the browser disconnects mid-optimization — which

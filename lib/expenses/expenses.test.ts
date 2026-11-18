@@ -61,6 +61,7 @@ describe('parseReceipt', () => {
           totalCents: 56500,
           hstCents: 6500,
           projectNumber: null,
+          receiptPath: null,
         },
       ],
     });
@@ -177,6 +178,23 @@ describe('parseReceipt', () => {
   });
 });
 
+describe('receipt photo on save', () => {
+  const path = 'receipts/2026/0f8fad5b-d9cb-469f-a165-70867728950e.jpg';
+
+  it('keeps an uploaded receipt on every item', () => {
+    const result = parseReceipt({ ...validExpense, receiptPath: path }, NOW);
+    expect(result.ok && result.data.map(e => e.receiptPath)).toEqual([path]);
+  });
+
+  it('refuses a path this app did not store', () => {
+    for (const receiptPath of ['receipts/2026/x.jpg', '../secret', 'https://example.com/a.jpg']) {
+      const result = parseReceipt({ ...validExpense, receiptPath }, NOW);
+      expect(result.ok, receiptPath).toBe(false);
+      if (!result.ok) expect(Object.keys(result.errors)).toEqual(['receiptPath']);
+    }
+  });
+});
+
 describe('splitReceipt', () => {
   it('shares the HST in proportion, the items adding up to the receipt to the cent', () => {
     // $10 HST over three equal items can't be 3.33 each; one of them gets the extra cent
@@ -209,6 +227,7 @@ describe('receipts', () => {
     hstCents,
     projectNumber: null,
     receiptGroup,
+    receiptPath: null,
   });
 
   it('gather the items of a split receipt where the first one sits, in entry order', () => {

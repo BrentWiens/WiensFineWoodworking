@@ -12,7 +12,15 @@ import {
   type ReceiptItemValues,
 } from '@/lib/expenses/receipts';
 import { HST_PERCENT, centsToInput, formatCents, hstIncluded, parseMoney } from '@/lib/money';
+import type { ScanOutcome } from '@/lib/expenses/scanResult';
 import { Field, FormMessage, ProjectSelect, Suggestions, errorProps, inputClass, primaryButtonClass, secondaryButtonClass, useSubmit } from './forms';
+import ReceiptAttachment from './ReceiptAttachment';
+
+/** What uploading a receipt gives back (the expense log's attachReceiptAction). */
+export type AttachReceipt = (
+  formData: FormData,
+  current: ReceiptFormValues | null,
+) => Promise<{ ok: true; path: string; scan: ScanOutcome | null; note?: string } | { ok: false; message: string }>;
 
 interface ExpenseFormProps {
   action: (formData: FormData) => Promise<ActionResult>;
@@ -23,6 +31,8 @@ interface ExpenseFormProps {
   projects: { number: string; name: string; active: boolean }[];
   mode: 'create' | 'edit';
   cancelHref?: string;
+  /** Receipt photos: hidden when no store is set up. Read by Claude when adding an expense. */
+  receipts: { attach: AttachReceipt; storage: boolean; scanning: boolean };
 }
 
 /**
@@ -35,15 +45,23 @@ interface ExpenseFormProps {
  * After a save the date stays put, since receipts tend to come in batches from the
  * same day.
  */
-export default function ExpenseForm({ action, initial, vendors, projects, mode, cancelHref }: ExpenseFormProps) {
+export default function ExpenseForm({ action, initial, vendors, projects, mode, cancelHref, receipts }: ExpenseFormProps) {
   const [values, setValues] = useState(initial);
   const set = <K extends keyof ReceiptFormValues>(key: K, value: ReceiptFormValues[K]) =>
     setValues(v => ({ ...v, [key]: value }));
   const setItem = (index: number, change: Partial<ReceiptItemValues>) =>
     setValues(v => ({ ...v, items: v.items.map((item, i) => (i === index ? { ...item, ...change } : item)) }));
 
+  // Bumped after adding an expense, so the receipt photo section starts afresh
+  const [receiptKey, setReceiptKey] = useState(0);
   const { result, pending, onSubmit } = useSubmit(action, {
-    onSuccess: mode === 'create' ? () => setValues(v => ({ ...initial, expenseDate: v.expenseDate })) : undefined,
+    onSuccess:
+      mode === 'create'
+        ? () => {
+            setValues(v => ({ ...initial, expenseDate: v.expenseDate }));
+            setReceiptKey(k => k + 1);
+          }
+        : undefined,
   });
 
   const split = values.items.length > 1;
@@ -79,14 +97,50 @@ export default function ExpenseForm({ action, initial, vendors, projects, mode, 
     if (beforeTaxCents - others > 0) setItem(index, { subtotal: centsToInput(beforeTaxCents - others) });
   };
 
+  // A photo chosen while adding an expense is read, and fills in the form; on an
+  // existing expense it's only attached, so nothing already entered is overwritten.
+  const scanOnUpload = mode === 'create' && receipts.scanning;
+  const uploadReceipt = async (file: File) => {
+    const formData = new FormData();
+    formData.set('file', file);
+    let outcome: Awaited<ReturnType<AttachReceipt>>;
+    try {
+      outcome = await receipts.attach(formData, scanOnUpload ? values : null);
+    } catch {
+      return { ok: false as const, message: 'Could not reach the server. Check your connection and try again.' };
+    }
+    if (!outcome.ok) return outcome;
+    const { path } = outcome;
+    if (outcome.scan) {
+      setValues({ ...outcome.scan.values, receiptPath: path });
+      const notes = ['Filled in from the receipt. Check each field before saving.', ...outcome.scan.warnings];
+      return { ok: true as const, path, notes };
+    }
+    set('receiptPath', path);
+    return { ok: true as const, path, notes: outcome.note ? [outcome.note] : [] };
+  };
+
   const date = errorProps(result, 'expenseDate', 'expense-date');
   const total = errorProps(result, 'total', 'expense-total');
   const vendor = errorProps(result, 'vendor', 'expense-vendor');
   const hst = errorProps(result, 'hst', 'expense-hst');
   const itemsError = errorProps(result, 'items', 'expense-items').error;
+  const receiptError = errorProps(result, 'receiptPath', 'expense-receipt').error;
 
   return (
     <form onSubmit={onSubmit} className="space-y-4" noValidate>
+      <input type="hidden" name="receiptPath" value={values.receiptPath} />
+      {receipts.storage && (
+        <ReceiptAttachment
+          key={receiptKey}
+          path={values.receiptPath}
+          scan={scanOnUpload}
+          upload={uploadReceipt}
+          onRemove={() => set('receiptPath', '')}
+          error={receiptError}
+        />
+      )}
+
       <div className="grid grid-cols-2 gap-3">
         <Field label="Date" htmlFor="expense-date" error={date.error}>
           <input

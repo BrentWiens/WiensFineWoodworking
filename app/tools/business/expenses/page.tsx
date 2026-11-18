@@ -9,9 +9,14 @@ import { projectOptions } from '@/lib/projectTracking/data';
 import { summarizeExpenses, type ExpenseSummary } from '@/lib/expenses/summary';
 import type { Expense } from '@/lib/db/schema';
 import { formatCents } from '@/lib/money';
-import { createExpenseAction } from './actions';
+import { receiptStorageConfigured } from '@/lib/expenses/receiptFiles';
+import { receiptScanningConfigured } from '@/lib/expenses/scan';
+import { attachReceiptAction, createExpenseAction } from './actions';
 
 const BASE = '/tools/business/expenses';
+
+/** Reading a receipt photo with Claude can take a while; this covers the page's Server Actions. */
+export const maxDuration = 60;
 
 export default async function ExpensesPage({
   searchParams,
@@ -47,6 +52,11 @@ export default async function ExpensesPage({
           vendors={vendors}
           projects={projects}
           initial={blankReceipt(todayIso())}
+          receipts={{
+            attach: attachReceiptAction,
+            storage: receiptStorageConfigured(),
+            scanning: receiptScanningConfigured(),
+          }}
         />
       </section>
 
@@ -94,7 +104,12 @@ function ExpenseList({ expenses, year, summary }: { expenses: Expense[]; year: n
                   className="flex items-start justify-between gap-3 px-4 py-3 hover:bg-stone-50"
                 >
                   <div className="min-w-0">
-                    <p className="font-medium text-stone-800 truncate">{receipt.lines[0].vendor}</p>
+                    <p className="font-medium text-stone-800 truncate">
+                      {receipt.lines[0].vendor}
+                      {receipt.lines[0].receiptPath && (
+                        <span className="ml-1.5 text-xs font-normal text-stone-500">· receipt</span>
+                      )}
+                    </p>
                     <p className="text-sm text-stone-500 truncate">
                       {formatShortDate(receipt.lines[0].expenseDate)} · {unique(receipt.lines.map(l => l.description)).join(' · ')}
                     </p>

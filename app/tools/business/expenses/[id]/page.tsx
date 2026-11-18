@@ -5,7 +5,11 @@ import { getReceipt, recentVendors } from '@/lib/expenses/data';
 import { receiptFormValues } from '@/lib/expenses/receipts';
 import { projectOptions } from '@/lib/projectTracking/data';
 import { formatCents } from '@/lib/money';
-import { deleteExpenseAction, updateExpenseAction } from '../actions';
+import { receiptStorageConfigured } from '@/lib/expenses/receiptFiles';
+import { receiptScanningConfigured } from '@/lib/expenses/scan';
+import { attachReceiptAction, deleteExpenseAction, updateExpenseAction } from '../actions';
+
+export const maxDuration = 60;
 
 /** Edits a receipt: one expense, or every item split from the same receipt. */
 export default async function EditExpensePage({ params }: { params: Promise<{ id: string }> }) {
@@ -34,6 +38,12 @@ export default async function EditExpensePage({ params }: { params: Promise<{ id
           projects={projects}
           cancelHref={backHref}
           initial={receiptFormValues(lines)}
+          receipts={{
+            attach: attachReceiptAction,
+            // A receipt already attached stays visible even if storage is later disconnected
+            storage: receiptStorageConfigured() || Boolean(first.receiptPath),
+            scanning: receiptScanningConfigured(),
+          }}
         />
       </section>
 

@@ -135,6 +135,11 @@ export const expenses = pgTable(
      * are edited and deleted together. Null for a receipt entered as one expense.
      */
     receiptGroup: text('receipt_group'),
+    /**
+     * The receipt's photo or PDF in the private Blob store (lib/expenses/receiptFiles.ts),
+     * the same on every item of a split receipt. Null when none was attached.
+     */
+    receiptPath: text('receipt_path'),
     ...timestamps,
   },
   t => [

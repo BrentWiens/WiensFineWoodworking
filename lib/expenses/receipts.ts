@@ -50,6 +50,7 @@ export interface ReceiptLine {
   hstCents: number;
   projectNumber: string | null;
   receiptGroup: string | null;
+  receiptPath: string | null;
 }
 
 /** The expenses of one receipt, in the order they were listed. */
@@ -101,6 +102,8 @@ export interface ReceiptFormValues {
   total: string;
   hst: string;
   items: ReceiptItemValues[];
+  /** The attached photo or PDF in storage, or '' for none. */
+  receiptPath: string;
 }
 
 export const blankItem = (projectNumber = ''): ReceiptItemValues => ({
@@ -116,6 +119,7 @@ export const blankReceipt = (expenseDate: string): ReceiptFormValues => ({
   total: '',
   hst: '',
   items: [blankItem()],
+  receiptPath: '',
 });
 
 /** A saved receipt's items back into the form that entered them. */
@@ -133,5 +137,6 @@ export function receiptFormValues(lines: ReceiptLine[]): ReceiptFormValues {
       projectNumber: line.projectNumber ?? '',
       subtotal: lines.length > 1 ? centsToInput(line.totalCents - line.hstCents) : '',
     })),
+    receiptPath: lines[0].receiptPath ?? '',
   };
 }

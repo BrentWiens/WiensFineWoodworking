@@ -51,6 +51,19 @@ used against the real database, locally and in production.
   cent (`lib/expenses/receipts.ts`). Each item is saved as its own expense, so every report
   works per item; items of one receipt share `expenses.receipt_group`, show as one entry in
   the list, and are edited and deleted together.
+- **Receipt photos:** a photo or PDF can be attached to each receipt. Photos are shrunk on
+  the phone before upload (2000 px on the long side, 80% JPEG: a few hundred KB instead of
+  several MB; `lib/expenses/compressImage.ts`). Files go to a **private** Vercel Blob store
+  under `receipts/<year>/<uuid>.<ext>` and are only ever served through
+  `/tools/business/expenses/receipt?path=…`, which checks the session
+  (`lib/expenses/receiptFiles.ts`). The path is stored on every item of the receipt
+  (`expenses.receipt_path`); replacing or deleting the receipt deletes the old file.
+- **Reading receipts:** when adding an expense, the chosen photo is sent to Claude
+  (`claude-opus-5-5`, `lib/expenses/scan.ts`), which reads the date, vendor, total, HST and
+  the items by category, and the form is filled in for checking (`lib/expenses/scanResult.ts`).
+  Nothing is saved until the form is. A declined request is retried on Anthropic's default
+  fallback model. On an existing expense a photo is only attached, never read over what's
+  there. A photo uploaded and then abandoned (form never saved) stays in the store unlinked.
 - Year summary by section and category: total paid, HST (input tax credits) and net of HST,
   plus a "By project" table once any expense has a project number
 - CSV export: one row per expense, then totals by category and by project
@@ -113,6 +126,8 @@ used against the real database, locally and in production.
    | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | From step 2 |
    | `ALLOWED_EMAILS` | Comma-separated list of the Google accounts allowed to sign in |
    | `SESSION_SECRET` | At least 32 random characters, e.g. `node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"` |
+   | `BLOB_STORE_ID` | Set when a **private** Blob store is connected (Storage → Create → Blob → access Private), which also lets the app sign in to it with OIDC. Locally, `vercel env pull` brings both; or set `BLOB_READ_WRITE_TOKEN` from the store's settings. Without it the receipt photo field is hidden. |
+   | `ANTHROPIC_API_KEY` | From console.anthropic.com → API keys, for reading receipts. Without it, photos are stored but not read. |
 
    Vercel stores Production values as Sensitive, and Sensitive values can't be pulled to a
    dev machine. So each variable exists twice: the Production entry, and a separate
@@ -160,12 +175,15 @@ These rules matter when adding more tools:
 ## Next steps
 
 1. Have the accountant look over the expense categories and line numbers.
-2. **Receipt photos:** stored in Vercel Blob and shrunk on the phone before upload. Receipts
-   are private records, so decide first whether a public-but-unguessable blob URL is acceptable
-   or the photos must be served through an authenticated route. This needs a Blob store
-   connected in Vercel (`BLOB_READ_WRITE_TOKEN`) and the Blob host added to the CSP's `img-src`.
-3. **Year-end archive:** records must be kept 6 years, and Neon's free plan only restores
-   recent history.
+2. **Backup and recovery (to do):** the site now holds records the CRA expects kept for 6
+   years: the Neon database (expenses, trips, projects, income) and the Blob store (receipt
+   photos). Neon's free plan only restores recent history, and Blob has no versioning, so a
+   bad migration, a mistaken delete or a lost account could lose them for good. Work out:
+   scheduled off-site exports of both (e.g. a nightly `pg_dump` and a copy of new receipt
+   files to storage outside Vercel), how long to keep them, how to restore from them, and a
+   test restore. Also a sweep for receipt files no expense points at.
+3. **Year-end archive:** a yearly export (CSV and receipt photos) to hand the accountant and
+   keep with the tax records.
 4. **Reports:** a T2125 summary laid out line by line for the accountant.
 5. **Quotes and invoices:** moved over from the separate tool used today, with HST charged on
    invoices, and linked to projects so a paid invoice becomes the project's income.

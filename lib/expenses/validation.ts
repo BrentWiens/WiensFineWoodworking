@@ -4,6 +4,7 @@ import { formatCents } from '../money';
 import { blankToUndefined, entryDate, hstFitsTotal, money, parse, projectNumberField, text, type FieldErrors, type ParseResult } from '../validation';
 import { isCategoryId } from './categories';
 import { MAX_RECEIPT_ITEMS, splitReceipt } from './receipts';
+import { isReceiptPath } from './receiptPath';
 
 /** One expense: a whole receipt, or one category's share of a split receipt. */
 export interface ExpenseInput {
@@ -17,6 +18,8 @@ export interface ExpenseInput {
   hstCents: number;
   /** The project it was bought for, or null when it isn't tied to one. */
   projectNumber: string | null;
+  /** The receipt's photo or PDF in storage; the same on every item of a split receipt. */
+  receiptPath: string | null;
 }
 
 /** The receipt's own lines: when, where, and its bottom line. */
@@ -29,6 +32,10 @@ const receiptSchema = (today: string) =>
         .refine(c => c > 0, 'Total must be more than 0')
         .refine(c => c <= 100_000_000, 'Total looks too large'),
       hst: z.preprocess(blankToUndefined, money('HST').optional()),
+      receiptPath: z.preprocess(
+        blankToUndefined,
+        z.string().refine(isReceiptPath, 'Upload the receipt photo again').optional(),
+      ),
     })
     .refine(v => v.hst === undefined || hstFitsTotal(v.hst, v.total), {
       message: 'HST is more than the tax on this total could be. Check the amounts.',
@@ -86,7 +93,7 @@ export function parseReceipt(input: Record<string, unknown>, now: Date = new Dat
   });
 
   if (!receipt.ok || items.some(item => item === null)) return { ok: false, errors };
-  const { expenseDate, vendor, total, hst = 0 } = receipt.data;
+  const { expenseDate, vendor, total, hst = 0, receiptPath = null } = receipt.data;
   const parsed = items.filter(item => item !== null);
 
   const amounts = split
@@ -121,6 +128,7 @@ export function parseReceipt(input: Record<string, unknown>, now: Date = new Dat
       totalCents: amounts[i].totalCents,
       hstCents: amounts[i].hstCents,
       projectNumber: item.projectNumber ?? null,
+      receiptPath,
     })),
   };
 }
