@@ -266,6 +266,20 @@ export const PROJECTS: Project[] = [
     ],
   },
   {
+    slug: 'office-entryway-fluted-walnut',
+    title: 'Pinstripe',
+    kind: 'Office Entryway with Fluted Wall Panelling and Walnut Shelf',
+    category: 'finish-carpentry',
+    images: ['office-entryway-fluted-walnut.jpg'],
+    woods: ['Walnut'],
+    description:
+      'An office entryway wrapped in dark fluted wall panelling, with a custom walnut shelf over a hanging rail and solid walnut trim.',
+    story: [
+      'An office entry has to work hard and still make a first impression. Here, the wall behind the coat rail is clad floor to ceiling in dark fluted panelling, its vertical slats adding depth and texture to what would otherwise be a plain wall.',
+      'A custom walnut shelf runs the full width above a steel hanging rail, carried on black brackets, with room for hats and bags on top. Solid walnut trim frames the panelled alcove at both ends, tying its warm tone back to the shelf.',
+    ],
+  },
+  {
     slug: 'custom-kitchen-cabinetry',
     title: 'Clean Slate',
     kind: 'Custom Kitchen Cabinetry',
