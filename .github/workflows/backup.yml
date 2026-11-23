@@ -33,8 +33,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
-      BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
       REMOTE: gdrive:wfinew-backups
     steps:
       - uses: actions/checkout@v4
@@ -45,6 +43,38 @@ jobs:
           cache: 'npm'
 
       - run: npm ci --ignore-scripts
+
+      # Secrets pasted from .env.local can carry its quotes; strip them. GitHub only masks
+      # a secret's exact value, so the direct connection string derived from it, and the
+      # host and password inside it, are masked too: an error message can't show them.
+      - name: Prepare credentials
+        env:
+          RAW_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          RAW_BLOB_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+        run: |
+          clean() {
+            local v
+            v=$(printf '%s' "$1" | tr -d '\r\n' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+            v=${v#\"}; v=${v%\"}; v=${v#\'}; v=${v%\'}
+            printf '%s' "$v"
+          }
+          DB=$(clean "$RAW_DATABASE_URL")
+          TOKEN=$(clean "$RAW_BLOB_TOKEN")
+          # pg_dump needs a direct connection, not Neon's connection pooler
+          DIRECT=${DB/-pooler./.}
+          for value in "$DB" "$DIRECT" "$TOKEN" $(node -e '
+            for (const url of process.argv.slice(1)) {
+              const u = new URL(url);
+              console.log(u.host, u.hostname.split(".")[0]);
+              if (u.password) console.log(u.password, decodeURIComponent(u.password));
+            }' "$DB" "$DIRECT"); do
+            [ -n "$value" ] && echo "::add-mask::$value"
+          done
+          {
+            echo "DATABASE_URL=$DB"
+            echo "DB_DIRECT=$DIRECT"
+            echo "BLOB_READ_WRITE_TOKEN=$TOKEN"
+          } >> "$GITHUB_ENV"
 
       # pg_dump must be at least as new as the server (Postgres 18); Ubuntu ships 16
       - name: Install Postgres 18 client and rclone
@@ -67,9 +97,7 @@ jobs:
 
       - name: Back up the database
         run: |
-          # pg_dump needs a direct connection, not Neon's connection pooler
-          DIRECT="${DATABASE_URL/-pooler./.}"
-          echo "::add-mask::$DIRECT"
+          DIRECT="$DB_DIRECT"
           DAY=$(TZ=America/Toronto date +%F)
           mkdir -p out/database
           pg_dump "$DIRECT" --no-owner --no-privileges --format=plain --file out/database/wfinew.sql
