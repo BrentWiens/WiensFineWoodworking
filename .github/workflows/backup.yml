@@ -44,7 +44,9 @@ jobs:
 
       - run: npm ci --ignore-scripts
 
-      # Secrets pasted from .env.local can carry its quotes; strip them. GitHub only masks
+      # Secrets pasted from .env.local can carry its quotes, and a value saved in Vercel
+      # with a trailing line break comes out of `vercel env pull` ending in a literal \n;
+      # strip both. GitHub only masks
       # a secret's exact value, so the direct connection string derived from it, and the
       # host and password inside it, are masked too: an error message can't show them.
       - name: Prepare credentials
@@ -56,6 +58,7 @@ jobs:
             local v
             v=$(printf '%s' "$1" | tr -d '\r\n' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
             v=${v#\"}; v=${v%\"}; v=${v#\'}; v=${v%\'}
+            while [[ "$v" == *'\n' ]]; do v=${v%'\n'}; done
             printf '%s' "$v"
           }
           DB=$(clean "$RAW_DATABASE_URL")
