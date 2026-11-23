@@ -39,12 +39,15 @@ do {
   for (const blob of page.blobs) {
     const match = /^receipts\/(\d{4})\/([0-9a-f-]{36})\.(\w+)$/.exec(blob.pathname);
     if (!match) continue;
-    const [, year, id, ext] = match;
+    const [, storedYear, id, ext] = match;
     if (backedUp.has(id)) {
       skipped += 1;
       continue;
     }
     const expense = byPath.get(blob.pathname);
+    // Filed by the expense's year: a photo is stored under the year on the form when it's
+    // uploaded, which is still today's date for an old receipt the photo then fills in
+    const year = expense?.date.slice(0, 4) ?? storedYear;
     const name = expense
       ? `${expense.date} ${safe(expense.vendor)} ${dollars(expense.cents)} (${id}).${ext}`
       : `Not on an expense (${id}).${ext}`;
