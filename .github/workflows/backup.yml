@@ -80,15 +80,21 @@ jobs:
           } >> "$GITHUB_ENV"
 
       # pg_dump must be at least as new as the server (Postgres 18); Ubuntu ships 16
-      - name: Install Postgres 18 client and rclone
+      - name: Install Postgres 18 client and rclone 1.76
         run: |
           sudo install -d /usr/share/postgresql-common/pgdg
           sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
           echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
             | sudo tee /etc/apt/sources.list.d/pgdg.list > /dev/null
           sudo apt-get update -qq
-          sudo apt-get install -y -qq postgresql-client-18 rclone > /dev/null
+          sudo apt-get install -y -qq postgresql-client-18 > /dev/null
           pg_dump --version
+          # Current rclone rather than Ubuntu's (1.60, from 2022), which spent ~50 s
+          # before every Drive call
+          RCLONE=v1.76.0
+          curl -fsSLO "https://downloads.rclone.org/$RCLONE/rclone-$RCLONE-linux-amd64.deb"
+          sudo dpkg -i "rclone-$RCLONE-linux-amd64.deb" > /dev/null
+          rclone version | head -1
 
       - name: Configure Google Drive
         env:

@@ -182,7 +182,28 @@ wfinew-backups/
 | --- | --- |
 | `DATABASE_URL` | The Neon connection string, the same as `DATABASE_URL` in `.env.local`. The workflow switches it to Neon's direct (unpooled) host, which `pg_dump` needs. |
 | `BLOB_READ_WRITE_TOKEN` | A read-write token for `blob-wfinew`. GitHub can't use Vercel's OIDC sign-in, so it needs a token: Storage → blob-wfinew → Projects → edit the connection → tick "Add a read-write token env var", then copy the token. |
-| `RCLONE_CONFIG` | Google Drive access. Install rclone (`winget install Rclone.Rclone`), run `rclone config create gdrive drive scope=drive.file` and sign in to Google in the browser that opens, then paste the whole file that `rclone config file` points to. `drive.file` limits it to the files it creates, so it can't see the rest of the Drive. |
+| `RCLONE_CONFIG` | Google Drive access through rclone, with **its own Google client** (below): rclone's shared one is being retired during 2026. Paste the whole file that `rclone config file` points to. |
+
+**Google client for rclone** (once, in [Google Cloud Console](https://console.cloud.google.com)):
+
+1. Create a project (e.g. "wfinew-backups"), then APIs & Services → Library → enable the
+   **Google Drive API**.
+2. Google Auth Platform (OAuth consent screen): app name and your email, audience
+   **External**. Under Data access, add only the scope `.../auth/drive.file`. It's a
+   non-sensitive scope, so the app needs no Google review.
+3. Audience → **Publish app** (status "In production"). Left in Testing, Google expires the
+   sign-in after 7 days and the backup stops. If Publish is greyed out, add a home page
+   (`https://wfinew.com`) and privacy policy URL under Branding first.
+4. Clients → Create client → **Desktop app**. Copy the client ID and secret.
+5. Point rclone at it and sign in again (choose the same Google account):
+   `rclone config update gdrive client_id=<id> client_secret=<secret> scope=drive.file`, then
+   `rclone config reconnect gdrive:`.
+6. Paste the updated rclone config file into the `RCLONE_CONFIG` secret.
+
+`drive.file` limits rclone to the files that **this Google client** created, so it can't see
+the rest of the Drive. That also means a new client can't see a `wfinew-backups` folder an
+earlier client made, and would create a second one beside it: when changing clients, rename or
+delete the old folder, then run the backup to start a complete new one.
 
 **Restoring**
 
