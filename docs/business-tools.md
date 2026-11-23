@@ -111,8 +111,8 @@ income were imported from the earlier spreadsheet.
   set-aside %, the threshold and the meals %. The business is not HST-registered yet, so
   every expense currently counts in full, HST included.
 
-**Not built yet:** backup and recovery, a year-end archive, a T2125 line-by-line report, quotes
-and invoices. See [Next steps](#next-steps).
+**Not built yet:** a year-end archive, a T2125 line-by-line report, quotes and invoices. See
+[Next steps](#next-steps).
 
 ## Setup
 
@@ -150,6 +150,49 @@ To sign out every device at once, change `SESSION_SECRET` and redeploy. To revok
 account, remove it from `ALLOWED_EMAILS`. Existing sessions are checked against the list on
 every request.
 
+## Backups
+
+The database and the receipt photos are copied to Google Drive every night by
+`.github/workflows/backup.yml` (07:00 UTC, about 2 a.m. in Toronto), outside Vercel and Neon,
+so they survive a mistake noticed days later, a lost account or either service going down.
+One database is kept on purpose: losing at most a day's changes is acceptable.
+
+```
+wfinew-backups/
+  database/2026-11-22/wfinew.sql      the whole database, to restore from
+  database/2026-11-22/expenses.csv    one CSV per table, to open in Google Sheets
+  receipts/2026/2026-11-14 Kitchener Building Supply $330.95 (<id>).jpg
+```
+
+- Database copies are kept for 30 days, plus the earliest copy of each month for 7 years.
+- Receipts are only ever added. One deleted on the site stays in the backup. One uploaded but
+  never saved to an expense is named "Not on an expense".
+- The files are plain, not encrypted, so Drive can search and preview them. Keep the Google
+  account behind 2-step verification.
+- GitHub emails the account that last changed the schedule when a run fails. GitHub also
+  pauses scheduled workflows in a public repo after 60 days without a commit, and emails
+  before it does. Re-enable it under Actions → Backup.
+- The repo is public, so anyone can read the run logs. The workflow and
+  `scripts/backup-receipts.mjs` print counts only; keep it that way.
+- Run it by hand any time: Actions → Backup → Run workflow.
+
+**One-time setup** (GitHub → Settings → Secrets and variables → Actions → New repository secret):
+
+| Secret | Value |
+| --- | --- |
+| `DATABASE_URL` | The Neon connection string, the same as `DATABASE_URL` in `.env.local`. The workflow switches it to Neon's direct (unpooled) host, which `pg_dump` needs. |
+| `BLOB_READ_WRITE_TOKEN` | A read-write token for `blob-wfinew`. GitHub can't use Vercel's OIDC sign-in, so it needs a token: Storage → blob-wfinew → Projects → edit the connection → tick "Add a read-write token env var", then copy the token. |
+| `RCLONE_CONFIG` | Google Drive access. Install rclone (`winget install Rclone.Rclone`), run `rclone config create gdrive drive scope=drive.file` and sign in to Google in the browser that opens, then paste the whole file that `rclone config file` points to. `drive.file` limits it to the files it creates, so it can't see the rest of the Drive. |
+
+**Restoring**
+
+- One record or receipt: open the CSV or the receipt in Drive.
+- The whole database: install the Postgres 18 client, download a `wfinew.sql`, and run
+  `psql "<connection string>" -f wfinew.sql` against an **empty** database (a new Neon
+  project or branch). Then point `DATABASE_URL` in Vercel at it and redeploy.
+- Receipts: upload the files back to the Blob store under `receipts/<year>/<id>.<ext>` (the
+  id in brackets in each file name), e.g. with `vercel blob put`.
+
 ## How it fits together
 
 | Piece | Where |
@@ -186,13 +229,9 @@ These rules matter when adding more tools:
 ## Next steps
 
 1. Have the accountant look over the expense categories and line numbers.
-2. **Backup and recovery (to do):** the site now holds records the CRA expects kept for 6
-   years: the Neon database (expenses, trips, projects, income) and the Blob store (receipt
-   photos). Neon's free plan only restores recent history, and Blob has no versioning, so a
-   bad migration, a mistaken delete or a lost account could lose them for good. Work out:
-   scheduled off-site exports of both (e.g. a nightly `pg_dump` and a copy of new receipt
-   files to storage outside Vercel), how long to keep them, how to restore from them, and a
-   test restore. Also a sweep for receipt files no expense points at.
+2. **Restore check:** once the nightly backup has run, restore one `wfinew.sql` into a
+   temporary Neon branch and compare row counts with the live database, to prove it rebuilds.
+   Also, eventually, a sweep that deletes receipt files no expense points at from the store.
 3. **Year-end archive:** a yearly export (CSV and receipt photos) to hand the accountant and
    keep with the tax records.
 4. **Reports:** a T2125 summary laid out line by line for the accountant.
